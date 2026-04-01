@@ -75,12 +75,12 @@ These rules trigger based on what the **previous player** just played. They appl
 ### 8 — Draw and skip
 
 - The next player must draw **2 cards per 8 played** and their turn is **skipped**.
-- If multiple 8s were played simultaneously, the playing player decides how to distribute the effect across the following players:
-  - All 8s can be aimed at one player (they draw 2× the number of 8s and skip once).
-  - The effect can be spread across multiple players (each targeted player draws 2 cards and skips their turn).
-  - **Example:** 2 eights played → either one player draws 4 and skips, or two players each draw 2 and skip.
+- If multiple 8s were played simultaneously, the playing player decides how to distribute the effect across the following players **in clockwise order** (no skipping):
+  - All 8s can be aimed at the next player (they draw 2× the number of 8s and skip once).
+  - The effect can be spread across the next N players clockwise (each draws 2 cards and skips their turn).
+  - **Example:** 2 eights played → either the next player draws 4 and skips, or the next 2 players in clockwise order each draw 2 and skip.
 
-> **UI rule:** Before confirming the play, the player is shown a radio selector: target 1 player (all 8 effects on one person) or spread across N players (one effect each). Selection must be made before the action is submitted to the server.
+> **UI rule:** Before confirming the play, the player is shown a radio selector: target 1 player (all effects stacked) or spread across the next N players clockwise. Selection must be made before the action is submitted to the server.
 
 ### Ace — Skip turn
 
