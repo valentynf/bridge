@@ -122,7 +122,27 @@ A player also **cannot finish on a 6**, because the 6 must be covered (see Speci
 
 ## Winning a Round
 
-The first player to empty their hand wins the round and scores **0 points** for that round.
+There are two ways to win a round:
+
+### 1. Empty your hand
+
+The first player to play all their cards wins the round and scores **0 points** for that round.
+
+### 2. Bridge — play all 4 cards of the same rank
+
+If a player plays all 4 cards of the same rank in a single action, they **may** call **"Bridge"**. This is optional — the player can choose to continue playing instead. If Bridge is called, the round ends immediately. **Every player — including the one who called Bridge — counts the points remaining in their hand.** No further cards are played.
+
+This can happen mid-turn: if the top card allows it and the player holds all 4 of a rank, they play all 4, declare Bridge, and the round is over.
+
+**Special card effects on Bridge:**
+
+| Rank | Effect triggers? |
+|---|---|
+| 7 | Yes — next player draws cards before scoring |
+| 8 | Yes — targeted player(s) draw cards before scoring |
+| Jack | No — no suit declaration, no finish bonus |
+| 6 | No — no cover required |
+| Ace | No — no skips |
 
 ### Jack finish bonus
 
