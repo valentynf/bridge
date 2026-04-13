@@ -8,6 +8,6 @@ export const CARD_RANKS = [
     "Q",
     "K",
     "A",
-] as const
-export const CARD_SUITS = ["hearts", "spades", "diamonds", "clubs"] as const
-export const DECK_SIZE = 36
+] as const;
+export const CARD_SUITS = ["hearts", "spades", "diamonds", "clubs"] as const;
+export const DECK_SIZE = 36;
