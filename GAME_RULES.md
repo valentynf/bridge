@@ -7,7 +7,7 @@
 
 ## Overview
 
-A 4-player card game played with a 36-card deck. Players try to get rid of all their cards. Those left holding cards count up their points. Reach 120 points and you're eliminated. Last player standing wins.
+A 4-player card game played with a 36-card deck. Players try to get rid of all their cards. Those left holding cards count up their points. Surpass 120 points and you're eliminated. Last player standing wins.
 
 ---
 
@@ -21,12 +21,12 @@ No 2s, 3s, 4s, or 5s.
 
 ## Point Values
 
-| Cards | Points |
-|---|---|
-| 6, 7, 8, 9 | 0 |
+| Cards           | Points  |
+| --------------- | ------- |
+| 6, 7, 8, 9      | 0       |
 | 10, Queen, King | 10 each |
-| Ace | 15 |
-| Jack | 20 |
+| Ace             | 15      |
+| Jack            | 20      |
 
 ---
 
@@ -37,12 +37,13 @@ No 2s, 3s, 4s, or 5s.
 **Subsequent rounds:** The player with the lowest cumulative score deals. If multiple players share the lowest score, the player sitting clockwise after the round winner deals.
 
 **Process:**
+
 1. Dealer deals cards one at a time, going clockwise, starting with the player to their left.
 2. This continues for 5 rounds of dealing.
 3. After round 5: each non-dealer has 5 cards. The dealer's own 5th card is placed face-up — this becomes the **first active card** on the table. The remaining undealt cards are stacked face-down next to it. This stack is the **draw pile**.
 4. Dealer's opening turn:
-   - If the dealer holds any cards of the **same rank** as the face-up card (rank only — not suit), they **must** play them immediately on top of it.
-   - If the dealer has no matching rank card, their turn is considered done.
+    - If the dealer holds any cards of the **same rank** as the face-up card (rank only — not suit), they **must** play them immediately on top of it.
+    - If the dealer has no matching rank card, their turn is considered done.
 5. If the face-up card (or the last card the dealer played on top of it) is a special card, its effect triggers immediately on the first player: a 7 means they draw, an 8 means they draw and skip, an Ace means they skip. If the face-up card is a 6, the dealer must cover it (same rules as the 6 cover mechanic).
 6. Regular play begins from the player to the dealer's left.
 
@@ -76,9 +77,9 @@ These rules trigger based on what the **previous player** just played. They appl
 
 - The next player must draw **2 cards per 8 played** and their turn is **skipped**.
 - If multiple 8s were played simultaneously, the playing player decides how to distribute the effect across the following players **in clockwise order** (no skipping):
-  - All 8s can be aimed at the next player (they draw 2× the number of 8s and skip once).
-  - The effect can be spread across the next N players clockwise (each draws 2 cards and skips their turn).
-  - **Example:** 2 eights played → either the next player draws 4 and skips, or the next 2 players in clockwise order each draw 2 and skip.
+    - All 8s can be aimed at the next player (they draw 2× the number of 8s and skip once).
+    - The effect can be spread across the next N players clockwise (each draws 2 cards and skips their turn).
+    - **Example:** 2 eights played → either the next player draws 4 and skips, or the next 2 players in clockwise order each draw 2 and skip.
 
 > **UI rule:** Before confirming the play, the player is shown a radio selector: target 1 player (all effects stacked) or spread across the next N players clockwise. Selection must be made before the action is submitted to the server.
 
@@ -136,13 +137,13 @@ This can happen mid-turn: if the top card allows it and the player holds all 4 o
 
 **Special card effects on Bridge:**
 
-| Rank | Effect triggers? |
-|---|---|
-| 7 | Yes — next player draws cards before scoring |
-| 8 | Yes — targeted player(s) draw cards before scoring |
-| Jack | No — no suit declaration, no finish bonus |
-| 6 | No — no cover required |
-| Ace | No — no skips |
+| Rank | Effect triggers?                                   |
+| ---- | -------------------------------------------------- |
+| 7    | Yes — next player draws cards before scoring       |
+| 8    | Yes — targeted player(s) draw cards before scoring |
+| Jack | No — no suit declaration, no finish bonus          |
+| 6    | No — no cover required                             |
+| Ace  | No — no skips                                      |
 
 ### Jack finish bonus
 
@@ -161,11 +162,11 @@ This rule is only valid because players are forced to play cards when they can �
 
 After a player wins the round, all remaining players count the **point values of cards still in their hands** and add that total to their cumulative score.
 
-| Cumulative score | Result |
-|---|---|
-| Under 120 | Player continues |
-| Exactly 120 | Score is reset to **0** (not eliminated) |
-| Over 120 | Player is **eliminated** |
+| Cumulative score | Result                                   |
+| ---------------- | ---------------------------------------- |
+| Under 120        | Player continues                         |
+| Exactly 120      | Score is reset to **0** (not eliminated) |
+| Over 120         | Player is **eliminated**                 |
 
 ---
 
@@ -189,12 +190,12 @@ When that happens:
 
 **Scoring multiplier:** Each reshuffle adds +1 to the round's scoring multiplier.
 
-| Reshuffles | Multiplier |
-|---|---|
-| 0 | ×1 (normal) |
-| 1 | ×2 |
-| 2 | ×3 |
-| 3 | ×4 |
+| Reshuffles | Multiplier  |
+| ---------- | ----------- |
+| 0          | ×1 (normal) |
+| 1          | ×2          |
+| 2          | ×3          |
+| 3          | ×4          |
 
 The multiplier applies to all players' hand totals at the end of the round before they are added to cumulative scores. The engine must track how many reshuffles have occurred in the current round and reset the counter at the start of each new round.
 
