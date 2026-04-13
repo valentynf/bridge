@@ -1,13 +1,12 @@
 import type { Card } from "./types.js"
-import { CARD_RANKS as cardRanks, CARD_SUITS as cardSuits } from "./consts.js"
+import { CARD_RANKS, CARD_SUITS } from "./consts.js"
 
 export const newDeck = (): Card[] => {
     const newDeck: Card[] = []
-    cardRanks.forEach((rank) => {
-        for (const suit of cardSuits) {
+    for (const rank of CARD_RANKS) {
+        for (const suit of CARD_SUITS) {
             newDeck.push({ rank, suit })
         }
-    })
-
+    }
     return newDeck
 }
