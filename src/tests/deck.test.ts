@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { newDeck, shuffleDeck } from "../functions.js";
+import { newDeck, shuffleDeck } from "../functions/deck.js";
 import { CARD_SUITS, CARD_RANKS, DECK_SIZE } from "../consts.js";
 
 describe("newDeck", () => {
