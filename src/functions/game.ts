@@ -10,8 +10,8 @@ export const dealCards = (
         .fill(undefined)
         .map(() => []);
     const cardsToDeal = [...shuffledDeck];
-
     let i = 0;
+
     while (i < PLAYER_CARD_NUMBER) {
         for (const hand of hands) {
             const dealingCard = cardsToDeal.shift();
