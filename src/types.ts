@@ -1,6 +1,8 @@
-type CardSuit = "hearts" | "spades" | "diamonds" | "clubs"
+import type { CARD_RANKS, CARD_SUITS } from "./consts.js"
 
-type CardRank = "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K" | "A"
+type CardSuit = (typeof CARD_SUITS)[number]
+
+type CardRank = (typeof CARD_RANKS)[number]
 
 type PendingEffect = "TAKE_1" | "SKIP_TURN"
 
@@ -9,7 +11,7 @@ type SpecialAction = {
     effect: PendingEffect[]
 }
 
-type Card = {
+export type Card = {
     rank: CardRank
     suit: CardSuit
 }
