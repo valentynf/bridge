@@ -12,7 +12,7 @@ export const newDeck = (): Card[] => {
 };
 
 export const shuffleDeck = (unshuffledDeck: Card[]): Card[] => {
-    const shuffledDeck = unshuffledDeck;
+    const shuffledDeck = [...unshuffledDeck];
     for (let i = shuffledDeck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledDeck[i], shuffledDeck[j]] = [shuffledDeck[j], shuffledDeck[i]];
