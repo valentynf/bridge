@@ -10,3 +10,7 @@ export const newDeck = (): Card[] => {
     }
     return newDeck
 }
+
+export const shuffleDeck = (unshuffledDeck: Card[]): Card[] => {
+    return unshuffledDeck
+}
