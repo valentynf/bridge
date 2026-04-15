@@ -1,5 +1,5 @@
 import { PLAYER_CARD_NUMBER } from "../consts.js";
-import type { Card, PendingEffect } from "../types.js";
+import type { Card, CardSuit, PendingEffect } from "../types.js";
 import { shuffleDeck } from "./deck.js";
 
 export const dealCards = (
@@ -82,4 +82,23 @@ export const applyPendingEffects = (
         skipTurn,
         reshuffled,
     };
+};
+
+export const checkCanPlay = (
+    activePileTopCard: Card,
+    playerHand: Card[],
+    jackSuit: CardSuit
+): boolean => {
+    if (playerHand.some((card) => card.rank === "J")) return true;
+    for (const card of playerHand) {
+        if (
+            (card.rank === activePileTopCard.rank ||
+                card.suit === activePileTopCard.suit) &&
+            activePileTopCard.rank !== "J"
+        )
+            return true;
+        if (activePileTopCard.rank === "J" && card.suit === jackSuit)
+            return true;
+    }
+    return false;
 };

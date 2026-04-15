@@ -1,8 +1,8 @@
 import type { CARD_RANKS, CARD_SUITS } from "./consts.js";
 
-type CardSuit = (typeof CARD_SUITS)[number];
+export type CardSuit = (typeof CARD_SUITS)[number];
 
-type CardRank = (typeof CARD_RANKS)[number];
+export type CardRank = (typeof CARD_RANKS)[number];
 
 export type PendingEffect = "TAKE_CARD" | "SKIP_TURN";
 

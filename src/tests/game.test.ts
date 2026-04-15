@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { newDeck, shuffleDeck } from "../functions/deck.js";
-import { applyPendingEffects, dealCards } from "../functions/game.js";
+import {
+    applyPendingEffects,
+    checkCanPlay,
+    dealCards,
+} from "../functions/game.js";
 import {
     DEALER_CARD_NUMBER,
     PLAYER_CARD_NUMBER,
@@ -189,5 +193,84 @@ describe("applyPendingEffects", () => {
         const { updatedHand, skipTurn } = updatedData;
         expect(updatedHand.length).toBe(defaultHand.length + 1);
         expect(skipTurn).toBe(false);
+    });
+});
+
+describe("checkCanPlay", () => {
+    const defaultHand = [
+        { rank: "9", suit: "hearts" },
+        { rank: "10", suit: "spades" },
+        { rank: "K", suit: "clubs" },
+        { rank: "8", suit: "clubs" },
+    ];
+    const handWithJack = [
+        { rank: "9", suit: "hearts" },
+        { rank: "10", suit: "spades" },
+        { rank: "K", suit: "clubs" },
+        { rank: "8", suit: "clubs" },
+        { rank: "J", suit: "hearts" },
+    ];
+    const defaultJackSuit = "diamonds";
+    const defaultJack = { rank: "J", suit: "spades" };
+    const defaultTopActivePileCard: Card = { rank: "6", suit: "diamonds" };
+
+    test("Should be true - existing rank card", () => {
+        const existingRankCard: Card = { rank: "10", suit: "diamonds" };
+        const canPlay = checkCanPlay(
+            existingRankCard,
+            defaultHand as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(true);
+    });
+    test("Should be true - existing suit card", () => {
+        const existingSuitCard: Card = { rank: "A", suit: "spades" };
+        const canPlay = checkCanPlay(
+            existingSuitCard,
+            defaultHand as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(true);
+    });
+    test("Should be true - Jack in hand", () => {
+        const canPlay = checkCanPlay(
+            defaultTopActivePileCard,
+            handWithJack as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(true);
+    });
+    test("Should be false - active Jack (chosen suit)", () => {
+        const canPlay = checkCanPlay(
+            defaultJack as Card,
+            defaultHand as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(false);
+    });
+    test("Should be true - active Jack (chosen suit), Jack in hand", () => {
+        const canPlay = checkCanPlay(
+            defaultJack as Card,
+            handWithJack as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(true);
+    });
+    test("Should be true - active Jack (same suit)", () => {
+        const canPlay = checkCanPlay(
+            defaultJack as Card,
+            defaultHand as Card[],
+            "spades"
+        );
+        expect(canPlay).toBe(true);
+    });
+    test("Should be false - no legal play", () => {
+        const noLegalPlayCard: Card = { rank: "Q", suit: "diamonds" };
+        const canPlay = checkCanPlay(
+            noLegalPlayCard as Card,
+            defaultHand as Card[],
+            defaultJackSuit
+        );
+        expect(canPlay).toBe(false);
     });
 });
