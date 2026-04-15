@@ -4,11 +4,11 @@ type CardSuit = (typeof CARD_SUITS)[number];
 
 type CardRank = (typeof CARD_RANKS)[number];
 
-type PendingEffect = "TAKE_1" | "SKIP_TURN";
+export type PendingEffect = "TAKE_CARD" | "SKIP_TURN";
 
-type SpecialAction = {
+export type SpecialAction = {
     targetIndex: number;
-    effect: PendingEffect[];
+    effects: PendingEffect[];
 };
 
 export type Card = {

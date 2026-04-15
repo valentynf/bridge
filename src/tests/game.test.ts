@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { newDeck, shuffleDeck } from "../functions/deck.js";
-import { dealCards } from "../functions/game.js";
+import { applyPendingEffects, dealCards } from "../functions/game.js";
 import {
     DEALER_CARD_NUMBER,
     PLAYER_CARD_NUMBER,
@@ -10,6 +10,7 @@ import {
     DECK_SIZE,
     CUSTOM_DEALER_INDEX,
 } from "../consts.js";
+import type { Card, PendingEffect } from "../types.js";
 
 describe("dealHands", () => {
     const shuffledDeck = shuffleDeck(newDeck());
@@ -61,5 +62,132 @@ describe("dealHands", () => {
         expect(
             cardsOnHandsNum + cardsDrawPileNum + START_ACTIVE_PILE_SIZE
         ).toBe(DECK_SIZE);
+    });
+});
+
+describe("playCards", () => {
+    test("Active pile should have played cards on top", () => {});
+    test("Played cards shouldn't be in hand after turn", () => {});
+    test("During 0 turn, only same rank should be played", () => {});
+    test("Only allowed cards should be played", () => {});
+});
+
+describe("applyPendingEffects", () => {
+    const defaultHand = [
+        { rank: "9", suit: "hearts" },
+        { rank: "10", suit: "hearts" },
+        { rank: "K", suit: "diamonds" },
+        { rank: "8", suit: "clubs" },
+    ];
+    const defaultActivePile = [
+        { rank: "7", suit: "spades" },
+        { rank: "8", suit: "spades" },
+        { rank: "9", suit: "spades" },
+        { rank: "10", suit: "clubs" },
+        { rank: "10", suit: "hearts" },
+        { rank: "J", suit: "clubs" },
+    ];
+    const defaultDrawPile = [
+        { rank: "Q", suit: "spades" },
+        { rank: "J", suit: "clubs" },
+        { rank: "K", suit: "spades" },
+        { rank: "9", suit: "diamonds" },
+    ];
+    const smallDrawPile = [
+        { rank: "Q", suit: "spades" },
+        { rank: "J", suit: "clubs" },
+    ];
+    const defaultEffects = ["SKIP_TURN", "TAKE_CARD", "TAKE_CARD", "TAKE_CARD"];
+    const defaultUpdatedData = applyPendingEffects(
+        defaultDrawPile as Card[],
+        defaultActivePile as Card[],
+        defaultHand as Card[],
+        defaultEffects as PendingEffect[]
+    );
+
+    test("Should skip turn and add three cards to hand", () => {
+        const { updatedHand, skipTurn } = defaultUpdatedData;
+        expect(skipTurn).toBe(true);
+        expect(updatedHand.length).toBe(defaultHand.length + 3);
+    });
+    test("Should return active pile with only top card", () => {
+        const smallDrawPileUpdatedData = applyPendingEffects(
+            smallDrawPile as Card[],
+            defaultActivePile as Card[],
+            defaultHand as Card[],
+            defaultEffects as PendingEffect[]
+        );
+        const { updatedActivePile, updatedHand, reshuffled } =
+            smallDrawPileUpdatedData;
+        expect(updatedActivePile).toEqual([defaultActivePile[0]]);
+        expect(updatedHand.length).toBe(defaultHand.length + 3);
+        expect(reshuffled).toBe(true);
+    });
+    test("Should make no changes to hand or piles", () => {
+        const notUpdatedData = applyPendingEffects(
+            defaultDrawPile as Card[],
+            defaultActivePile as Card[],
+            defaultHand as Card[],
+            [] as PendingEffect[]
+        );
+        const {
+            updatedDrawPile,
+            updatedHand,
+            updatedActivePile,
+            skipTurn,
+            reshuffled,
+        } = notUpdatedData;
+        expect({
+            updatedDrawPile,
+            updatedHand,
+            updatedActivePile,
+            skipTurn,
+            reshuffled,
+        }).toEqual({
+            updatedDrawPile: defaultDrawPile,
+            updatedHand: defaultHand,
+            updatedActivePile: defaultActivePile,
+            skipTurn: false,
+            reshuffled: false,
+        });
+    });
+    test("Should only skip turn", () => {
+        const skipTurnData = applyPendingEffects(
+            defaultDrawPile as Card[],
+            defaultActivePile as Card[],
+            defaultHand as Card[],
+            ["SKIP_TURN"] as PendingEffect[]
+        );
+        const {
+            updatedDrawPile,
+            updatedHand,
+            updatedActivePile,
+            skipTurn,
+            reshuffled,
+        } = skipTurnData;
+        expect({
+            updatedDrawPile,
+            updatedHand,
+            updatedActivePile,
+            skipTurn,
+            reshuffled,
+        }).toEqual({
+            updatedDrawPile: defaultDrawPile,
+            updatedHand: defaultHand,
+            updatedActivePile: defaultActivePile,
+            skipTurn: true,
+            reshuffled: false,
+        });
+    });
+    test("Should only draw cards", () => {
+        const updatedData = applyPendingEffects(
+            defaultDrawPile as Card[],
+            defaultActivePile as Card[],
+            defaultHand as Card[],
+            ["TAKE_CARD"] as PendingEffect[]
+        );
+        const { updatedHand, skipTurn } = updatedData;
+        expect(updatedHand.length).toBe(defaultHand.length + 1);
+        expect(skipTurn).toBe(false);
     });
 });

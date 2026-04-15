@@ -1,5 +1,6 @@
 import { PLAYER_CARD_NUMBER } from "../consts.js";
-import type { Card } from "../types.js";
+import type { Card, PendingEffect } from "../types.js";
+import { shuffleDeck } from "./deck.js";
 
 export const dealCards = (
     dealerIndex: number,
@@ -28,4 +29,57 @@ export const dealCards = (
     const drawPile: Card[] = [...cardsToDeal];
 
     return { hands, drawPile, activePile };
+};
+
+// export const playCards = (
+//     cardsToPlay: Card[],
+//     activePile: Card[],
+//     playerHand: Card[],
+//     isDealerTurnZero: boolean = false
+// ): { updatedActivePile: Card[]; updatedHand: Card[] } => {
+//     return { updatedActivePile: [], updatedHand: [] };
+// };
+
+export const applyPendingEffects = (
+    drawPile: Card[],
+    activePile: Card[],
+    playerHand: Card[],
+    pendingEffects: PendingEffect[]
+): {
+    updatedDrawPile: Card[];
+    updatedHand: Card[];
+    updatedActivePile: Card[];
+    skipTurn: boolean;
+    reshuffled: boolean;
+} => {
+    const updatedHand = [...playerHand];
+    let updatedDrawPile = [...drawPile];
+    let updatedActivePile = [...activePile];
+    let skipTurn = false;
+    let reshuffled = false;
+    for (const effect of pendingEffects) {
+        if (effect === "TAKE_CARD") {
+            const topDrawPileCard = updatedDrawPile.shift();
+            if (topDrawPileCard) {
+                updatedHand.push(topDrawPileCard);
+            } else {
+                // if (!reshuffled), implement scenario with empty deck (only 1 card on the table)
+                const topActivePileCard = updatedActivePile.shift();
+                updatedDrawPile = shuffleDeck(updatedActivePile);
+                const topDrawPileCard = updatedDrawPile.shift();
+                if (topActivePileCard) updatedActivePile = [topActivePileCard];
+                if (topDrawPileCard) updatedHand.push(topDrawPileCard);
+                reshuffled = true;
+            }
+        }
+        if (effect === "SKIP_TURN") skipTurn = true;
+    }
+
+    return {
+        updatedDrawPile,
+        updatedHand,
+        updatedActivePile,
+        skipTurn,
+        reshuffled,
+    };
 };
