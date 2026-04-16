@@ -14,7 +14,7 @@ import {
     DECK_SIZE,
     CUSTOM_DEALER_INDEX,
 } from "../consts.js";
-import type { Card, PendingEffect } from "../types.js";
+import type { Card, SpecialEffect } from "../types.js";
 
 describe("dealHands", () => {
     const shuffledDeck = shuffleDeck(newDeck());
@@ -69,13 +69,6 @@ describe("dealHands", () => {
     });
 });
 
-describe("playCards", () => {
-    test("Active pile should have played cards on top", () => {});
-    test("Played cards shouldn't be in hand after turn", () => {});
-    test("During 0 turn, only same rank should be played", () => {});
-    test("Only allowed cards should be played", () => {});
-});
-
 describe("applyPendingEffects", () => {
     const defaultHand = [
         { rank: "9", suit: "hearts" },
@@ -106,7 +99,7 @@ describe("applyPendingEffects", () => {
         defaultDrawPile as Card[],
         defaultActivePile as Card[],
         defaultHand as Card[],
-        defaultEffects as PendingEffect[]
+        defaultEffects as SpecialEffect[]
     );
 
     test("Should skip turn and add three cards to hand", () => {
@@ -119,7 +112,7 @@ describe("applyPendingEffects", () => {
             smallDrawPile as Card[],
             defaultActivePile as Card[],
             defaultHand as Card[],
-            defaultEffects as PendingEffect[]
+            defaultEffects as SpecialEffect[]
         );
         const { updatedActivePile, updatedHand, reshuffled } =
             smallDrawPileUpdatedData;
@@ -132,7 +125,7 @@ describe("applyPendingEffects", () => {
             defaultDrawPile as Card[],
             defaultActivePile as Card[],
             defaultHand as Card[],
-            [] as PendingEffect[]
+            [] as SpecialEffect[]
         );
         const {
             updatedDrawPile,
@@ -160,7 +153,7 @@ describe("applyPendingEffects", () => {
             defaultDrawPile as Card[],
             defaultActivePile as Card[],
             defaultHand as Card[],
-            ["SKIP_TURN"] as PendingEffect[]
+            ["SKIP_TURN"] as SpecialEffect[]
         );
         const {
             updatedDrawPile,
@@ -188,7 +181,7 @@ describe("applyPendingEffects", () => {
             defaultDrawPile as Card[],
             defaultActivePile as Card[],
             defaultHand as Card[],
-            ["TAKE_CARD"] as PendingEffect[]
+            ["TAKE_CARD"] as SpecialEffect[]
         );
         const { updatedHand, skipTurn } = updatedData;
         expect(updatedHand.length).toBe(defaultHand.length + 1);
@@ -273,4 +266,47 @@ describe("checkCanPlay", () => {
         );
         expect(canPlay).toBe(false);
     });
+});
+
+describe.skip("playCards", () => {
+    // const defaultHand = [
+    //     { rank: "7", suit: "hearts" },
+    //     { rank: "7", suit: "diamonds" },
+    //     { rank: "J", suit: "clubs" },
+    //     { rank: "A", suit: "spades" },
+    //     { rank: "8", suit: "spades" },
+    //     { rank: "6", suit: "spades" },
+    // ];
+    // const defaultActivePile = [
+    //     { rank: "7", suit: "spades" },
+    //     { rank: "8", suit: "clubs" },
+    //     { rank: "9", suit: "spades" },
+    //     { rank: "10", suit: "clubs" },
+    //     { rank: "10", suit: "hearts" },
+    //     { rank: "J", suit: "clubs" },
+    // ];
+    // const defaultDrawPile = [
+    //     { rank: "Q", suit: "spades" },
+    //     { rank: "J", suit: "spades" },
+    //     { rank: "K", suit: "spades" },
+    //     { rank: "9", suit: "diamonds" },
+    // ];
+    // const defaultJackSuit = "diamonds";
+
+    test("Should return updatedData, match by rank, single card", () => {});
+    test("Should return updatedData, match by rank, two cards", () => {});
+    test("Should return updatedData, match by suit", () => {});
+    test("Should return updatedData, playing Jack", () => {});
+    test("Should return updated pile, 6 case", () => {});
+    test("Should return updated pile, 6 case, small pile", () => {});
+    test("Should return updated pile, match by Jack suit", () => {});
+    test("Should return updated data, empty hand");
+    test("Should return take 2 cards effect (7s)", () => {});
+    test("Should return skip turn, 2 take cards effecs (8)", () => {});
+    test("Should return 2 skip turn, 4 take cards effecs (8)", () => {});
+    test("Should return skip turn effect (A)", () => {});
+    test("Should return skip turn effect (Aces)", () => {});
+    test("Should return same data, illegal hand (wrong rank and suit)", () => {});
+    test("Should return same data, cards not on hand", () => {});
+    test("Should return same data, different ranks pair", () => {});
 });

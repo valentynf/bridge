@@ -1,5 +1,5 @@
 import { PLAYER_CARD_NUMBER } from "../consts.js";
-import type { Card, CardSuit, PendingEffect } from "../types.js";
+import type { Card, CardSuit, SpecialEffect } from "../types.js";
 import { shuffleDeck } from "./deck.js";
 
 export const dealCards = (
@@ -31,20 +31,11 @@ export const dealCards = (
     return { hands, drawPile, activePile };
 };
 
-// export const playCards = (
-//     cardsToPlay: Card[],
-//     activePile: Card[],
-//     playerHand: Card[],
-//     isDealerTurnZero: boolean = false
-// ): { updatedActivePile: Card[]; updatedHand: Card[] } => {
-//     return { updatedActivePile: [], updatedHand: [] };
-// };
-
 export const applyPendingEffects = (
     drawPile: Card[],
     activePile: Card[],
     playerHand: Card[],
-    pendingEffects: PendingEffect[]
+    pendingEffects: SpecialEffect[]
 ): {
     updatedDrawPile: Card[];
     updatedHand: Card[];
@@ -101,4 +92,23 @@ export const checkCanPlay = (
             return true;
     }
     return false;
+};
+
+export const playCards = (
+    playersHand: Card[],
+    // cardsToPlay: Card[],
+    activePile: Card[],
+    drawPile: Card[]
+    // jackSuit: CardRank
+): {
+    updatedHand: Card[];
+    updatedActivePile: Card[];
+    updatedDrawPile: Card[];
+    specialEffects: SpecialEffect[];
+} => {
+    const updatedHand = [...playersHand];
+    const updatedActivePile = [...activePile];
+    const updatedDrawPile = [...drawPile];
+    const specialEffects: SpecialEffect[] = [];
+    return { updatedHand, updatedActivePile, updatedDrawPile, specialEffects };
 };

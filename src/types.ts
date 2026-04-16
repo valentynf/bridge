@@ -4,11 +4,11 @@ export type CardSuit = (typeof CARD_SUITS)[number];
 
 export type CardRank = (typeof CARD_RANKS)[number];
 
-export type PendingEffect = "TAKE_CARD" | "SKIP_TURN";
+export type SpecialEffect = "TAKE_CARD" | "SKIP_TURN";
 
 export type SpecialAction = {
     targetIndex: number;
-    effects: PendingEffect[];
+    effects: SpecialEffect[];
 };
 
 export type Card = {
@@ -32,7 +32,7 @@ export type BridgeGameState = {
     currentPlayerIndex: number;
     drawPile: Card[];
     activePile: Card[];
-    jackSuit: CardSuit | undefined;
+    jackSuit: CardSuit;
     pendingSpecialEffects: SpecialAction[];
     reshuffleCount: number;
 };
