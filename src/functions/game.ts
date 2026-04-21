@@ -96,19 +96,28 @@ export const checkCanPlay = (
 
 export const playCards = (
     playersHand: Card[],
-    // cardsToPlay: Card[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    cardsToPlay: Card[],
     activePile: Card[],
-    drawPile: Card[]
-    // jackSuit: CardRank
+    drawPile: Card[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    jackSuit: CardSuit
 ): {
     updatedHand: Card[];
     updatedActivePile: Card[];
     updatedDrawPile: Card[];
     specialEffects: SpecialEffect[];
+    reshuffled: boolean;
 } => {
     const updatedHand = [...playersHand];
     const updatedActivePile = [...activePile];
     const updatedDrawPile = [...drawPile];
     const specialEffects: SpecialEffect[] = [];
-    return { updatedHand, updatedActivePile, updatedDrawPile, specialEffects };
+    return {
+        updatedHand,
+        updatedActivePile,
+        updatedDrawPile,
+        specialEffects,
+        reshuffled: false,
+    };
 };
