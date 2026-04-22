@@ -541,7 +541,7 @@ describe.skip("playCards", () => {
         );
         expect(dataAfterTurn.reshuffled).toBe(true);
     });
-    test("Should return updated data, empty hand", () => {
+    test("Should return same data, empty hand", () => {
         const cardsToPlay: Card[] = [];
         const dataAfterTurn = playCards(
             defaultHand,

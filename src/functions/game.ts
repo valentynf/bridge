@@ -78,7 +78,7 @@ export const applyPendingEffects = (
 export const checkCanPlay = (
     activePileTopCard: Card,
     playerHand: Card[],
-    jackSuit: CardSuit
+    jackSuit?: CardSuit
 ): boolean => {
     if (playerHand.some((card) => card.rank === "J")) return true;
     for (const card of playerHand) {
@@ -88,7 +88,11 @@ export const checkCanPlay = (
             activePileTopCard.rank !== "J"
         )
             return true;
-        if (activePileTopCard.rank === "J" && card.suit === jackSuit)
+        if (
+            jackSuit &&
+            activePileTopCard.rank === "J" &&
+            card.suit === jackSuit
+        )
             return true;
     }
     return false;
@@ -96,11 +100,9 @@ export const checkCanPlay = (
 
 export const playCards = (
     playersHand: Card[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     cardsToPlay: Card[],
     activePile: Card[],
     drawPile: Card[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     jackSuit: CardSuit
 ): {
     updatedHand: Card[];
@@ -109,15 +111,60 @@ export const playCards = (
     specialEffects: SpecialEffect[];
     reshuffled: boolean;
 } => {
-    const updatedHand = [...playersHand];
-    const updatedActivePile = [...activePile];
-    const updatedDrawPile = [...drawPile];
+    const activePileTopCard = activePile[0];
+    let updatedHand: Card[] = [...playersHand];
+    const updatedActivePile: Card[] = [...activePile];
+    const updatedDrawPile: Card[] = [...drawPile];
     const specialEffects: SpecialEffect[] = [];
+    const reshuffled: boolean = false;
+
+    const unchangedData = {
+        updatedHand: playersHand,
+        updatedActivePile: activePile,
+        updatedDrawPile: drawPile,
+        specialEffects,
+        reshuffled,
+    };
+
+    if (cardsToPlay.length === 1) {
+        if (activePileTopCard.rank === "J") {
+            if (!checkCanPlay(activePileTopCard, cardsToPlay, jackSuit))
+                return unchangedData;
+        } else if (!checkCanPlay(activePileTopCard, cardsToPlay))
+            return unchangedData;
+
+        //todo
+        // if (cardsToPlay[0].rank === "6") {
+        // }
+        if (
+            (activePileTopCard.rank === "J" &&
+                cardsToPlay[0].suit === jackSuit) ||
+            cardsToPlay[0].rank === activePileTopCard.rank ||
+            cardsToPlay[0].suit === activePileTopCard.suit
+        ) {
+            updatedHand = updatedHand.filter(
+                (card) =>
+                    !(
+                        card.rank === cardsToPlay[0].rank &&
+                        card.suit === cardsToPlay[0].suit
+                    )
+            );
+            updatedActivePile.unshift(cardsToPlay[0]);
+        }
+    }
+
+    for (const card of cardsToPlay) {
+        if (card.rank === "7") specialEffects.push("TAKE_CARD");
+        if (card.rank === "8")
+            specialEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
+        if (card.rank === "A") specialEffects.push("SKIP_TURN");
+    }
+
     return {
         updatedHand,
         updatedActivePile,
         updatedDrawPile,
         specialEffects,
-        reshuffled: false,
+        reshuffled,
     };
 };
