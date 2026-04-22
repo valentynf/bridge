@@ -42,7 +42,7 @@ No 2s, 3s, 4s, or 5s.
 2. This continues for 5 rounds of dealing.
 3. After round 5: each non-dealer has 5 cards. The dealer's own 5th card is placed face-up — this becomes the **first active card** on the table. The remaining undealt cards are stacked face-down next to it. This stack is the **draw pile**.
 4. Dealer's opening turn:
-    - If the dealer holds any cards of the **same rank** as the face-up card (rank only — not suit), they **must** play them immediately on top of it.
+    - If the dealer holds any cards of the **same rank** as the face-up card (rank only — not suit), they **may** play one or more of them on top of it. The dealer chooses how many matching-rank cards to play.
     - If the dealer has no matching rank card, their turn is considered done.
 5. If the face-up card (or the last card the dealer played on top of it) is a special card, its effect triggers immediately on the first player: a 7 means they draw, an 8 means they draw and skip, an Ace means they skip. If the face-up card is a 6, the dealer must cover it (same rules as the 6 cover mechanic).
 6. Regular play begins from the player to the dealer's left.
@@ -59,7 +59,7 @@ On your turn:
 4. If you still cannot play after drawing — your turn ends.
 5. Play passes clockwise to the next player.
 
-**You must play if you can. You cannot hold back cards intentionally.**
+**You must play at least one card if you can. You cannot skip playing entirely when you hold a legal card.** However, if you hold multiple cards of the same rank, you choose how many to play — you are not forced to play all of them.
 
 ---
 

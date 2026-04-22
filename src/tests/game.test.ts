@@ -501,10 +501,9 @@ describe.skip("playCards", () => {
     });
     test("Should return updated pile, 6 case (no play on hand), small pile", () => {
         const anotherActivePile: Card[] = [
-            { rank: "7", suit: "clubs" },
+            { rank: "10", suit: "clubs" },
             { rank: "7", suit: "spades" },
             { rank: "10", suit: "spades" },
-            { rank: "10", suit: "clubs" },
             { rank: "10", suit: "hearts" },
             { rank: "J", suit: "hearts" },
         ];
@@ -542,12 +541,265 @@ describe.skip("playCards", () => {
         );
         expect(dataAfterTurn.reshuffled).toBe(true);
     });
-    test("Should return updated pile, match by Jack suit", () => {});
-    test("Should return updated data, empty hand", () => {});
-    test("Should return 2 skip turn, 4 take cards effecs (8s)", () => {});
-    test("Should return skip turn effect (A)", () => {});
-    test("Should return skip turn effect (Aces)", () => {});
-    test("Should return same data, illegal hand (wrong rank and suit)", () => {});
-    test("Should return same data, cards not on hand", () => {});
-    test("Should return same data, different ranks pair", () => {});
+    test("Should return updated data, empty hand", () => {
+        const cardsToPlay: Card[] = [];
+        const dataAfterTurn = playCards(
+            defaultHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        expect(dataAfterTurn).toEqual({
+            updatedHand: defaultHand,
+            updatedActivePile: defaultActivePile,
+            updatedDrawPile: defaultDrawPile,
+            specialEffects: [],
+            reshuffled: false,
+        });
+    });
+    test("Should return updated pile, match by Jack suit", () => {
+        const cardsToPlay: Card[] = [{ rank: "7", suit: "diamonds" }];
+        const anotherActivePile: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+        ];
+        const dataAfterTurn = playCards(
+            defaultHand,
+            cardsToPlay,
+            anotherActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        const updatedHand: Card[] = [
+            { rank: "7", suit: "hearts" },
+            { rank: "J", suit: "clubs" },
+            { rank: "A", suit: "spades" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const updatedDrawPile = [...defaultDrawPile];
+        const specialEffects: SpecialEffect[] = ["TAKE_CARD"];
+        const updatedActivePile = [
+            { rank: "7", suit: "diamonds" },
+            { rank: "J", suit: "clubs" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+        ];
+        expect(dataAfterTurn).toEqual({
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled: false,
+        });
+    });
+    test("Should return skip turn, 4 take cards effects (8s)", () => {
+        const anotherHand: Card[] = [
+            { rank: "8", suit: "hearts" },
+            { rank: "8", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const cardsToPlay: Card[] = [
+            { rank: "8", suit: "hearts" },
+            { rank: "8", suit: "spades" },
+        ];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        const updatedHand: Card[] = [
+            { rank: "9", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const updatedDrawPile = [...defaultDrawPile];
+        const specialEffects: SpecialEffect[] = [
+            "TAKE_CARD",
+            "TAKE_CARD",
+            "TAKE_CARD",
+            "TAKE_CARD",
+            "SKIP_TURN",
+        ];
+        const updatedActivePile = [
+            { rank: "8", suit: "hearts" },
+            { rank: "8", suit: "spades" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+            { rank: "10", suit: "clubs" },
+            { rank: "10", suit: "hearts" },
+            { rank: "J", suit: "clubs" },
+        ];
+        expect(dataAfterTurn).toEqual({
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled: false,
+        });
+    });
+    test("Should return skip turn effect (A)", () => {
+        const cardsToPlay: Card[] = [{ rank: "A", suit: "spades" }];
+        const dataAfterTurn = playCards(
+            defaultHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        const updatedHand: Card[] = [
+            { rank: "7", suit: "hearts" },
+            { rank: "7", suit: "diamonds" },
+            { rank: "J", suit: "clubs" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const updatedDrawPile = [...defaultDrawPile];
+        const specialEffects: SpecialEffect[] = ["SKIP_TURN"];
+        const updatedActivePile = [
+            { rank: "A", suit: "spades" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+            { rank: "10", suit: "clubs" },
+            { rank: "10", suit: "hearts" },
+            { rank: "J", suit: "clubs" },
+        ];
+        expect(dataAfterTurn).toEqual({
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled: false,
+        });
+    });
+    test("Should return skip turn effect (As)", () => {
+        const anotherHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+            { rank: "A", suit: "spades" },
+            { rank: "A", suit: "diamonds" },
+        ];
+        const cardsToPlay: Card[] = [
+            { rank: "A", suit: "diamonds" },
+            { rank: "A", suit: "spades" },
+        ];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        const updatedHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const updatedDrawPile = [...defaultDrawPile];
+        const specialEffects: SpecialEffect[] = ["SKIP_TURN"];
+        const updatedActivePile = [
+            { rank: "A", suit: "diamonds" },
+            { rank: "A", suit: "spades" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+            { rank: "10", suit: "clubs" },
+            { rank: "10", suit: "hearts" },
+            { rank: "J", suit: "clubs" },
+        ];
+        expect(dataAfterTurn).toEqual({
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled: false,
+        });
+    });
+    test("Should return same data, illegal hand (wrong rank and suit)", () => {
+        const anotherHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+            { rank: "A", suit: "spades" },
+            { rank: "A", suit: "diamonds" },
+        ];
+        const cardsToPlay: Card[] = [{ rank: "A", suit: "diamonds" }];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+
+        expect(dataAfterTurn).toEqual({
+            updatedHand: anotherHand,
+            updatedActivePile: defaultActivePile,
+            updatedDrawPile: defaultDrawPile,
+            specialEffects: [],
+            reshuffled: false,
+        });
+    });
+    test("Should return same data, cards not on hand", () => {
+        const anotherHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+            { rank: "A", suit: "spades" },
+            { rank: "A", suit: "diamonds" },
+        ];
+        const cardsToPlay: Card[] = [{ rank: "10", suit: "diamonds" }];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+
+        expect(dataAfterTurn).toEqual({
+            updatedHand: anotherHand,
+            updatedActivePile: defaultActivePile,
+            updatedDrawPile: defaultDrawPile,
+            specialEffects: [],
+            reshuffled: false,
+        });
+    });
+    test("Should return same data, different ranks pair", () => {
+        const anotherHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "9", suit: "spades" },
+            { rank: "10", suit: "spades" },
+            { rank: "A", suit: "spades" },
+            { rank: "A", suit: "diamonds" },
+        ];
+        const cardsToPlay: Card[] = [
+            { rank: "9", suit: "spades" },
+            { rank: "10", suit: "spades" },
+        ];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+
+        expect(dataAfterTurn).toEqual({
+            updatedHand: anotherHand,
+            updatedActivePile: defaultActivePile,
+            updatedDrawPile: defaultDrawPile,
+            specialEffects: [],
+            reshuffled: false,
+        });
+    });
 });
