@@ -115,7 +115,7 @@ export const playCards = (
     let updatedHand: Card[] = [...playersHand];
     const updatedActivePile: Card[] = [...activePile];
     const updatedDrawPile: Card[] = [...drawPile];
-    const specialEffects: SpecialEffect[] = [];
+    let specialEffects: SpecialEffect[] = [];
     const reshuffled: boolean = false;
 
     const unchangedData = {
@@ -126,6 +126,15 @@ export const playCards = (
         reshuffled,
     };
 
+    //todo
+    // if (cardsToPlay.every(card => card.rank === "6")) {
+    //  case where only 6(s) are played and player need to draw cards to cover
+    // }
+    // we need to remember about enforcement to play
+    // i.e. if user plays only 6, before drawing cards, we should check his hand,
+    // if there's a way to cover it, we return same data (will show some error on
+    // front end saying cover the 6 right away or play another hand)
+
     if (cardsToPlay.length === 1) {
         if (activePileTopCard.rank === "J") {
             if (!checkCanPlay(activePileTopCard, cardsToPlay, jackSuit))
@@ -133,15 +142,12 @@ export const playCards = (
         } else if (!checkCanPlay(activePileTopCard, cardsToPlay))
             return unchangedData;
 
-        //todo
-        // if (cardsToPlay[0].rank === "6") {
-        // }
-        if (
-            (activePileTopCard.rank === "J" &&
-                cardsToPlay[0].suit === jackSuit) ||
-            cardsToPlay[0].rank === activePileTopCard.rank ||
-            cardsToPlay[0].suit === activePileTopCard.suit
-        ) {
+        const matchesByJackSuit =
+            activePileTopCard.rank === "J" && cardsToPlay[0].suit === jackSuit;
+        const matchesByRank = cardsToPlay[0].rank === activePileTopCard.rank;
+        const matchesBySuit = cardsToPlay[0].suit === activePileTopCard.suit;
+        const isJackCard = cardsToPlay[0].rank === "J";
+        if (matchesByJackSuit || matchesByRank || matchesBySuit || isJackCard) {
             updatedHand = updatedHand.filter(
                 (card) =>
                     !(
@@ -153,11 +159,71 @@ export const playCards = (
         }
     }
 
+    if (cardsToPlay.length > 1) {
+        const bottomCardIndex = cardsToPlay.length - 1;
+        if (activePileTopCard.rank === "J") {
+            if (
+                !checkCanPlay(
+                    activePileTopCard,
+                    [cardsToPlay[bottomCardIndex]],
+                    jackSuit
+                )
+            )
+                return unchangedData;
+        } else if (
+            !checkCanPlay(activePileTopCard, [cardsToPlay[bottomCardIndex]])
+        )
+            return unchangedData;
+
+        const matchesByJackSuit =
+            activePileTopCard.rank === "J" &&
+            cardsToPlay[bottomCardIndex].suit === jackSuit;
+        const matchesByRank =
+            cardsToPlay[bottomCardIndex].rank === activePileTopCard.rank;
+        const matchesBySuit =
+            cardsToPlay[bottomCardIndex].suit === activePileTopCard.suit;
+        const isJackCard = cardsToPlay[bottomCardIndex].rank === "J";
+        const areOfTheSameRank = cardsToPlay.every(
+            (card) => card.rank === cardsToPlay[bottomCardIndex].rank
+        );
+
+        if (areOfTheSameRank) {
+            if (
+                matchesByJackSuit ||
+                matchesByRank ||
+                matchesBySuit ||
+                isJackCard
+            ) {
+                updatedHand = updatedHand.filter(
+                    (card) =>
+                        !cardsToPlay.some(
+                            (playedCard) =>
+                                card.rank === playedCard.rank &&
+                                card.suit === playedCard.suit
+                        )
+                );
+                updatedActivePile.unshift(...cardsToPlay);
+            }
+        } else if (cardsToPlay[bottomCardIndex].rank === "6") {
+            // case when 6 is played together with the card(s) that can cover it
+        } else {
+            return unchangedData;
+        }
+    }
+
     for (const card of cardsToPlay) {
         if (card.rank === "7") specialEffects.push("TAKE_CARD");
         if (card.rank === "8")
             specialEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
         if (card.rank === "A") specialEffects.push("SKIP_TURN");
+    }
+    /* since distributing As and 8s across different players is not a v1 feature,
+    we stick to 1 SKIP_TURN, because effects will always affect next player only */
+    if (specialEffects.some((effect) => effect === "SKIP_TURN")) {
+        specialEffects = specialEffects.filter(
+            (effect) => effect === "TAKE_CARD"
+        );
+        specialEffects.push("SKIP_TURN");
     }
 
     return {

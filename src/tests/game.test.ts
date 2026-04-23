@@ -303,7 +303,7 @@ describe.skip("playCards", () => {
             reshuffled: false,
         });
     });
-    test("Should return updatedData, match by rank, take two cards", () => {
+    test("Should return updatedData, match by rank (2 cards), take two cards", () => {
         const cardsToPlay: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
@@ -392,8 +392,8 @@ describe.skip("playCards", () => {
         const updatedHand: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
-            { rank: "8", suit: "spades" },
             { rank: "A", suit: "spades" },
+            { rank: "8", suit: "spades" },
             { rank: "6", suit: "spades" },
         ];
         const updatedDrawPile = [...defaultDrawPile];
