@@ -106,6 +106,8 @@ These rules trigger based on what the **previous player** just played. They appl
 - A player **cannot finish the round by playing a 6**. Since the 6 must be covered, playing a 6 as your last card forces you to draw.
 
 > **Implementation note:** The 6 does not end the player's turn — it forces an additional mandatory action within the same turn. This creates a mini-loop: play 6 → must cover with non-6 → if can't, draw until can cover → cover → turn ends.
+>
+> **Post-play note:** After a 6-cover is resolved (especially when the cover card was drawn from the pile), the player may hold additional cards of the same rank as the cover card. They should be given the opportunity to play those on top. This is handled outside of `playCards`, as a post-play action.
 
 ---
 

@@ -243,7 +243,7 @@ describe("checkCanPlay", () => {
     });
 });
 
-describe.skip("playCards", () => {
+describe("playCards", () => {
     const defaultHand: Card[] = [
         { rank: "7", suit: "hearts" },
         { rank: "7", suit: "diamonds" },
@@ -505,19 +505,23 @@ describe.skip("playCards", () => {
             { rank: "7", suit: "spades" },
             { rank: "10", suit: "spades" },
             { rank: "10", suit: "hearts" },
-            { rank: "J", suit: "hearts" },
         ];
         const anotherHand: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
             { rank: "6", suit: "clubs" },
         ];
+        const anotherDrawPile: Card[] = [
+            { rank: "Q", suit: "spades" },
+            { rank: "K", suit: "spades" },
+            { rank: "9", suit: "diamonds" },
+        ];
         const cardsToPlay: Card[] = [{ rank: "6", suit: "clubs" }];
         const dataAfterTurn = playCards(
             anotherHand,
             cardsToPlay,
             anotherActivePile,
-            defaultDrawPile,
+            anotherDrawPile,
             defaultJackSuit
         );
         const updatedActivePile = [
@@ -533,7 +537,7 @@ describe.skip("playCards", () => {
         expect(
             anotherActivePile.length +
                 anotherHand.length +
-                defaultDrawPile.length
+                anotherDrawPile.length
         ).toBe(
             dataAfterTurn.updatedActivePile.length +
                 dataAfterTurn.updatedDrawPile.length +

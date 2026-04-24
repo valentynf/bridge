@@ -113,10 +113,10 @@ export const playCards = (
 } => {
     const activePileTopCard = activePile[0];
     let updatedHand: Card[] = [...playersHand];
-    const updatedActivePile: Card[] = [...activePile];
-    const updatedDrawPile: Card[] = [...drawPile];
+    let updatedActivePile: Card[] = [...activePile];
+    let updatedDrawPile: Card[] = [...drawPile];
     let specialEffects: SpecialEffect[] = [];
-    const reshuffled: boolean = false;
+    let reshuffled: boolean = false;
 
     const unchangedData = {
         updatedHand: playersHand,
@@ -126,10 +126,57 @@ export const playCards = (
         reshuffled,
     };
 
+    if (cardsToPlay.length === 0) return unchangedData;
+
     //todo
-    // if (cardsToPlay.every(card => card.rank === "6")) {
-    //  case where only 6(s) are played and player need to draw cards to cover
-    // }
+    if (cardsToPlay.every((card) => card.rank === "6")) {
+        const topSixCard = cardsToPlay[0];
+        const canCoverSix = playersHand.some(
+            (card) =>
+                card.rank === "J" ||
+                (card.rank !== "6" && card.suit === topSixCard.suit)
+        );
+
+        if (canCoverSix) return unchangedData;
+
+        updatedHand = updatedHand.filter(
+            (card) =>
+                !cardsToPlay.some(
+                    (playedCard) =>
+                        card.rank === playedCard.rank &&
+                        card.suit === playedCard.suit
+                )
+        );
+        updatedActivePile.unshift(...cardsToPlay);
+
+        let hasFoundCoverCard: boolean = false;
+        while (!hasFoundCoverCard) {
+            const drawPileTopCard = updatedDrawPile.shift();
+            if (drawPileTopCard) {
+                if (
+                    drawPileTopCard.rank === "J" ||
+                    drawPileTopCard.suit === topSixCard.suit
+                ) {
+                    updatedActivePile.unshift(drawPileTopCard);
+                    hasFoundCoverCard = true;
+                } else {
+                    updatedHand.push(drawPileTopCard);
+                }
+            } else {
+                const topActivePileCard = updatedActivePile.shift();
+                updatedDrawPile = shuffleDeck(updatedActivePile);
+                if (topActivePileCard) updatedActivePile = [topActivePileCard];
+                reshuffled = true;
+            }
+        }
+        return {
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled,
+        };
+    }
     // we need to remember about enforcement to play
     // i.e. if user plays only 6, before drawing cards, we should check his hand,
     // if there's a way to cover it, we return same data (will show some error on
@@ -206,6 +253,30 @@ export const playCards = (
             }
         } else if (cardsToPlay[bottomCardIndex].rank === "6") {
             // case when 6 is played together with the card(s) that can cover it
+            const rankSixCards: Card[] = cardsToPlay.filter(
+                (card) => card.rank === "6"
+            );
+            const coverCards: Card[] = cardsToPlay.filter(
+                (card) => card.rank !== "6"
+            );
+            const firstCoverCard: Card = coverCards[coverCards.length - 1];
+            const areSameRankCoverCards: boolean = coverCards.every(
+                (card) => card.rank === firstCoverCard.rank
+            );
+            const canCoverSix: boolean =
+                rankSixCards[0].suit === firstCoverCard.suit ||
+                firstCoverCard.rank === "J";
+            if (canCoverSix && areSameRankCoverCards) {
+                updatedHand = updatedHand.filter(
+                    (card) =>
+                        !cardsToPlay.some(
+                            (playedCard) =>
+                                card.rank === playedCard.rank &&
+                                card.suit === playedCard.suit
+                        )
+                );
+                updatedActivePile.unshift(...cardsToPlay);
+            }
         } else {
             return unchangedData;
         }
