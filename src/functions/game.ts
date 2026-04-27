@@ -92,7 +92,7 @@ export const playCards = (
         updatedHand: playersHand,
         updatedActivePile: activePile,
         updatedDrawPile: drawPile,
-        specialEffects: pendingEffects,
+        specialEffects: [],
         reshuffled,
     };
 
