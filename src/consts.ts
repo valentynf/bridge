@@ -9,6 +9,17 @@ export const CARD_RANKS = [
     "K",
     "A",
 ] as const;
+export const CARD_POINTS = {
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 10,
+    J: 20,
+    Q: 10,
+    K: 10,
+    A: 15,
+};
 export const CARD_SUITS = ["hearts", "spades", "diamonds", "clubs"] as const;
 export const DECK_SIZE = 36;
 export const DEFAULT_DEALER_INDEX = 0;

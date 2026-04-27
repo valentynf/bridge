@@ -1,5 +1,10 @@
 import type { Card } from "../types.js";
-import { CARD_RANKS, CARD_SUITS, PLAYER_CARD_NUMBER } from "../consts.js";
+import {
+    CARD_POINTS,
+    CARD_RANKS,
+    CARD_SUITS,
+    PLAYER_CARD_NUMBER,
+} from "../consts.js";
 
 export const createNewDeck = (): Card[] => {
     const newDeck: Card[] = [];
@@ -48,3 +53,9 @@ export const dealCards = (
 
     return { hands, drawPile, activePile };
 };
+
+export const countHandPoints = (playerHand: Card[]): number =>
+    playerHand.reduce((score, card) => {
+        score += CARD_POINTS[card.rank];
+        return score;
+    }, 0);

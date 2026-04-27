@@ -1,4 +1,4 @@
-import type { Card, CardSuit, SpecialEffect } from "../types.js";
+import type { Card, CardSuit, JackEndEffect, SpecialEffect } from "../types.js";
 import { shuffleDeck } from "./deck.js";
 
 export const applyPendingEffects = (
@@ -280,4 +280,20 @@ export const playCards = (
         specialEffects,
         reshuffled,
     };
+};
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+export const countPoints = (
+    playersHands: Card[][],
+    winnerIndex: number,
+    jackEndEffects: JackEndEffect[],
+    reshuffleMultiplier: number,
+    currentScore: number[]
+): {
+    updatedScores: number[];
+    eliminatedIndexes: number[];
+} => {
+    const updatedScores: number[] = [];
+    const eliminatedIndexes: number[] = [];
+    return { updatedScores, eliminatedIndexes };
 };

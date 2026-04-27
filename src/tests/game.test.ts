@@ -794,3 +794,5 @@ describe("playCards", () => {
         });
     });
 });
+
+describe.skip("countPoints", () => {});

@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { createNewDeck, dealCards, shuffleDeck } from "../functions/deck.js";
+import {
+    countHandPoints,
+    createNewDeck,
+    dealCards,
+    shuffleDeck,
+} from "../functions/deck.js";
 import {
     CARD_SUITS,
     CARD_RANKS,
@@ -11,6 +16,7 @@ import {
     DEFAULT_PLAYERS_NUMBER,
     DEFAULT_DEALER_INDEX,
 } from "../consts.js";
+import type { Card } from "../types.js";
 
 describe("newDeck", () => {
     const deck = createNewDeck();
@@ -111,5 +117,43 @@ describe("dealHands", () => {
         expect(
             cardsOnHandsNum + cardsDrawPileNum + START_ACTIVE_PILE_SIZE
         ).toBe(DECK_SIZE);
+    });
+});
+
+describe("countPoints", () => {
+    test("Should be 0 points", () => {
+        const numbersOnlyHand: Card[] = [
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+            { rank: "6", suit: "clubs" },
+        ];
+        expect(countHandPoints(numbersOnlyHand)).toBe(0);
+    });
+    test("Should be 30 points", () => {
+        const handOfTens: Card[] = [
+            { rank: "K", suit: "spades" },
+            { rank: "Q", suit: "spades" },
+            { rank: "10", suit: "clubs" },
+            { rank: "8", suit: "clubs" },
+        ];
+        expect(countHandPoints(handOfTens)).toBe(30);
+    });
+    test("Should be 40 points", () => {
+        const twoJacksHand: Card[] = [
+            { rank: "J", suit: "clubs" },
+            { rank: "J", suit: "diamonds" },
+            { rank: "9", suit: "spades" },
+        ];
+        expect(countHandPoints(twoJacksHand)).toBe(40);
+    });
+    test("Should be 45 points", () => {
+        const threeAcesHand: Card[] = [
+            { rank: "A", suit: "spades" },
+            { rank: "A", suit: "clubs" },
+            { rank: "A", suit: "hearts" },
+            { rank: "6", suit: "clubs" },
+        ];
+        expect(countHandPoints(threeAcesHand)).toBe(45);
     });
 });
