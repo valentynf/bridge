@@ -156,4 +156,15 @@ describe("countPoints", () => {
         ];
         expect(countHandPoints(threeAcesHand)).toBe(45);
     });
+    test("Should be 65 points", () => {
+        const mixedHand: Card[] = [
+            { rank: "A", suit: "spades" },
+            { rank: "J", suit: "clubs" },
+            { rank: "10", suit: "hearts" },
+            { rank: "Q", suit: "hearts" },
+            { rank: "K", suit: "hearts" },
+            { rank: "6", suit: "clubs" },
+        ];
+        expect(countHandPoints(mixedHand)).toBe(65);
+    });
 });
