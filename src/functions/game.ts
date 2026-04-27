@@ -85,14 +85,14 @@ export const playCards = (
     let updatedHand: Card[] = [...playersHand];
     let updatedActivePile: Card[] = [...activePile];
     let updatedDrawPile: Card[] = [...drawPile];
-    let specialEffects: SpecialEffect[] = [];
+    let pendingEffects: SpecialEffect[] = [];
     let reshuffled: boolean = false;
 
     const unchangedData = {
         updatedHand: playersHand,
         updatedActivePile: activePile,
         updatedDrawPile: drawPile,
-        specialEffects,
+        specialEffects: pendingEffects,
         reshuffled,
     };
 
@@ -153,7 +153,7 @@ export const playCards = (
             updatedHand,
             updatedActivePile,
             updatedDrawPile,
-            specialEffects,
+            specialEffects: pendingEffects,
             reshuffled,
         };
     }
@@ -259,25 +259,25 @@ export const playCards = (
     }
 
     for (const card of cardsToPlay) {
-        if (card.rank === "7") specialEffects.push("TAKE_CARD");
+        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
         if (card.rank === "8")
-            specialEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
-        if (card.rank === "A") specialEffects.push("SKIP_TURN");
+            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
+        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
     }
     /* since distributing As and 8s across different players is not a v1 feature,
     we stick to 1 SKIP_TURN, because effects will always affect next player only */
-    if (specialEffects.some((effect) => effect === "SKIP_TURN")) {
-        specialEffects = specialEffects.filter(
+    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
+        pendingEffects = pendingEffects.filter(
             (effect) => effect === "TAKE_CARD"
         );
-        specialEffects.push("SKIP_TURN");
+        pendingEffects.push("SKIP_TURN");
     }
 
     return {
         updatedHand,
         updatedActivePile,
         updatedDrawPile,
-        specialEffects,
+        specialEffects: pendingEffects,
         reshuffled,
     };
 };

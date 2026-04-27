@@ -351,8 +351,8 @@ describe("playCards", () => {
             reshuffled: false,
         });
     });
-    test("Should return updated data, 6 case", () => {
-        const anotherHand: Card[] = [
+    test("Should return updated data, 6 with cover case", () => {
+        const handWithSixAndCover: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
             { rank: "9", suit: "spades" },
@@ -363,7 +363,7 @@ describe("playCards", () => {
             { rank: "6", suit: "spades" },
         ];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handWithSixAndCover,
             cardsToPlay,
             defaultActivePile,
             defaultDrawPile,
@@ -394,14 +394,14 @@ describe("playCards", () => {
         });
     });
     test("Should return updated drawpile, 6 case (no play on hand)", () => {
-        const anotherHand: Card[] = [
+        const handWithSixNoCover: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
             { rank: "6", suit: "spades" },
         ];
         const cardsToPlay: Card[] = [{ rank: "6", suit: "spades" }];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handWithSixNoCover,
             cardsToPlay,
             defaultActivePile,
             defaultDrawPile,
@@ -436,12 +436,12 @@ describe("playCards", () => {
         });
     });
     test("Should return updated drawpile, 6 case (no play on hand, Jack)", () => {
-        const anotherHand: Card[] = [
+        const handWithSixNoCover: Card[] = [
             { rank: "7", suit: "diamonds" },
             { rank: "6", suit: "spades" },
             { rank: "6", suit: "hearts" },
         ];
-        const anotherDrawPile: Card[] = [
+        const drawPileWithJack: Card[] = [
             { rank: "Q", suit: "spades" },
             { rank: "J", suit: "spades" },
             { rank: "K", suit: "spades" },
@@ -452,10 +452,10 @@ describe("playCards", () => {
             { rank: "6", suit: "spades" },
         ];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handWithSixNoCover,
             cardsToPlay,
             defaultActivePile,
-            anotherDrawPile,
+            drawPileWithJack,
             defaultJackSuit
         );
         const updatedHand: Card[] = [
@@ -487,28 +487,28 @@ describe("playCards", () => {
         });
     });
     test("Should return updated pile, 6 case (no play on hand), small pile", () => {
-        const anotherActivePile: Card[] = [
+        const activePileWithCoverCard: Card[] = [
             { rank: "10", suit: "clubs" },
             { rank: "7", suit: "spades" },
             { rank: "10", suit: "spades" },
             { rank: "10", suit: "hearts" },
         ];
-        const anotherHand: Card[] = [
+        const handWithSix: Card[] = [
             { rank: "7", suit: "hearts" },
             { rank: "7", suit: "diamonds" },
             { rank: "6", suit: "clubs" },
         ];
-        const anotherDrawPile: Card[] = [
+        const smallDrawPile: Card[] = [
             { rank: "Q", suit: "spades" },
             { rank: "K", suit: "spades" },
             { rank: "9", suit: "diamonds" },
         ];
         const cardsToPlay: Card[] = [{ rank: "6", suit: "clubs" }];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handWithSix,
             cardsToPlay,
-            anotherActivePile,
-            anotherDrawPile,
+            activePileWithCoverCard,
+            smallDrawPile,
             defaultJackSuit
         );
         const updatedActivePile = [
@@ -522,9 +522,9 @@ describe("playCards", () => {
         ).toBe(false);
         expect(dataAfterTurn.updatedActivePile).toEqual(updatedActivePile);
         expect(
-            anotherActivePile.length +
-                anotherHand.length +
-                anotherDrawPile.length
+            activePileWithCoverCard.length +
+                handWithSix.length +
+                smallDrawPile.length
         ).toBe(
             dataAfterTurn.updatedActivePile.length +
                 dataAfterTurn.updatedDrawPile.length +
@@ -551,7 +551,7 @@ describe("playCards", () => {
     });
     test("Should return updated pile, match by Jack suit", () => {
         const cardsToPlay: Card[] = [{ rank: "7", suit: "diamonds" }];
-        const anotherActivePile: Card[] = [
+        const activePileTopJack: Card[] = [
             { rank: "J", suit: "clubs" },
             { rank: "7", suit: "spades" },
             { rank: "9", suit: "spades" },
@@ -560,7 +560,7 @@ describe("playCards", () => {
         const dataAfterTurn = playCards(
             defaultHand,
             cardsToPlay,
-            anotherActivePile,
+            activePileTopJack,
             defaultDrawPile,
             defaultJackSuit
         );
@@ -589,7 +589,7 @@ describe("playCards", () => {
         });
     });
     test("Should return skip turn, 4 take cards effects (8s)", () => {
-        const anotherHand: Card[] = [
+        const handTwoEights: Card[] = [
             { rank: "8", suit: "hearts" },
             { rank: "8", suit: "spades" },
             { rank: "9", suit: "spades" },
@@ -600,7 +600,7 @@ describe("playCards", () => {
             { rank: "8", suit: "spades" },
         ];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handTwoEights,
             cardsToPlay,
             defaultActivePile,
             defaultDrawPile,
@@ -672,7 +672,7 @@ describe("playCards", () => {
         });
     });
     test("Should return skip turn effect (As)", () => {
-        const anotherHand: Card[] = [
+        const handWithTwoAces: Card[] = [
             { rank: "J", suit: "clubs" },
             { rank: "8", suit: "spades" },
             { rank: "6", suit: "spades" },
@@ -684,7 +684,7 @@ describe("playCards", () => {
             { rank: "A", suit: "spades" },
         ];
         const dataAfterTurn = playCards(
-            anotherHand,
+            handWithTwoAces,
             cardsToPlay,
             defaultActivePile,
             defaultDrawPile,
