@@ -499,6 +499,57 @@ describe("playCards", () => {
             reshuffled: false,
         });
     });
+    test("Should return updated drawpile, 6 case (no play on hand, Jack)", () => {
+        const anotherHand: Card[] = [
+            { rank: "7", suit: "diamonds" },
+            { rank: "6", suit: "spades" },
+            { rank: "6", suit: "hearts" },
+        ];
+        const anotherDrawPile: Card[] = [
+            { rank: "Q", suit: "spades" },
+            { rank: "J", suit: "spades" },
+            { rank: "K", suit: "spades" },
+            { rank: "9", suit: "diamonds" },
+        ];
+        const cardsToPlay: Card[] = [
+            { rank: "6", suit: "hearts" },
+            { rank: "6", suit: "spades" },
+        ];
+        const dataAfterTurn = playCards(
+            anotherHand,
+            cardsToPlay,
+            defaultActivePile,
+            anotherDrawPile,
+            defaultJackSuit
+        );
+        const updatedHand: Card[] = [
+            { rank: "7", suit: "diamonds" },
+            { rank: "Q", suit: "spades" },
+        ];
+        const updatedDrawPile = [
+            { rank: "K", suit: "spades" },
+            { rank: "9", suit: "diamonds" },
+        ];
+        const specialEffects: SpecialEffect[] = [];
+        const updatedActivePile = [
+            { rank: "J", suit: "spades" },
+            { rank: "6", suit: "hearts" },
+            { rank: "6", suit: "spades" },
+            { rank: "7", suit: "spades" },
+            { rank: "9", suit: "spades" },
+            { rank: "8", suit: "clubs" },
+            { rank: "10", suit: "clubs" },
+            { rank: "10", suit: "hearts" },
+            { rank: "J", suit: "clubs" },
+        ];
+        expect(dataAfterTurn).toEqual({
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects,
+            reshuffled: false,
+        });
+    });
     test("Should return updated pile, 6 case (no play on hand), small pile", () => {
         const anotherActivePile: Card[] = [
             { rank: "10", suit: "clubs" },
@@ -761,7 +812,7 @@ describe("playCards", () => {
             { rank: "A", suit: "spades" },
             { rank: "A", suit: "diamonds" },
         ];
-        const cardsToPlay: Card[] = [{ rank: "10", suit: "diamonds" }];
+        const cardsToPlay: Card[] = [{ rank: "K", suit: "spades" }];
         const dataAfterTurn = playCards(
             anotherHand,
             cardsToPlay,

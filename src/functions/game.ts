@@ -128,7 +128,17 @@ export const playCards = (
 
     if (cardsToPlay.length === 0) return unchangedData;
 
-    //todo
+    if (
+        !cardsToPlay.every((card) =>
+            playersHand.some(
+                (cardOnHand) =>
+                    card.rank === cardOnHand.rank &&
+                    card.suit === cardOnHand.suit
+            )
+        )
+    )
+        return unchangedData;
+
     if (cardsToPlay.every((card) => card.rank === "6")) {
         const topSixCard = cardsToPlay[0];
         const canCoverSix = playersHand.some(
@@ -177,10 +187,6 @@ export const playCards = (
             reshuffled,
         };
     }
-    // we need to remember about enforcement to play
-    // i.e. if user plays only 6, before drawing cards, we should check his hand,
-    // if there's a way to cover it, we return same data (will show some error on
-    // front end saying cover the 6 right away or play another hand)
 
     if (cardsToPlay.length === 1) {
         if (activePileTopCard.rank === "J") {
