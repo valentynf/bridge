@@ -2,9 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
     applyPendingEffects,
     checkCanPlay,
+    countPoints,
     playCards,
 } from "../functions/game.js";
-import type { Card, CardSuit, SpecialEffect } from "../types.js";
+import type { Card, CardSuit, JackEndEffect, SpecialEffect } from "../types.js";
 
 describe("applyPendingEffects", () => {
     const defaultHand = [
@@ -795,4 +796,104 @@ describe("playCards", () => {
     });
 });
 
-describe.skip("countPoints", () => {});
+describe.skip("countPoints", () => {
+    const defaultPlayersHands: Card[][] = [
+        [
+            { rank: "9", suit: "hearts" },
+            { rank: "10", suit: "spades" },
+            { rank: "K", suit: "clubs" },
+            { rank: "8", suit: "diamonds" },
+        ],
+        [
+            { rank: "J", suit: "hearts" },
+            { rank: "7", suit: "spades" },
+            { rank: "A", suit: "clubs" },
+            { rank: "Q", suit: "diamonds" },
+        ],
+        [],
+        [
+            { rank: "8", suit: "clubs" },
+            { rank: "7", suit: "diamonds" },
+        ],
+    ];
+    const defaultWinnerIndex = 2;
+    const defaultJackEndEffects: JackEndEffect[] = [];
+    const defaultReshuffleMultiplier = 0;
+    const defaultCurrentScores = [50, 20, 30, 10];
+    test("Should return updated score, no multipliers", () => {
+        const updatedScores = countPoints(
+            defaultPlayersHands,
+            defaultWinnerIndex,
+            defaultJackEndEffects,
+            defaultReshuffleMultiplier,
+            defaultCurrentScores
+        );
+        expect(updatedScores).toEqual([70, 65, 30, 10]);
+    });
+    test("Should return updated score, reshuffled once", () => {
+        const reshuffledOnceMultiplier = 1;
+        const updatedScores = countPoints(
+            defaultPlayersHands,
+            defaultWinnerIndex,
+            defaultJackEndEffects,
+            reshuffledOnceMultiplier,
+            defaultCurrentScores
+        );
+        expect(updatedScores).toEqual([90, 110, 30, 10]);
+    });
+    test("Should return updated score, bridge case", () => {
+        const playerHandsAfterBrdige: Card[][] = [
+            [
+                { rank: "9", suit: "hearts" },
+                { rank: "10", suit: "spades" },
+                { rank: "K", suit: "clubs" },
+                { rank: "8", suit: "diamonds" },
+            ],
+            [
+                { rank: "J", suit: "hearts" },
+                { rank: "7", suit: "spades" },
+                { rank: "A", suit: "clubs" },
+                { rank: "Q", suit: "diamonds" },
+            ],
+            [
+                { rank: "8", suit: "spades" },
+                { rank: "A", suit: "spades" },
+            ],
+            [
+                { rank: "8", suit: "clubs" },
+                { rank: "7", suit: "diamonds" },
+                { rank: "Q", suit: "spades" },
+            ],
+        ];
+        const updatedScores = countPoints(
+            playerHandsAfterBrdige,
+            defaultWinnerIndex,
+            defaultJackEndEffects,
+            defaultReshuffleMultiplier,
+            defaultCurrentScores
+        );
+        expect(updatedScores).toEqual([70, 65, 45, 20]);
+    });
+    test("Should return updated score, jack -20", () => {
+        const oneJackMinus20: JackEndEffect[] = ["MINUS_20"];
+        const updatedScores = countPoints(
+            defaultPlayersHands,
+            defaultWinnerIndex,
+            oneJackMinus20,
+            defaultReshuffleMultiplier,
+            defaultCurrentScores
+        );
+        expect(updatedScores).toEqual([70, 65, 10, 10]);
+    });
+    test("Should return updated score, jack x2", () => {
+        const twoJacksToDouble: JackEndEffect[] = ["DOUBLE_ALL", "DOUBLE_ALL"];
+        const updatedScores = countPoints(
+            defaultPlayersHands,
+            defaultWinnerIndex,
+            twoJacksToDouble,
+            defaultReshuffleMultiplier,
+            defaultCurrentScores
+        );
+        expect(updatedScores).toEqual([130, 200, 30, 10]);
+    });
+});

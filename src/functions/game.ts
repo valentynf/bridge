@@ -288,12 +288,8 @@ export const countPoints = (
     winnerIndex: number,
     jackEndEffects: JackEndEffect[],
     reshuffleMultiplier: number,
-    currentScore: number[]
-): {
-    updatedScores: number[];
-    eliminatedIndexes: number[];
-} => {
+    currentScores: number[]
+): number[] => {
     const updatedScores: number[] = [];
-    const eliminatedIndexes: number[] = [];
-    return { updatedScores, eliminatedIndexes };
+    return updatedScores;
 };
