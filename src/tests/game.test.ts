@@ -796,7 +796,7 @@ describe("playCards", () => {
     });
 });
 
-describe.skip("countPoints", () => {
+describe("countPoints", () => {
     const defaultPlayersHands: Card[][] = [
         [
             { rank: "9", suit: "hearts" },

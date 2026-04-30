@@ -282,16 +282,26 @@ export const playCards = (
     };
 };
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export const countPoints = (
     playersHands: Card[][],
     winnerIndex: number,
     reshuffleMultiplier: number,
     currentScores: number[],
-    jackEndEffects?: JackEndEffect
+    jackEndEffect?: JackEndEffect
 ): number[] => {
-    const updatedScores: number[] = playersHands.map((playerHand) => {
-        return countHandPoints(playerHand);
+    const updatedScores: number[] = playersHands.map((playerHand, i) => {
+        let roundScore = countHandPoints(playerHand);
+        if (reshuffleMultiplier) roundScore *= reshuffleMultiplier + 1;
+
+        if (jackEndEffect) {
+            const jackEffect = jackEndEffect.option;
+            const numberOfJacks = jackEndEffect.count;
+            if (jackEffect === "DOUBLE_ALL" && i !== winnerIndex)
+                roundScore = roundScore * Math.pow(2, numberOfJacks);
+            if (jackEffect === "MINUS_20" && i === winnerIndex)
+                roundScore = roundScore - 20 * numberOfJacks;
+        }
+        return roundScore + currentScores[i];
     });
 
     return updatedScores;
