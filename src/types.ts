@@ -6,7 +6,10 @@ export type CardRank = (typeof CARD_RANKS)[number];
 
 export type SpecialEffect = "TAKE_CARD" | "SKIP_TURN";
 
-export type JackEndEffect = "DOUBLE_ALL" | "MINUS_20";
+export type JackEndEffect = {
+    option: "DOUBLE_ALL" | "MINUS_20";
+    count: number;
+} | null;
 
 export type SpecialAction = {
     targetIndex: number;

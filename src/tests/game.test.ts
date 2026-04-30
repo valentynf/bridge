@@ -817,14 +817,12 @@ describe.skip("countPoints", () => {
         ],
     ];
     const defaultWinnerIndex = 2;
-    const defaultJackEndEffects: JackEndEffect[] = [];
     const defaultReshuffleMultiplier = 0;
     const defaultCurrentScores = [50, 20, 30, 10];
     test("Should return updated score, no multipliers", () => {
         const updatedScores = countPoints(
             defaultPlayersHands,
             defaultWinnerIndex,
-            defaultJackEndEffects,
             defaultReshuffleMultiplier,
             defaultCurrentScores
         );
@@ -835,7 +833,6 @@ describe.skip("countPoints", () => {
         const updatedScores = countPoints(
             defaultPlayersHands,
             defaultWinnerIndex,
-            defaultJackEndEffects,
             reshuffledOnceMultiplier,
             defaultCurrentScores
         );
@@ -868,31 +865,33 @@ describe.skip("countPoints", () => {
         const updatedScores = countPoints(
             playerHandsAfterBrdige,
             defaultWinnerIndex,
-            defaultJackEndEffects,
             defaultReshuffleMultiplier,
             defaultCurrentScores
         );
         expect(updatedScores).toEqual([70, 65, 45, 20]);
     });
     test("Should return updated score, jack -20", () => {
-        const oneJackMinus20: JackEndEffect[] = ["MINUS_20"];
+        const oneJackMinus20: JackEndEffect = { option: "MINUS_20", count: 1 };
         const updatedScores = countPoints(
             defaultPlayersHands,
             defaultWinnerIndex,
-            oneJackMinus20,
             defaultReshuffleMultiplier,
-            defaultCurrentScores
+            defaultCurrentScores,
+            oneJackMinus20
         );
         expect(updatedScores).toEqual([70, 65, 10, 10]);
     });
     test("Should return updated score, jack x2", () => {
-        const twoJacksToDouble: JackEndEffect[] = ["DOUBLE_ALL", "DOUBLE_ALL"];
+        const twoJacksToDouble: JackEndEffect = {
+            option: "DOUBLE_ALL",
+            count: 2,
+        };
         const updatedScores = countPoints(
             defaultPlayersHands,
             defaultWinnerIndex,
-            twoJacksToDouble,
             defaultReshuffleMultiplier,
-            defaultCurrentScores
+            defaultCurrentScores,
+            twoJacksToDouble
         );
         expect(updatedScores).toEqual([130, 200, 30, 10]);
     });

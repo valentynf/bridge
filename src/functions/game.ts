@@ -1,5 +1,5 @@
 import type { Card, CardSuit, JackEndEffect, SpecialEffect } from "../types.js";
-import { shuffleDeck } from "./deck.js";
+import { countHandPoints, shuffleDeck } from "./deck.js";
 
 export const applyPendingEffects = (
     drawPile: Card[],
@@ -286,10 +286,13 @@ export const playCards = (
 export const countPoints = (
     playersHands: Card[][],
     winnerIndex: number,
-    jackEndEffects: JackEndEffect[],
     reshuffleMultiplier: number,
-    currentScores: number[]
+    currentScores: number[],
+    jackEndEffects?: JackEndEffect
 ): number[] => {
-    const updatedScores: number[] = [];
+    const updatedScores: number[] = playersHands.map((playerHand) => {
+        return countHandPoints(playerHand);
+    });
+
     return updatedScores;
 };
