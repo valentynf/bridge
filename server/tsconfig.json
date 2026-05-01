@@ -1,0 +1,10 @@
+{
+    "extends": "../tsconfig.json",
+    "include": ["src"],
+    "compilerOptions": {
+        // File Layout
+        "rootDir": "./src",
+        "outDir": "./dist"
+    },
+    "references": [{ "path": "../shared" }]
+}
