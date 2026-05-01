@@ -15,8 +15,8 @@ import {
     CUSTOM_DEALER_INDEX,
     DEFAULT_PLAYERS_NUMBER,
     DEFAULT_DEALER_INDEX,
-} from "../consts.js";
-import type { Card } from "../types.js";
+} from "../../../shared/consts.js";
+import type { Card } from "../../../shared/types.js";
 
 describe("newDeck", () => {
     const deck = createNewDeck();

@@ -5,7 +5,12 @@ import {
     countPoints,
     playCards,
 } from "../functions/game.js";
-import type { Card, CardSuit, JackEndEffect, SpecialEffect } from "../types.js";
+import type {
+    Card,
+    CardSuit,
+    JackEndEffect,
+    SpecialEffect,
+} from "../../../shared/types.js";
 
 describe("applyPendingEffects", () => {
     const defaultHand = [

@@ -1,10 +1,10 @@
-import type { Card } from "../types.js";
+import type { Card } from "../../../shared/types.js";
 import {
     CARD_POINTS,
     CARD_RANKS,
     CARD_SUITS,
     PLAYER_CARD_NUMBER,
-} from "../consts.js";
+} from "../../../shared/consts.js";
 
 export const createNewDeck = (): Card[] => {
     const newDeck: Card[] = [];
