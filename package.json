@@ -1,0 +1,37 @@
+{
+    "name": "bridge",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "bridge game full stack project",
+    "main": "index.js",
+    "lint-staged": {
+        "*.ts": "eslint",
+        "**/*": "prettier --write --ignore-unknown"
+    },
+    "scripts": {
+        "test": "vitest",
+        "prepare": "husky"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/valentynf/bridge.git"
+    },
+    "author": "valentynf",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/valentynf/bridge/issues"
+    },
+    "homepage": "https://github.com/valentynf/bridge#readme",
+    "devDependencies": {
+        "@eslint/js": "^9.39.4",
+        "eslint": "^9.39.4",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.4.0",
+        "jiti": "^2.6.1",
+        "lint-staged": "^16.4.0",
+        "prettier": "^3.8.1",
+        "typescript": "^6.0.2",
+        "typescript-eslint": "^8.58.0",
+        "vitest": "^4.1.2"
+    }
+}

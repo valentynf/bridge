@@ -1,0 +1,308 @@
+import type { Card, CardSuit, JackEndEffect, SpecialEffect } from "../types.js";
+import { countHandPoints, shuffleDeck } from "./deck.js";
+
+export const applyPendingEffects = (
+    drawPile: Card[],
+    activePile: Card[],
+    playerHand: Card[],
+    pendingEffects: SpecialEffect[]
+): {
+    updatedDrawPile: Card[];
+    updatedHand: Card[];
+    updatedActivePile: Card[];
+    skipTurn: boolean;
+    reshuffled: boolean;
+} => {
+    const updatedHand = [...playerHand];
+    let updatedDrawPile = [...drawPile];
+    let updatedActivePile = [...activePile];
+    let skipTurn = false;
+    let reshuffled = false;
+    for (const effect of pendingEffects) {
+        if (effect === "TAKE_CARD") {
+            const topDrawPileCard = updatedDrawPile.shift();
+            if (topDrawPileCard) {
+                updatedHand.push(topDrawPileCard);
+            } else {
+                // if (!reshuffled), implement scenario with empty deck (only 1 card on the table)
+                const topActivePileCard = updatedActivePile.shift();
+                updatedDrawPile = shuffleDeck(updatedActivePile);
+                const topDrawPileCard = updatedDrawPile.shift();
+                if (topActivePileCard) updatedActivePile = [topActivePileCard];
+                if (topDrawPileCard) updatedHand.push(topDrawPileCard);
+                reshuffled = true;
+            }
+        }
+        if (effect === "SKIP_TURN") skipTurn = true;
+    }
+
+    return {
+        updatedDrawPile,
+        updatedHand,
+        updatedActivePile,
+        skipTurn,
+        reshuffled,
+    };
+};
+
+export const checkCanPlay = (
+    activePileTopCard: Card,
+    playerHand: Card[],
+    jackSuit?: CardSuit
+): boolean => {
+    if (playerHand.some((card) => card.rank === "J")) return true;
+    for (const card of playerHand) {
+        if (
+            (card.rank === activePileTopCard.rank ||
+                card.suit === activePileTopCard.suit) &&
+            activePileTopCard.rank !== "J"
+        )
+            return true;
+        if (
+            jackSuit &&
+            activePileTopCard.rank === "J" &&
+            card.suit === jackSuit
+        )
+            return true;
+    }
+    return false;
+};
+
+export const playCards = (
+    playersHand: Card[],
+    cardsToPlay: Card[],
+    activePile: Card[],
+    drawPile: Card[],
+    jackSuit: CardSuit
+): {
+    updatedHand: Card[];
+    updatedActivePile: Card[];
+    updatedDrawPile: Card[];
+    specialEffects: SpecialEffect[];
+    reshuffled: boolean;
+} => {
+    const activePileTopCard = activePile[0];
+    let updatedHand: Card[] = [...playersHand];
+    let updatedActivePile: Card[] = [...activePile];
+    let updatedDrawPile: Card[] = [...drawPile];
+    let pendingEffects: SpecialEffect[] = [];
+    let reshuffled: boolean = false;
+
+    const unchangedData = {
+        updatedHand: playersHand,
+        updatedActivePile: activePile,
+        updatedDrawPile: drawPile,
+        specialEffects: [],
+        reshuffled,
+    };
+
+    if (cardsToPlay.length === 0) return unchangedData;
+
+    if (
+        !cardsToPlay.every((card) =>
+            playersHand.some(
+                (cardOnHand) =>
+                    card.rank === cardOnHand.rank &&
+                    card.suit === cardOnHand.suit
+            )
+        )
+    )
+        return unchangedData;
+
+    if (cardsToPlay.every((card) => card.rank === "6")) {
+        const topSixCard = cardsToPlay[0];
+        const canCoverSix = playersHand.some(
+            (card) =>
+                card.rank === "J" ||
+                (card.rank !== "6" && card.suit === topSixCard.suit)
+        );
+
+        if (canCoverSix) return unchangedData;
+
+        updatedHand = updatedHand.filter(
+            (card) =>
+                !cardsToPlay.some(
+                    (playedCard) =>
+                        card.rank === playedCard.rank &&
+                        card.suit === playedCard.suit
+                )
+        );
+        updatedActivePile.unshift(...cardsToPlay);
+
+        let hasFoundCoverCard: boolean = false;
+        while (!hasFoundCoverCard) {
+            const drawPileTopCard = updatedDrawPile.shift();
+            if (drawPileTopCard) {
+                if (
+                    drawPileTopCard.rank === "J" ||
+                    drawPileTopCard.suit === topSixCard.suit
+                ) {
+                    updatedActivePile.unshift(drawPileTopCard);
+                    hasFoundCoverCard = true;
+                } else {
+                    updatedHand.push(drawPileTopCard);
+                }
+            } else {
+                const topActivePileCard = updatedActivePile.shift();
+                updatedDrawPile = shuffleDeck(updatedActivePile);
+                if (topActivePileCard) updatedActivePile = [topActivePileCard];
+                reshuffled = true;
+            }
+        }
+        return {
+            updatedHand,
+            updatedActivePile,
+            updatedDrawPile,
+            specialEffects: pendingEffects,
+            reshuffled,
+        };
+    }
+
+    if (cardsToPlay.length === 1) {
+        if (activePileTopCard.rank === "J") {
+            if (!checkCanPlay(activePileTopCard, cardsToPlay, jackSuit))
+                return unchangedData;
+        } else if (!checkCanPlay(activePileTopCard, cardsToPlay))
+            return unchangedData;
+
+        const matchesByJackSuit =
+            activePileTopCard.rank === "J" && cardsToPlay[0].suit === jackSuit;
+        const matchesByRank = cardsToPlay[0].rank === activePileTopCard.rank;
+        const matchesBySuit = cardsToPlay[0].suit === activePileTopCard.suit;
+        const isJackCard = cardsToPlay[0].rank === "J";
+        if (matchesByJackSuit || matchesByRank || matchesBySuit || isJackCard) {
+            updatedHand = updatedHand.filter(
+                (card) =>
+                    !(
+                        card.rank === cardsToPlay[0].rank &&
+                        card.suit === cardsToPlay[0].suit
+                    )
+            );
+            updatedActivePile.unshift(cardsToPlay[0]);
+        }
+    }
+
+    if (cardsToPlay.length > 1) {
+        const bottomCardIndex = cardsToPlay.length - 1;
+        if (activePileTopCard.rank === "J") {
+            if (
+                !checkCanPlay(
+                    activePileTopCard,
+                    [cardsToPlay[bottomCardIndex]],
+                    jackSuit
+                )
+            )
+                return unchangedData;
+        } else if (
+            !checkCanPlay(activePileTopCard, [cardsToPlay[bottomCardIndex]])
+        )
+            return unchangedData;
+
+        const matchesByJackSuit =
+            activePileTopCard.rank === "J" &&
+            cardsToPlay[bottomCardIndex].suit === jackSuit;
+        const matchesByRank =
+            cardsToPlay[bottomCardIndex].rank === activePileTopCard.rank;
+        const matchesBySuit =
+            cardsToPlay[bottomCardIndex].suit === activePileTopCard.suit;
+        const isJackCard = cardsToPlay[bottomCardIndex].rank === "J";
+        const areOfTheSameRank = cardsToPlay.every(
+            (card) => card.rank === cardsToPlay[bottomCardIndex].rank
+        );
+
+        if (areOfTheSameRank) {
+            if (
+                matchesByJackSuit ||
+                matchesByRank ||
+                matchesBySuit ||
+                isJackCard
+            ) {
+                updatedHand = updatedHand.filter(
+                    (card) =>
+                        !cardsToPlay.some(
+                            (playedCard) =>
+                                card.rank === playedCard.rank &&
+                                card.suit === playedCard.suit
+                        )
+                );
+                updatedActivePile.unshift(...cardsToPlay);
+            }
+        } else if (cardsToPlay[bottomCardIndex].rank === "6") {
+            // case when 6 is played together with the card(s) that can cover it
+            const rankSixCards: Card[] = cardsToPlay.filter(
+                (card) => card.rank === "6"
+            );
+            const coverCards: Card[] = cardsToPlay.filter(
+                (card) => card.rank !== "6"
+            );
+            const firstCoverCard: Card = coverCards[coverCards.length - 1];
+            const areSameRankCoverCards: boolean = coverCards.every(
+                (card) => card.rank === firstCoverCard.rank
+            );
+            const canCoverSix: boolean =
+                rankSixCards[0].suit === firstCoverCard.suit ||
+                firstCoverCard.rank === "J";
+            if (canCoverSix && areSameRankCoverCards) {
+                updatedHand = updatedHand.filter(
+                    (card) =>
+                        !cardsToPlay.some(
+                            (playedCard) =>
+                                card.rank === playedCard.rank &&
+                                card.suit === playedCard.suit
+                        )
+                );
+                updatedActivePile.unshift(...cardsToPlay);
+            }
+        } else {
+            return unchangedData;
+        }
+    }
+
+    for (const card of cardsToPlay) {
+        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
+        if (card.rank === "8")
+            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
+        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
+    }
+    /* since distributing As and 8s across different players is not a v1 feature,
+    we stick to 1 SKIP_TURN, because effects will always affect next player only */
+    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
+        pendingEffects = pendingEffects.filter(
+            (effect) => effect === "TAKE_CARD"
+        );
+        pendingEffects.push("SKIP_TURN");
+    }
+
+    return {
+        updatedHand,
+        updatedActivePile,
+        updatedDrawPile,
+        specialEffects: pendingEffects,
+        reshuffled,
+    };
+};
+
+export const countPoints = (
+    playersHands: Card[][],
+    winnerIndex: number,
+    reshuffleMultiplier: number,
+    currentScores: number[],
+    jackEndEffect?: JackEndEffect
+): number[] => {
+    const updatedScores: number[] = playersHands.map((playerHand, i) => {
+        let roundScore = countHandPoints(playerHand);
+        if (reshuffleMultiplier) roundScore *= reshuffleMultiplier + 1;
+
+        if (jackEndEffect) {
+            const jackEffect = jackEndEffect.option;
+            const numberOfJacks = jackEndEffect.count;
+            if (jackEffect === "DOUBLE_ALL" && i !== winnerIndex)
+                roundScore = roundScore * Math.pow(2, numberOfJacks);
+            if (jackEffect === "MINUS_20" && i === winnerIndex)
+                roundScore = roundScore - 20 * numberOfJacks;
+        }
+        return roundScore + currentScores[i];
+    });
+
+    return updatedScores;
+};
