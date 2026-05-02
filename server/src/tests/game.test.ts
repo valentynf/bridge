@@ -799,6 +799,9 @@ describe("playCards", () => {
             reshuffled: false,
         });
     });
+    test(
+        "TODO: Scenario when 6 is covered by 7/8 (check if effects are adding)"
+    );
 });
 
 describe("countPoints", () => {
