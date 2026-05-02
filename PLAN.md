@@ -52,18 +52,21 @@ Write the entire game engine as isolated TypeScript. No Express, no React, no so
 Responsibilities of this module:
 
 **Deck and dealing**
+
 - Represent a 36-card deck (ranks 6–A, 4 suits)
 - Shuffle the deck
 - Deal 5 cards to each non-dealer player and place the dealer's 5th card face-up as the opening card
 - Identify if the dealer has matching-rank cards to play immediately
 
 **Turn logic**
+
 - Determine whether a player has a legal card to play given the last played card (match by rank or suit)
 - Validate a card play (correct player, legal card, pairs/triples/quadruples of same rank)
 - Handle drawing from the pile when a player cannot play
 - Handle the draw pile exhaustion and reshuffle (only triggered when a player needs to draw, not when the last card is taken); increment reshuffle counter
 
 **Special card effects**
+
 - 7: force next player to draw N cards (N = number of 7s played)
 - 8: force next player(s) to draw 2 cards each and skip; validate and apply the distribution choice made by the playing player
 - Ace: skip next N players (N = number of Aces played)
@@ -71,10 +74,12 @@ Responsibilities of this module:
 - 6: force the same player to immediately cover; loop drawing until they can cover
 
 **Win condition checking**
+
 - Detect when a player's hand is empty
 - Validate the win is legal (Ace-last edge case — check if skips cycle back to the same player)
 
 **Scoring**
+
 - Count point values of remaining cards in each losing player's hand
 - Apply Jack Option B multiplier if applicable (winner's choice)
 - Apply reshuffle multiplier on top
@@ -111,17 +116,21 @@ Before building rooms or game flow, write out every WebSocket event the game nee
 Categorise every event:
 
 **Client → Server** (actions a player takes)
+
 - Examples: `join_room`, `play_cards`, `draw_card`, `declare_suit` (after Jack), `choose_8_distribution`, `choose_jack_bonus`
 
 **Server → Client** (state changes the server broadcasts)
+
 - Examples: `room_joined`, `game_started`, `hand_dealt`, `cards_played`, `draw_forced`, `turn_skipped`, `suit_declared`, `pile_reshuffled`, `round_over`, `game_over`
 
 For each event define:
+
 - Its name
 - Direction and audience (broadcast to all players, or emitted to one specific player only)
 - The exact shape of the data payload
 
 Hard cases to think through carefully:
+
 - `hand_dealt` — the server sends a different payload to each player (their own cards only)
 - `choose_8_distribution` — the playing player must specify targets before the action is confirmed; the server must validate the choice is legal
 - `choose_jack_bonus` — only the round winner receives this prompt; other players wait
@@ -153,19 +162,33 @@ Store room and player state in memory on the server (a Map or plain object). No 
 Bring the Phase 1 game engine into the server and connect it to the Socket.io event layer from Phase 3.
 
 When a game starts:
+
 - Server deals using Phase 1 logic
-- Server emits `hand_dealt` to each player — each receives only their own cards
-- Server emits the face-up opening card and dealer opening play result to all players
+- Server emits `game_started` to each player — each receives only their own cards, plus `initialEffect` if the face-up card is special
 - Turn loop begins: server tracks whose turn it is, accepts `play_cards` or `draw_card` events, validates them, updates game state, broadcasts the result
 
 Special card handling on the server:
-- After 8s are played, server emits a `choose_8_distribution` prompt to the playing player only and waits for their response before advancing state
-- After a Jack is played, server emits a `declare_suit` prompt and waits
+
+- After a Jack is played (and no bridge declared), server emits a `declare_suit` prompt and waits
 - After a round winner is detected and they finished with Jacks, server emits a `choose_jack_bonus` prompt and waits before calculating final scores
 
 The server rejects any invalid action and emits an error back to that client only.
 
 **This is the hardest phase.** Expect bugs. That is what the Phase 1 tests are for.
+
+### Phase 1 logic updates required
+
+These changes to the existing game engine were identified during Phase 3 (event contract design) and must be applied before or during Phase 5:
+
+1. **Move effects out of `applyPendingEffects` into `playCards` pipeline.** Effects (7s, 8s, Aces) must apply immediately after a play, not at the start of the next turn. `applyPendingEffects` as a standalone turn-start function goes away. Instead, `playCards` (or a wrapper) returns the applied effects as part of its result so the server can broadcast them immediately.
+
+2. **Make 6-cover interactive over WebSocket.** Currently `playCards` auto-resolves the 6-cover draw loop server-side in one shot. Change this so the server signals the player that they must cover (via `cards_played` with a pending cover indicator), then the player draws card-by-card via `draw_card` events until they can cover, then plays the cover via `play_cards`. The server validates that the cover is legal (matches the 6's suit, is not another 6).
+
+3. **Allow post-cover same-rank follow-up.** After a 6 is covered, the player may hold additional cards of the same rank as the cover card. The server should check for this and allow the player to play them before ending their turn. Same interactive flow — player draws one-by-one to find a cover, covers, then optionally plays same-rank cards on top.
+
+4. **Dealer's opening turn uses different validation.** The dealer can only play cards matching the face-up card's rank (not suit). The server must detect that `currentPlayerIndex === dealerIndex` on the first turn and apply rank-only validation instead of the normal rank-or-suit check.
+
+5. **Bridge check must happen before Jack suit prompt.** After `cards_played`, check if bridge is possible (top 4 cards same rank). If yes, prompt the player. Only if they decline bridge (or it's not possible) should the Jack suit declaration prompt fire. Bridge with Jacks means no suit declaration and no Jack finish bonus.
 
 **Exit condition:** 4 players can play a complete round through the server, including all special card effects, reshuffle, and correct end-of-round scoring.
 
@@ -176,6 +199,7 @@ The server rejects any invalid action and emits an error back to that client onl
 Build the React interface. A player connects, sees a lobby, joins or creates a room, and is presented with the game table.
 
 The game table displays:
+
 - The player's own hand
 - The active pile (last played cards)
 - The draw pile (face-down, card count visible)
@@ -185,6 +209,7 @@ The game table displays:
 - Reshuffle count for the current round (so players know the multiplier)
 
 Interactive moments the UI must handle:
+
 - Selecting one or more cards of the same rank to play together
 - When 8s are played: radio selector for distribution (target 1 player or spread)
 - When a Jack is played: suit picker (4 options)
@@ -201,6 +226,7 @@ Key discipline: the server is always right. React state reflects what the server
 Add user accounts: register, login, JWT-based sessions.
 
 Store in PostgreSQL:
+
 - Users table
 - Completed games (participants, final scores, date)
 - Optional: cumulative leaderboard
