@@ -1,10 +1,9 @@
 import type { CARD_RANKS, CARD_SUITS } from "./consts.js";
 
 export type CardSuit = (typeof CARD_SUITS)[number];
-
 export type CardRank = (typeof CARD_RANKS)[number];
-
 export type SpecialEffect = "TAKE_CARD" | "SKIP_TURN";
+export type GamePhase = "PLAYING" | "ROUND_OVER" | "GAME_OVER";
 
 export type JackEndEffect = {
     option: "DOUBLE_ALL" | "MINUS_20";
@@ -21,18 +20,16 @@ export type Card = {
     suit: CardSuit;
 };
 
-type Player = {
+export type GamePlayer = {
     nickname: string;
     score: number;
     hand: Card[];
     isEliminated: boolean;
 };
 
-type GamePhase = "PLAYING" | "ROUND_OVER" | "GAME_OVER";
-
 export type BridgeGameState = {
     currentPhase: GamePhase;
-    players: Player[];
+    players: GamePlayer[];
     currentDealerIndex: number;
     currentPlayerIndex: number;
     drawPile: Card[];
@@ -41,3 +38,32 @@ export type BridgeGameState = {
     pendingSpecialEffects: SpecialAction[];
     reshuffleCount: number;
 };
+
+export type LobbyMember = {
+    name: string;
+    id: string;
+    isReady: boolean;
+};
+
+export type LobbyRoom = {
+    id: string;
+    status: "waiting" | "in_progress";
+    members: LobbyMember[];
+};
+
+export interface ServerToClientEvents {
+    room_created: (payload: { roomCode: string }) => void;
+    room_joined: (roomMembers: LobbyMember[]) => void;
+    player_ready_update: (payload: {
+        readyPlayerId: string;
+        readyPlayers: LobbyMember[];
+    }) => void;
+    error: (error: string) => void;
+    game_started: () => void;
+}
+
+export interface ClientToServerEvents {
+    create_room: (playerName: string) => void;
+    join_room: (payload: { playerName: string; roomCode: string }) => void;
+    player_ready: () => void;
+}

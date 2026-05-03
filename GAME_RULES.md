@@ -7,7 +7,9 @@
 
 ## Overview
 
-A 4-player card game played with a 36-card deck. Players try to get rid of all their cards. Those left holding cards count up their points. Surpass 120 points and you're eliminated. Last player standing wins.
+A card game for 2–4 players, played with a 36-card deck. Players try to get rid of all their cards. Those left holding cards count up their points. Surpass 120 points and you're eliminated. Last player standing wins.
+
+**Player count:** Minimum 2, maximum 4. The game plays best with 4.
 
 ---
 

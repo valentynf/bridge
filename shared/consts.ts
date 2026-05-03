@@ -28,3 +28,5 @@ export const DEFAULT_PLAYERS_NUMBER = 4;
 export const DEALER_CARD_NUMBER = 4;
 export const PLAYER_CARD_NUMBER = 5;
 export const START_ACTIVE_PILE_SIZE = 1;
+export const MAX_ROOM_SIZE = 4;
+export const MIN_ROOM_SIZE = 4;
