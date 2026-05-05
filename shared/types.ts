@@ -53,17 +53,17 @@ export type LobbyRoom = {
 
 export interface ServerToClientEvents {
     room_created: (payload: { roomCode: string }) => void;
-    room_joined: (roomMembers: LobbyMember[]) => void;
+    room_joined: (payload: { roomMembers: LobbyMember[] }) => void;
     player_ready_update: (payload: {
         readyPlayerId: string;
         readyPlayers: LobbyMember[];
     }) => void;
-    error: (error: string) => void;
+    error: (payload: { error: string }) => void;
     game_started: () => void;
 }
 
 export interface ClientToServerEvents {
-    create_room: (playerName: string) => void;
+    create_room: (payload: { playerName: string }) => void;
     join_room: (payload: { playerName: string; roomCode: string }) => void;
     player_ready: () => void;
 }

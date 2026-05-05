@@ -16,10 +16,10 @@ export const registerSocketEvents = (
     io.on("connection", (socket) => {
         console.log("Connected user, socketId:" + socket.id);
 
-        socket.on("create_room", (playerName) => {
+        socket.on("create_room", (payload) => {
             const roomId = generateRoomCode();
             const roomMembers: LobbyMember[] = [
-                { name: playerName, id: socket.id, isReady: false },
+                { name: payload.playerName, id: socket.id, isReady: false },
             ];
             const newRoom: LobbyRoom = {
                 id: roomId,
@@ -29,21 +29,27 @@ export const registerSocketEvents = (
             lobbyRooms.set(roomId, newRoom);
             socket.emit("room_created", { roomCode: roomId });
             socket.join(roomId);
-            io.to(roomId).emit("room_joined", roomMembers);
+            io.to(roomId).emit("room_joined", { roomMembers });
         });
         socket.on("join_room", ({ playerName, roomCode }) => {
             const roomToJoin: LobbyRoom | undefined = lobbyRooms.get(roomCode);
             if (!roomToJoin) {
-                socket.emit("error", `The room id: ${roomCode} doesn't exist`);
+                socket.emit("error", {
+                    error: `The room id: ${roomCode} doesn't exist`,
+                });
                 return;
             }
             const numberOfPlayersInRoom = roomToJoin.members.length;
             if (roomToJoin.status === "in_progress") {
-                socket.emit("error", `The room id: ${roomCode} is playing`);
+                socket.emit("error", {
+                    error: `The room id: ${roomCode} is playing`,
+                });
                 return;
             }
             if (numberOfPlayersInRoom === MAX_ROOM_SIZE) {
-                socket.emit("error", `The room id: ${roomCode} is full`);
+                socket.emit("error", {
+                    error: `The room id: ${roomCode} is full`,
+                });
                 return;
             }
             const newLobbyMember: LobbyMember = {
@@ -53,32 +59,34 @@ export const registerSocketEvents = (
             };
             roomToJoin.members.push(newLobbyMember);
             socket.join(roomCode);
-            io.to(roomCode).emit("room_joined", roomToJoin.members);
+            io.to(roomCode).emit("room_joined", {
+                roomMembers: roomToJoin.members,
+            });
         });
         socket.on("player_ready", () => {
             const currentRoomCode = [...socket.rooms].filter(
                 (roomId) => roomId !== socket.id
             )[0];
             if (!currentRoomCode) {
-                socket.emit("error", `The player hasn't joined a room`);
+                socket.emit("error", {
+                    error: `The player hasn't joined a room`,
+                });
                 return;
             }
             const currentRoom = lobbyRooms.get(currentRoomCode);
             if (!currentRoom) {
-                socket.emit(
-                    "error",
-                    `Room id: ${currentRoomCode} does not exist`
-                );
+                socket.emit("error", {
+                    error: `Room id: ${currentRoomCode} does not exist`,
+                });
                 return;
             }
             const currentRoomMember = currentRoom.members.find(
                 (roomMember) => roomMember.id === socket.id
             );
             if (!currentRoomMember) {
-                socket.emit(
-                    "error",
-                    `Player is not a member of the room (BUG: socket.rooms and loobyRooms inconsistency!)`
-                );
+                socket.emit("error", {
+                    error: `Player is not a member of the room (BUG: socket.rooms and loobyRooms inconsistency!)`,
+                });
                 return;
             }
             currentRoomMember.isReady = true;
