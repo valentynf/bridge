@@ -25,7 +25,7 @@ function App() {
                 <button
                     type="button"
                     onClick={() => {
-                        socket.emit("create_room", "user1");
+                        socket.emit("create_room", { playerName: "testUser" });
                     }}
                 >
                     `Create room`
