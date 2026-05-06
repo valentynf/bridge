@@ -8,6 +8,13 @@ import type {
     ClientToServerEvents,
     ServerToClientEvents,
 } from "../../../shared/types.js";
+import { lobbyRooms } from "../socketHandlers.js";
+// fancy method for tomorrow me
+// function waitFor(socket: ClientSocket, event: keyof ServerToClientEvents) {
+//   return new Promise((resolve) => {
+//     socket.once(event, resolve);
+//   });
+// }
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -95,7 +102,72 @@ describe("registerSocketEvents", () => {
             clientSockets[0].emit("create_room", { playerName: "testUser" });
         });
     });
-    test("join_room, room does not exist", () => {});
-    test("join_room, room full", () => {});
-    test("join_room, game in progress", () => {});
+    test("join_room, room does not exist", () => {
+        return new Promise<void>((resolve) => {
+            clientSockets[0].on("error", ({ error }) => {
+                expect(error.includes(`doesn't exist`)).toBe(true);
+                resolve();
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "testUser2",
+                roomCode: "noice",
+            });
+        });
+    });
+    test("join_room, room full", () => {
+        return new Promise<void>((resolve) => {
+            let theRoomCode: string;
+            clientSockets[0].on("room_created", ({ roomCode }) => {
+                theRoomCode = roomCode;
+                console.log("code received");
+            });
+            clientSockets[0].once("room_joined", () => {
+                clientSockets[1].emit("join_room", {
+                    playerName: "testUser2",
+                    roomCode: theRoomCode,
+                });
+            });
+            clientSockets[1].once("room_joined", () => {
+                clientSockets[2].emit("join_room", {
+                    playerName: "testUser3",
+                    roomCode: theRoomCode,
+                });
+            });
+            clientSockets[2].once("room_joined", () => {
+                clientSockets[3].emit("join_room", {
+                    playerName: "testUser4",
+                    roomCode: theRoomCode,
+                });
+            });
+            clientSockets[3].once("room_joined", () => {
+                clientSockets[4].emit("join_room", {
+                    playerName: "testUser4",
+                    roomCode: theRoomCode,
+                });
+            });
+            clientSockets[4].on("error", ({ error }) => {
+                expect(error.includes(`is full`)).toBe(true);
+                resolve();
+            });
+
+            clientSockets[0].emit("create_room", { playerName: "testUser1" });
+        });
+    });
+    test("join_room, game in progress", () => {
+        return new Promise<void>((resolve) => {
+            lobbyRooms.set("ingame", {
+                id: "ingame",
+                status: "in_progress",
+                members: [],
+            });
+            clientSockets[0].on("error", ({ error }) => {
+                expect(error.includes("in progress")).toBe(true);
+                resolve();
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "Frank",
+                roomCode: "ingame",
+            });
+        });
+    });
 });

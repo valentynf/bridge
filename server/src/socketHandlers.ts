@@ -7,12 +7,11 @@ import type {
 } from "../../shared/types.js";
 import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
+export const lobbyRooms: Map<string, LobbyRoom> = new Map();
 
 export const registerSocketEvents = (
     io: Server<ClientToServerEvents, ServerToClientEvents>
 ): void => {
-    const lobbyRooms: Map<string, LobbyRoom> = new Map();
-
     io.on("connection", (socket) => {
         console.log("Connected user, socketId:" + socket.id);
 
@@ -42,7 +41,7 @@ export const registerSocketEvents = (
             const numberOfPlayersInRoom = roomToJoin.members.length;
             if (roomToJoin.status === "in_progress") {
                 socket.emit("error", {
-                    error: `The room id: ${roomCode} is playing`,
+                    error: `The room id: ${roomCode} game is in progress`,
                 });
                 return;
             }
@@ -69,7 +68,7 @@ export const registerSocketEvents = (
             )[0];
             if (!currentRoomCode) {
                 socket.emit("error", {
-                    error: `The player hasn't joined a room`,
+                    error: `BUG: The player hasn't joined a room`,
                 });
                 return;
             }
