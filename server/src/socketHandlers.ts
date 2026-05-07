@@ -84,7 +84,7 @@ export const registerSocketEvents = (
             );
             if (!currentRoomMember) {
                 socket.emit("error", {
-                    error: `Player is not a member of the room (BUG: socket.rooms and loobyRooms inconsistency!)`,
+                    error: `Player is not a member of the room (BUG: socket.rooms and lobbyRooms inconsistency!)`,
                 });
                 return;
             }
@@ -104,4 +104,11 @@ export const registerSocketEvents = (
                 io.to(currentRoomCode).emit("game_started");
         });
     });
+};
+
+export const resetLobby = (
+    io: Server<ClientToServerEvents, ServerToClientEvents>
+): void => {
+    lobbyRooms.forEach((_, roomId) => io.socketsLeave(roomId));
+    lobbyRooms.clear();
 };

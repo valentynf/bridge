@@ -3,7 +3,7 @@ import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { registerSocketEvents } from "../socketHandlers.js";
+import { registerSocketEvents, resetLobby } from "../socketHandlers.js";
 import type {
     ClientToServerEvents,
     ServerToClientEvents,
@@ -26,7 +26,9 @@ describe("registerSocketEvents", () => {
     beforeAll(() => {
         return new Promise((resolve) => {
             const httpServer = createServer();
-            io = new Server(httpServer);
+            io = new Server<ClientToServerEvents, ServerToClientEvents>(
+                httpServer
+            );
             httpServer.listen(() => {
                 const port = (httpServer.address() as AddressInfo).port;
                 for (let i = 0; i < 5; i++) {
@@ -59,6 +61,7 @@ describe("registerSocketEvents", () => {
         clientSockets.forEach((clientSocket) => {
             clientSocket.removeAllListeners();
         });
+        resetLobby(io);
     });
 
     test("create_room, happy path", () => {
@@ -116,33 +119,33 @@ describe("registerSocketEvents", () => {
     });
     test("join_room, room full", () => {
         return new Promise<void>((resolve) => {
-            let theRoomCode: string;
-            clientSockets[0].on("room_created", ({ roomCode }) => {
-                theRoomCode = roomCode;
-                console.log("code received");
-            });
+            let roomCode: string;
+            clientSockets[0].on(
+                "room_created",
+                (payload) => (roomCode = payload.roomCode)
+            );
             clientSockets[0].once("room_joined", () => {
                 clientSockets[1].emit("join_room", {
                     playerName: "testUser2",
-                    roomCode: theRoomCode,
+                    roomCode,
                 });
             });
             clientSockets[1].once("room_joined", () => {
                 clientSockets[2].emit("join_room", {
                     playerName: "testUser3",
-                    roomCode: theRoomCode,
+                    roomCode,
                 });
             });
             clientSockets[2].once("room_joined", () => {
                 clientSockets[3].emit("join_room", {
                     playerName: "testUser4",
-                    roomCode: theRoomCode,
+                    roomCode,
                 });
             });
             clientSockets[3].once("room_joined", () => {
                 clientSockets[4].emit("join_room", {
                     playerName: "testUser4",
-                    roomCode: theRoomCode,
+                    roomCode,
                 });
             });
             clientSockets[4].on("error", ({ error }) => {
@@ -168,6 +171,44 @@ describe("registerSocketEvents", () => {
                 playerName: "Frank",
                 roomCode: "ingame",
             });
+        });
+    });
+    test("player_ready, happy path", () => {
+        return new Promise<void>((resolve) => {
+            let roomCode: string;
+            clientSockets[0].on(
+                "room_created",
+                (payload) => (roomCode = payload.roomCode)
+            );
+            clientSockets[0].once("room_joined", () => {
+                clientSockets[0].emit("player_ready");
+                clientSockets[1].emit("join_room", {
+                    playerName: "testUser2",
+                    roomCode,
+                });
+            });
+            clientSockets[1].once("room_joined", () => {
+                clientSockets[1].emit("player_ready");
+                clientSockets[2].emit("join_room", {
+                    playerName: "testUser3",
+                    roomCode,
+                });
+            });
+            clientSockets[2].once("room_joined", () => {
+                clientSockets[2].emit("player_ready");
+                clientSockets[3].emit("join_room", {
+                    playerName: "testUser4",
+                    roomCode,
+                });
+            });
+            clientSockets[3].once("room_joined", () => {
+                clientSockets[3].emit("player_ready");
+            });
+            clientSockets[0].on("game_started", () => {
+                resolve();
+            });
+
+            clientSockets[0].emit("create_room", { playerName: "testUser1" });
         });
     });
 });
