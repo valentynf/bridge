@@ -20,14 +20,14 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Lobby & rooms
 
-| Event                 | Dir | Audience    | Payload                        |
-| --------------------- | --- | ----------- | ------------------------------ |
-| `create_room`         | C→S | sender      | `{ playerId }`                 |
-| `room_created`        | S→C | sender      | `{ roomCode }`                 |
-| `join_room`           | C→S | sender      | `{ playerId, roomCode }`       |
-| `room_joined`         | S→C | all in room | `{ players[] }`                |
-| `player_ready`        | C→S | sender      | `{ playerId }`                 |
-| `player_ready_update` | S→C | all in room | `{ playerId, readyPlayers[] }` |
+| Event                 | Dir | Audience    | Payload                    |
+| --------------------- | --- | ----------- | -------------------------- |
+| `create_room`         | C→S | sender      | `{ playerName }`           |
+| `room_created`        | S→C | sender      | `{ roomCode }`             |
+| `join_room`           | C→S | sender      | `{ playerName, roomCode }` |
+| `room_joined`         | S→C | all in room | `{ lobbyMembers[] }`       |
+| `player_ready`        | C→S | sender      | `{ }`                      |
+| `player_ready_update` | S→C | all in room | `{ readyPlayers[] }`       |
 
 ---
 

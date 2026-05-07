@@ -1,8 +1,20 @@
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import "./App.css";
+import {
+    type ServerToClientEvents,
+    type ClientToServerEvents,
+} from "../../shared/types";
 
 function App() {
-    const socket = io();
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
+
+    socket.on("room_created", (args) => {
+        console.log(args);
+    });
+
+    socket.on("room_joined", () => {
+        //changing view to room and stuff
+    });
 
     return (
         <>
@@ -10,8 +22,16 @@ function App() {
                 <div>
                     <h1>Bridge</h1>
                 </div>
-                <button type="button" className="counter" onClick={() => {}}>
-                    `Push me ${socket.active}`
+                <button
+                    type="button"
+                    onClick={() => {
+                        socket.emit("create_room", { playerName: "testUser" });
+                    }}
+                >
+                    `Create room`
+                </button>
+                <button type="button" onClick={() => {}}>
+                    `Join room`
                 </button>
             </section>
         </>

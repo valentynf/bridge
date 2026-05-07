@@ -1,18 +1,20 @@
 import express, { type Application } from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import {
+    type ClientToServerEvents,
+    type ServerToClientEvents,
+} from "../../shared/types.js";
+import { registerSocketEvents } from "./socketHandlers.js";
 
 const port: number = 3000;
 const app: Application = express();
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
+registerSocketEvents(io);
 
 app.get("/", (_, res) => {
     res.send("Hello World!");
-});
-
-io.on("connection", () => {
-    console.log("Connected user++");
 });
 
 server.listen(port, () => {
