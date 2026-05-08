@@ -292,3 +292,40 @@ export const countPoints = (
 
     return updatedScores;
 };
+
+export const dealerOpeningPlay = (
+    playersHand: Card[],
+    cardsToPlay: Card[],
+    topActivePileCard: Card
+): { updatedHand: Card[]; updatedActivePile: Card[] } => {
+    let updatedHand: Card[] = [...playersHand];
+    const updatedActivePile: Card[] = [topActivePileCard];
+    const unchangedData = { updatedActivePile, updatedHand };
+
+    if (cardsToPlay.length === 0) return unchangedData;
+
+    if (
+        !cardsToPlay.every((card) =>
+            playersHand.some(
+                (cardOnHand) =>
+                    card.rank === cardOnHand.rank &&
+                    card.suit === cardOnHand.suit
+            )
+        )
+    )
+        return unchangedData;
+
+    if (!cardsToPlay.every((card) => card.rank === topActivePileCard.rank))
+        return unchangedData;
+
+    updatedHand = updatedHand.filter(
+        (card) =>
+            !cardsToPlay.some(
+                (playedCard) =>
+                    card.rank === playedCard.rank &&
+                    card.suit === playedCard.suit
+            )
+    );
+    updatedActivePile.unshift(...cardsToPlay);
+    return { updatedActivePile, updatedHand };
+};

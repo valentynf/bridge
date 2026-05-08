@@ -3,6 +3,7 @@ import {
     applyPendingEffects,
     checkCanPlay,
     countPoints,
+    dealerOpeningPlay,
     playCards,
 } from "../functions/game.js";
 import type {
@@ -813,5 +814,72 @@ describe("countPoints", () => {
             twoJacksToDouble
         );
         expect(updatedScores).toEqual([130, 200, 30, 10]);
+    });
+});
+
+describe("dealerOpeningPlay", () => {
+    const defaultHand: Card[] = [
+        { rank: "9", suit: "hearts" },
+        { rank: "9", suit: "spades" },
+        { rank: "K", suit: "clubs" },
+        { rank: "8", suit: "clubs" },
+    ];
+    const defaultCardsToPlay: Card[] = [
+        { rank: "9", suit: "hearts" },
+        { rank: "9", suit: "spades" },
+    ];
+    const defaultTopActivePileCard: Card = { rank: "9", suit: "clubs" };
+    test("Should return updated data, playing same rank cards", () => {
+        const data = dealerOpeningPlay(
+            defaultHand,
+            defaultCardsToPlay,
+            defaultTopActivePileCard
+        );
+        expect(data).toEqual({
+            updatedActivePile: [
+                { rank: "9", suit: "hearts" },
+                { rank: "9", suit: "spades" },
+                { rank: "9", suit: "clubs" },
+            ],
+            updatedHand: [
+                { rank: "K", suit: "clubs" },
+                { rank: "8", suit: "clubs" },
+            ],
+        });
+    });
+    test("Should return same active pile, no cards played", () => {
+        const data = dealerOpeningPlay(
+            defaultHand,
+            [],
+            defaultTopActivePileCard
+        );
+        expect(data).toEqual({
+            updatedActivePile: [defaultTopActivePileCard],
+            updatedHand: defaultHand,
+        });
+    });
+    test("Should return same active pile, doesn't match by rank", () => {
+        const differentRankCard: Card = { rank: "K", suit: "clubs" };
+        const data = dealerOpeningPlay(
+            defaultHand,
+            [differentRankCard],
+            defaultTopActivePileCard
+        );
+        expect(data).toEqual({
+            updatedActivePile: [defaultTopActivePileCard],
+            updatedHand: defaultHand,
+        });
+    });
+    test("Should return same active pile, playing card not on hand", () => {
+        const cardNotOnHand: Card = { rank: "Q", suit: "clubs" };
+        const data = dealerOpeningPlay(
+            defaultHand,
+            [cardNotOnHand],
+            defaultTopActivePileCard
+        );
+        expect(data).toEqual({
+            updatedActivePile: [defaultTopActivePileCard],
+            updatedHand: defaultHand,
+        });
     });
 });
