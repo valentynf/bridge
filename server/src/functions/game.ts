@@ -84,21 +84,21 @@ export const playCards = (
     updatedActivePile: Card[];
     updatedDrawPile: Card[];
     specialEffects: SpecialEffect[];
-    reshuffled: boolean;
+    needsCover: boolean;
 } => {
     const activePileTopCard = activePile[0];
     let updatedHand: Card[] = [...playersHand];
-    let updatedActivePile: Card[] = [...activePile];
-    let updatedDrawPile: Card[] = [...drawPile];
+    const updatedActivePile: Card[] = [...activePile];
+    const updatedDrawPile: Card[] = [...drawPile];
     let pendingEffects: SpecialEffect[] = [];
-    let reshuffled: boolean = false;
+    let needsCover: boolean = false;
 
     const unchangedData = {
         updatedHand: playersHand,
         updatedActivePile: activePile,
         updatedDrawPile: drawPile,
         specialEffects: [],
-        reshuffled,
+        needsCover,
     };
 
     if (cardsToPlay.length === 0) return unchangedData;
@@ -133,33 +133,14 @@ export const playCards = (
                 )
         );
         updatedActivePile.unshift(...cardsToPlay);
+        needsCover = true;
 
-        let hasFoundCoverCard: boolean = false;
-        while (!hasFoundCoverCard) {
-            const drawPileTopCard = updatedDrawPile.shift();
-            if (drawPileTopCard) {
-                if (
-                    drawPileTopCard.rank === "J" ||
-                    drawPileTopCard.suit === topSixCard.suit
-                ) {
-                    updatedActivePile.unshift(drawPileTopCard);
-                    hasFoundCoverCard = true;
-                } else {
-                    updatedHand.push(drawPileTopCard);
-                }
-            } else {
-                const topActivePileCard = updatedActivePile.shift();
-                updatedDrawPile = shuffleDeck(updatedActivePile);
-                if (topActivePileCard) updatedActivePile = [topActivePileCard];
-                reshuffled = true;
-            }
-        }
         return {
             updatedHand,
             updatedActivePile,
             updatedDrawPile,
             specialEffects: pendingEffects,
-            reshuffled,
+            needsCover,
         };
     }
 
@@ -283,7 +264,7 @@ export const playCards = (
         updatedActivePile,
         updatedDrawPile,
         specialEffects: pendingEffects,
-        reshuffled,
+        needsCover,
     };
 };
 

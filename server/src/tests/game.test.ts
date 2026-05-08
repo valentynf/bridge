@@ -242,7 +242,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return updatedData, match by rank (2 cards), take two cards", () => {
@@ -280,7 +280,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return updatedData, match by suit, take two cards, skip turn", () => {
@@ -319,7 +319,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return updatedData, playing Jack", () => {
@@ -354,7 +354,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return updated data, 6 with cover case", () => {
@@ -396,147 +396,26 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
-    test("Should return updated drawpile, 6 case (no play on hand)", () => {
+    test("Should return updated data, cannot cover 6 from hand, needsCover: true", () => {
         const handWithSixNoCover: Card[] = [
             { rank: "7", suit: "hearts" },
-            { rank: "7", suit: "diamonds" },
+            { rank: "A", suit: "diamonds" },
             { rank: "6", suit: "spades" },
+            { rank: "6", suit: "diamonds" },
         ];
-        const cardsToPlay: Card[] = [{ rank: "6", suit: "spades" }];
-        const dataAfterTurn = playCards(
+        const playingCardOnlySix: Card[] = [{ rank: "6", suit: "spades" }];
+        const updatedData = playCards(
             handWithSixNoCover,
-            cardsToPlay,
+            playingCardOnlySix,
             defaultActivePile,
             defaultDrawPile,
             defaultJackSuit
         );
-        const updatedHand: Card[] = [
-            { rank: "7", suit: "hearts" },
-            { rank: "7", suit: "diamonds" },
-        ];
-        const updatedDrawPile = [
-            { rank: "J", suit: "spades" },
-            { rank: "K", suit: "spades" },
-            { rank: "9", suit: "diamonds" },
-        ];
-        const specialEffects: SpecialEffect[] = [];
-        const updatedActivePile = [
-            { rank: "Q", suit: "spades" },
-            { rank: "6", suit: "spades" },
-            { rank: "7", suit: "spades" },
-            { rank: "9", suit: "spades" },
-            { rank: "8", suit: "clubs" },
-            { rank: "10", suit: "clubs" },
-            { rank: "10", suit: "hearts" },
-            { rank: "J", suit: "clubs" },
-        ];
-        expect(dataAfterTurn).toEqual({
-            updatedHand,
-            updatedActivePile,
-            updatedDrawPile,
-            specialEffects,
-            reshuffled: false,
-        });
-    });
-    test("Should return updated drawpile, 6 case (no play on hand, Jack)", () => {
-        const handWithSixNoCover: Card[] = [
-            { rank: "7", suit: "diamonds" },
-            { rank: "6", suit: "spades" },
-            { rank: "6", suit: "hearts" },
-        ];
-        const drawPileWithJack: Card[] = [
-            { rank: "Q", suit: "spades" },
-            { rank: "J", suit: "spades" },
-            { rank: "K", suit: "spades" },
-            { rank: "9", suit: "diamonds" },
-        ];
-        const cardsToPlay: Card[] = [
-            { rank: "6", suit: "hearts" },
-            { rank: "6", suit: "spades" },
-        ];
-        const dataAfterTurn = playCards(
-            handWithSixNoCover,
-            cardsToPlay,
-            defaultActivePile,
-            drawPileWithJack,
-            defaultJackSuit
-        );
-        const updatedHand: Card[] = [
-            { rank: "7", suit: "diamonds" },
-            { rank: "Q", suit: "spades" },
-        ];
-        const updatedDrawPile = [
-            { rank: "K", suit: "spades" },
-            { rank: "9", suit: "diamonds" },
-        ];
-        const specialEffects: SpecialEffect[] = [];
-        const updatedActivePile = [
-            { rank: "J", suit: "spades" },
-            { rank: "6", suit: "hearts" },
-            { rank: "6", suit: "spades" },
-            { rank: "7", suit: "spades" },
-            { rank: "9", suit: "spades" },
-            { rank: "8", suit: "clubs" },
-            { rank: "10", suit: "clubs" },
-            { rank: "10", suit: "hearts" },
-            { rank: "J", suit: "clubs" },
-        ];
-        expect(dataAfterTurn).toEqual({
-            updatedHand,
-            updatedActivePile,
-            updatedDrawPile,
-            specialEffects,
-            reshuffled: false,
-        });
-    });
-    test("Should return updated pile, 6 case (no play on hand), small pile", () => {
-        const activePileWithCoverCard: Card[] = [
-            { rank: "10", suit: "clubs" },
-            { rank: "7", suit: "spades" },
-            { rank: "10", suit: "spades" },
-            { rank: "10", suit: "hearts" },
-        ];
-        const handWithSix: Card[] = [
-            { rank: "7", suit: "hearts" },
-            { rank: "7", suit: "diamonds" },
-            { rank: "6", suit: "clubs" },
-        ];
-        const smallDrawPile: Card[] = [
-            { rank: "Q", suit: "spades" },
-            { rank: "K", suit: "spades" },
-            { rank: "9", suit: "diamonds" },
-        ];
-        const cardsToPlay: Card[] = [{ rank: "6", suit: "clubs" }];
-        const dataAfterTurn = playCards(
-            handWithSix,
-            cardsToPlay,
-            activePileWithCoverCard,
-            smallDrawPile,
-            defaultJackSuit
-        );
-        const updatedActivePile = [
-            { rank: "10", suit: "clubs" },
-            { rank: "6", suit: "clubs" },
-        ];
-        expect(
-            dataAfterTurn.updatedHand.some(
-                (card) => card.rank === "6" && card.suit === "clubs"
-            )
-        ).toBe(false);
-        expect(dataAfterTurn.updatedActivePile).toEqual(updatedActivePile);
-        expect(
-            activePileWithCoverCard.length +
-                handWithSix.length +
-                smallDrawPile.length
-        ).toBe(
-            dataAfterTurn.updatedActivePile.length +
-                dataAfterTurn.updatedDrawPile.length +
-                dataAfterTurn.updatedHand.length
-        );
-        expect(dataAfterTurn.reshuffled).toBe(true);
+        const { needsCover } = updatedData;
+        expect(needsCover).toBe(true);
     });
     test("Should return same data, empty hand", () => {
         const cardsToPlay: Card[] = [];
@@ -552,7 +431,7 @@ describe("playCards", () => {
             updatedActivePile: defaultActivePile,
             updatedDrawPile: defaultDrawPile,
             specialEffects: [],
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return updated pile, match by Jack suit", () => {
@@ -591,7 +470,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return skip turn, 4 take cards effects (8s)", () => {
@@ -639,7 +518,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return skip turn effect (A)", () => {
@@ -674,7 +553,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return skip turn effect (As)", () => {
@@ -718,7 +597,7 @@ describe("playCards", () => {
             updatedActivePile,
             updatedDrawPile,
             specialEffects,
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return same data, illegal hand (wrong rank and suit)", () => {
@@ -743,7 +622,7 @@ describe("playCards", () => {
             updatedActivePile: defaultActivePile,
             updatedDrawPile: defaultDrawPile,
             specialEffects: [],
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return same data, cards not on hand", () => {
@@ -768,7 +647,7 @@ describe("playCards", () => {
             updatedActivePile: defaultActivePile,
             updatedDrawPile: defaultDrawPile,
             specialEffects: [],
-            reshuffled: false,
+            needsCover: false,
         });
     });
     test("Should return same data, different ranks pair", () => {
@@ -796,12 +675,44 @@ describe("playCards", () => {
             updatedActivePile: defaultActivePile,
             updatedDrawPile: defaultDrawPile,
             specialEffects: [],
-            reshuffled: false,
+            needsCover: false,
         });
     });
-    test(
-        "TODO: Scenario when 6 is covered by 7/8 (check if effects are adding)"
-    );
+    test("Should return updated data, 6 covered by 7/8", () => {
+        const handWithSixSevenEigth: Card[] = [
+            { rank: "7", suit: "spades" },
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const handSevenCoverSix: Card[] = [
+            { rank: "7", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const handEightCoverSix: Card[] = [
+            { rank: "8", suit: "spades" },
+            { rank: "6", suit: "spades" },
+        ];
+        const dataWithSevenEffects = playCards(
+            handWithSixSevenEigth,
+            handSevenCoverSix,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        expect(dataWithSevenEffects.specialEffects).toEqual(["TAKE_CARD"]);
+        const dataWithEigthEffects = playCards(
+            handWithSixSevenEigth,
+            handEightCoverSix,
+            defaultActivePile,
+            defaultDrawPile,
+            defaultJackSuit
+        );
+        expect(dataWithEigthEffects.specialEffects).toEqual([
+            "TAKE_CARD",
+            "TAKE_CARD",
+            "SKIP_TURN",
+        ]);
+    });
 });
 
 describe("countPoints", () => {
