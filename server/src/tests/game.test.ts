@@ -4,12 +4,15 @@ import {
     checkCanPlay,
     countPoints,
     dealerOpeningPlay,
+    generateInitialState,
     playCards,
 } from "../functions/game.js";
 import type {
+    BridgeGameState,
     Card,
     CardSuit,
     JackEndEffect,
+    LobbyMember,
     SpecialEffect,
 } from "../../../shared/types.js";
 
@@ -881,5 +884,52 @@ describe("dealerOpeningPlay", () => {
             updatedActivePile: [defaultTopActivePileCard],
             updatedHand: defaultHand,
         });
+    });
+});
+
+describe.skip("generateInitialState", () => {
+    const fourMembersLobby: LobbyMember[] = [
+        { name: "player1", id: "id1", isReady: true },
+        { name: "player2", id: "id2", isReady: true },
+        { name: "player3", id: "id3", isReady: true },
+        { name: "player4", id: "id4", isReady: true },
+    ];
+    test("Should have default values, 4 players", () => {
+        const initialStateFourPlayers: BridgeGameState = generateInitialState(
+            fourMembersLobby,
+            2
+        );
+        const {
+            players,
+            activePile,
+            drawPile,
+            currentDealerIndex,
+            currentPlayerIndex,
+            reshuffleCount,
+        } = initialStateFourPlayers;
+        expect(players.length).toBe(4);
+        expect(activePile.length).toBe(1);
+        expect(drawPile.length).toBe(16);
+        expect(currentDealerIndex).toBe(currentPlayerIndex);
+        expect(players[currentDealerIndex].hand.length).toBe(4);
+        expect(reshuffleCount).toBe(0);
+        expect(
+            players.every(
+                (player, i) =>
+                    player.nickname === fourMembersLobby[i].name &&
+                    player.id === fourMembersLobby[i].id
+            )
+        ).toBe(true);
+    });
+    test("Should have default values, 2 players", () => {
+        const [memberOne, memberTwo] = fourMembersLobby;
+        const twoMembersLobby: LobbyMember[] = [memberOne, memberTwo];
+        const initialStateTwoPlayers: BridgeGameState = generateInitialState(
+            twoMembersLobby,
+            0
+        );
+        const { players, drawPile } = initialStateTwoPlayers;
+        expect(drawPile.length).toBe(26);
+        expect(players.length).toBe(2);
     });
 });

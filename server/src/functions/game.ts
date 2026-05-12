@@ -1,7 +1,9 @@
 import type {
+    BridgeGameState,
     Card,
     CardSuit,
     JackEndEffect,
+    LobbyMember,
     SpecialEffect,
 } from "../../../shared/types.js";
 import { countHandPoints, shuffleDeck } from "./deck.js";
@@ -328,4 +330,12 @@ export const dealerOpeningPlay = (
     );
     updatedActivePile.unshift(...cardsToPlay);
     return { updatedActivePile, updatedHand };
+};
+
+/* eslint-disable */
+export const generateInitialState = (
+    members: LobbyMember[],
+    dealerIndex: number
+): BridgeGameState => {
+    return {} as BridgeGameState;
 };

@@ -22,6 +22,7 @@ export type Card = {
 
 export type GamePlayer = {
     nickname: string;
+    id: string;
     score: number;
     hand: Card[];
     isEliminated: boolean;
