@@ -2,11 +2,18 @@ import type {
     BridgeGameState,
     Card,
     CardSuit,
+    GamePlayer,
     JackEndEffect,
     LobbyMember,
+    SpecialAction,
     SpecialEffect,
 } from "../../../shared/types.js";
-import { countHandPoints, shuffleDeck } from "./deck.js";
+import {
+    countHandPoints,
+    createNewDeck,
+    dealCards,
+    shuffleDeck,
+} from "./deck.js";
 
 export const applyPendingEffects = (
     drawPile: Card[],
@@ -332,10 +339,39 @@ export const dealerOpeningPlay = (
     return { updatedActivePile, updatedHand };
 };
 
-/* eslint-disable */
 export const generateInitialState = (
     members: LobbyMember[],
     dealerIndex: number
 ): BridgeGameState => {
-    return {} as BridgeGameState;
+    const freshDeck: Card[] = createNewDeck();
+    const shuffledDeck: Card[] = shuffleDeck(freshDeck);
+    const numberOfPlayers: number = members.length;
+    const pendingSpecialEffects: SpecialAction[] = [];
+    const { hands, drawPile, activePile } = dealCards(
+        dealerIndex,
+        numberOfPlayers,
+        shuffledDeck
+    );
+    const players: GamePlayer[] = members.map((member, i) => {
+        const player: GamePlayer = {
+            nickname: member.name,
+            id: member.id,
+            score: 0,
+            hand: hands[i],
+            isEliminated: false,
+        };
+        return player;
+    });
+
+    return {
+        currentPhase: "PLAYING",
+        players,
+        currentDealerIndex: dealerIndex,
+        currentPlayerIndex: dealerIndex,
+        drawPile,
+        activePile,
+        jackSuit: "diamonds", //it doesn't matter which suit is here
+        pendingSpecialEffects,
+        reshuffleCount: 0,
+    };
 };

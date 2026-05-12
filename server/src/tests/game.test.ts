@@ -15,6 +15,7 @@ import type {
     LobbyMember,
     SpecialEffect,
 } from "../../../shared/types.js";
+import { START_ACTIVE_PILE_SIZE } from "../../../shared/consts.js";
 
 describe("applyPendingEffects", () => {
     const defaultHand = [
@@ -887,7 +888,7 @@ describe("dealerOpeningPlay", () => {
     });
 });
 
-describe.skip("generateInitialState", () => {
+describe("generateInitialState", () => {
     const fourMembersLobby: LobbyMember[] = [
         { name: "player1", id: "id1", isReady: true },
         { name: "player2", id: "id2", isReady: true },
@@ -908,7 +909,7 @@ describe.skip("generateInitialState", () => {
             reshuffleCount,
         } = initialStateFourPlayers;
         expect(players.length).toBe(4);
-        expect(activePile.length).toBe(1);
+        expect(activePile.length).toBe(START_ACTIVE_PILE_SIZE);
         expect(drawPile.length).toBe(16);
         expect(currentDealerIndex).toBe(currentPlayerIndex);
         expect(players[currentDealerIndex].hand.length).toBe(4);
