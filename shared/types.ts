@@ -50,6 +50,7 @@ export type LobbyRoom = {
     id: string;
     status: "waiting" | "in_progress";
     members: LobbyMember[];
+    gameState: BridgeGameState | undefined;
 };
 
 export interface ServerToClientEvents {
@@ -60,7 +61,12 @@ export interface ServerToClientEvents {
         readyPlayers: LobbyMember[];
     }) => void;
     error: (payload: { error: string }) => void;
-    game_started: () => void;
+    game_started: (payload: {
+        hand: Card[];
+        activePileTopCard: Card;
+        dealerIndex: number;
+        currentPlayerIndex: number;
+    }) => void;
 }
 
 export interface ClientToServerEvents {

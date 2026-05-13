@@ -162,6 +162,7 @@ describe("registerSocketEvents", () => {
                 id: "ingame",
                 status: "in_progress",
                 members: [],
+                gameState: undefined,
             });
             clientSockets[0].on("error", ({ error }) => {
                 expect(error.includes("in progress")).toBe(true);
@@ -173,42 +174,68 @@ describe("registerSocketEvents", () => {
             });
         });
     });
-    test("player_ready, happy path", () => {
+    test("player_ready, data validation", () => {
         return new Promise<void>((resolve) => {
             let roomCode: string;
+            const gameStartedPromises = clientSockets
+                .filter((_, i) => i < 4)
+                .map(
+                    (socket) =>
+                        new Promise((res) => {
+                            socket.once(
+                                "game_started",
+                                ({ hand, dealerIndex, currentPlayerIndex }) => {
+                                    expect(Array.isArray(hand)).toBe(true);
+                                    expect(Number.isInteger(dealerIndex)).toBe(
+                                        true
+                                    );
+                                    expect(currentPlayerIndex).toBe(
+                                        dealerIndex
+                                    );
+
+                                    res(undefined);
+                                }
+                            );
+                        })
+                );
             clientSockets[0].on(
                 "room_created",
                 (payload) => (roomCode = payload.roomCode)
             );
             clientSockets[0].once("room_joined", () => {
-                clientSockets[0].emit("player_ready");
                 clientSockets[1].emit("join_room", {
                     playerName: "testUser2",
                     roomCode,
                 });
             });
             clientSockets[1].once("room_joined", () => {
-                clientSockets[1].emit("player_ready");
                 clientSockets[2].emit("join_room", {
                     playerName: "testUser3",
                     roomCode,
                 });
             });
             clientSockets[2].once("room_joined", () => {
-                clientSockets[2].emit("player_ready");
                 clientSockets[3].emit("join_room", {
                     playerName: "testUser4",
                     roomCode,
                 });
             });
             clientSockets[3].once("room_joined", () => {
-                clientSockets[3].emit("player_ready");
+                clientSockets[0].emit("player_ready");
             });
-            clientSockets[0].on("game_started", () => {
-                resolve();
+            clientSockets[0].once("player_ready_update", () => {
+                clientSockets[1].emit("player_ready");
+            });
+            clientSockets[1].once("player_ready_update", () => {
+                clientSockets[2].emit("player_ready");
+            });
+            clientSockets[2].once("player_ready_update", () => {
+                clientSockets[3].emit("player_ready");
             });
 
             clientSockets[0].emit("create_room", { playerName: "testUser1" });
+
+            Promise.all(gameStartedPromises).finally(() => resolve());
         });
     });
 });

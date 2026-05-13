@@ -7,6 +7,7 @@ import type {
 } from "../../shared/types.js";
 import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
+import { generateInitialState } from "./functions/game.js";
 export const lobbyRooms: Map<string, LobbyRoom> = new Map();
 
 export const registerSocketEvents = (
@@ -24,6 +25,7 @@ export const registerSocketEvents = (
                 id: roomId,
                 status: "waiting",
                 members: roomMembers,
+                gameState: undefined,
             };
             lobbyRooms.set(roomId, newRoom);
             socket.emit("room_created", { roomCode: roomId });
@@ -100,11 +102,37 @@ export const registerSocketEvents = (
                 (member) => member.isReady
             );
             const isEnoughPlayers = currentRoom.members.length >= MIN_ROOM_SIZE;
-            if (areAllReady && isEnoughPlayers)
-                io.to(currentRoomCode).emit("game_started");
+            if (areAllReady && isEnoughPlayers) {
+                const dealerIndex = Math.floor(
+                    Math.random() * (currentRoom.members.length - 1)
+                );
+                currentRoom.gameState = generateInitialState(
+                    currentRoom.members,
+                    dealerIndex
+                );
+                currentRoom.status = "in_progress";
+                const { players, activePile } = currentRoom.gameState;
+
+                players.forEach(({ id, hand }) => {
+                    io.to(id).emit("game_started", {
+                        hand,
+                        activePileTopCard: activePile[0],
+                        dealerIndex,
+                        currentPlayerIndex: dealerIndex,
+                    });
+                });
+            }
         });
     });
 };
+
+/* game_started: (payload: {
+        hand: Card[];
+        activePileTopCard: Card;
+        dealerIndex: number;
+        currentPlayerIndex: number;
+    }
+*/
 
 export const resetLobby = (
     io: Server<ClientToServerEvents, ServerToClientEvents>
