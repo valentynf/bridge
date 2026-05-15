@@ -1,10 +1,19 @@
 import type {
+    BridgeGameState,
     Card,
     CardSuit,
+    GamePlayer,
     JackEndEffect,
+    LobbyMember,
+    SpecialAction,
     SpecialEffect,
 } from "../../../shared/types.js";
-import { countHandPoints, shuffleDeck } from "./deck.js";
+import {
+    countHandPoints,
+    createNewDeck,
+    dealCards,
+    shuffleDeck,
+} from "./deck.js";
 
 export const applyPendingEffects = (
     drawPile: Card[],
@@ -84,21 +93,21 @@ export const playCards = (
     updatedActivePile: Card[];
     updatedDrawPile: Card[];
     specialEffects: SpecialEffect[];
-    reshuffled: boolean;
+    needsCover: boolean;
 } => {
     const activePileTopCard = activePile[0];
     let updatedHand: Card[] = [...playersHand];
-    let updatedActivePile: Card[] = [...activePile];
-    let updatedDrawPile: Card[] = [...drawPile];
+    const updatedActivePile: Card[] = [...activePile];
+    const updatedDrawPile: Card[] = [...drawPile];
     let pendingEffects: SpecialEffect[] = [];
-    let reshuffled: boolean = false;
+    let needsCover: boolean = false;
 
     const unchangedData = {
         updatedHand: playersHand,
         updatedActivePile: activePile,
         updatedDrawPile: drawPile,
         specialEffects: [],
-        reshuffled,
+        needsCover,
     };
 
     if (cardsToPlay.length === 0) return unchangedData;
@@ -133,33 +142,14 @@ export const playCards = (
                 )
         );
         updatedActivePile.unshift(...cardsToPlay);
+        needsCover = true;
 
-        let hasFoundCoverCard: boolean = false;
-        while (!hasFoundCoverCard) {
-            const drawPileTopCard = updatedDrawPile.shift();
-            if (drawPileTopCard) {
-                if (
-                    drawPileTopCard.rank === "J" ||
-                    drawPileTopCard.suit === topSixCard.suit
-                ) {
-                    updatedActivePile.unshift(drawPileTopCard);
-                    hasFoundCoverCard = true;
-                } else {
-                    updatedHand.push(drawPileTopCard);
-                }
-            } else {
-                const topActivePileCard = updatedActivePile.shift();
-                updatedDrawPile = shuffleDeck(updatedActivePile);
-                if (topActivePileCard) updatedActivePile = [topActivePileCard];
-                reshuffled = true;
-            }
-        }
         return {
             updatedHand,
             updatedActivePile,
             updatedDrawPile,
             specialEffects: pendingEffects,
-            reshuffled,
+            needsCover,
         };
     }
 
@@ -283,7 +273,7 @@ export const playCards = (
         updatedActivePile,
         updatedDrawPile,
         specialEffects: pendingEffects,
-        reshuffled,
+        needsCover,
     };
 };
 
@@ -310,4 +300,78 @@ export const countPoints = (
     });
 
     return updatedScores;
+};
+
+export const dealerOpeningPlay = (
+    playersHand: Card[],
+    cardsToPlay: Card[],
+    topActivePileCard: Card
+): { updatedHand: Card[]; updatedActivePile: Card[] } => {
+    let updatedHand: Card[] = [...playersHand];
+    const updatedActivePile: Card[] = [topActivePileCard];
+    const unchangedData = { updatedActivePile, updatedHand };
+
+    if (cardsToPlay.length === 0) return unchangedData;
+
+    if (
+        !cardsToPlay.every((card) =>
+            playersHand.some(
+                (cardOnHand) =>
+                    card.rank === cardOnHand.rank &&
+                    card.suit === cardOnHand.suit
+            )
+        )
+    )
+        return unchangedData;
+
+    if (!cardsToPlay.every((card) => card.rank === topActivePileCard.rank))
+        return unchangedData;
+
+    updatedHand = updatedHand.filter(
+        (card) =>
+            !cardsToPlay.some(
+                (playedCard) =>
+                    card.rank === playedCard.rank &&
+                    card.suit === playedCard.suit
+            )
+    );
+    updatedActivePile.unshift(...cardsToPlay);
+    return { updatedActivePile, updatedHand };
+};
+
+export const generateInitialState = (
+    members: LobbyMember[],
+    dealerIndex: number
+): BridgeGameState => {
+    const freshDeck: Card[] = createNewDeck();
+    const shuffledDeck: Card[] = shuffleDeck(freshDeck);
+    const numberOfPlayers: number = members.length;
+    const pendingSpecialEffects: SpecialAction[] = [];
+    const { hands, drawPile, activePile } = dealCards(
+        dealerIndex,
+        numberOfPlayers,
+        shuffledDeck
+    );
+    const players: GamePlayer[] = members.map((member, i) => {
+        const player: GamePlayer = {
+            nickname: member.name,
+            id: member.id,
+            score: 0,
+            hand: hands[i],
+            isEliminated: false,
+        };
+        return player;
+    });
+
+    return {
+        currentPhase: "PLAYING",
+        players,
+        currentDealerIndex: dealerIndex,
+        currentPlayerIndex: dealerIndex,
+        drawPile,
+        activePile,
+        jackSuit: "diamonds", //it doesn't matter which suit is here
+        pendingSpecialEffects,
+        reshuffleCount: 0,
+    };
 };
