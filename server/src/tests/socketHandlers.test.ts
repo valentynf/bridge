@@ -1,10 +1,19 @@
 import { Server } from "socket.io";
 import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
+import {
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { registerSocketEvents, resetLobby } from "../socketHandlers.js";
 import type {
+    Card,
     ClientToServerEvents,
     ServerToClientEvents,
 } from "../../../shared/types.js";
@@ -254,5 +263,55 @@ describe("registerSocketEvents", () => {
             });
         });
     });
-    describe("play_cards");
+    describe.skip("play_cards", () => {
+        /* eslint-disable */
+        let activePileTopCard: Card;
+        let dealerIndex: number;
+        let currentPlayerIndex: number;
+
+        beforeEach(
+            () =>
+                new Promise<void>((resolve) => {
+                    let roomCode: string;
+                    clientSockets[0].on(
+                        "room_created",
+                        (payload) => (roomCode = payload.roomCode)
+                    );
+                    clientSockets[0].once("room_joined", () => {
+                        clientSockets[1].emit("join_room", {
+                            playerName: "testUser2",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[1].once("room_joined", () => {
+                        clientSockets[2].emit("join_room", {
+                            playerName: "testUser3",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[2].once("room_joined", () => {
+                        clientSockets[3].emit("join_room", {
+                            playerName: "testUser4",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[3].once("room_joined", () => {
+                        clientSockets[0].emit("player_ready");
+                        clientSockets[1].emit("player_ready");
+                        clientSockets[2].emit("player_ready");
+                        clientSockets[3].emit("player_ready");
+                    });
+                    clientSockets[0].on("game_started", (payload) => {
+                        activePileTopCard = payload.activePileTopCard;
+                        dealerIndex = payload.dealerIndex;
+                        currentPlayerIndex = payload.currentPlayerIndex;
+                        resolve();
+                    });
+
+                    clientSockets[0].emit("create_room", {
+                        playerName: "testUser1",
+                    });
+                })
+        );
+    });
 });
