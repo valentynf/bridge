@@ -61,16 +61,26 @@ export interface ServerToClientEvents {
         readyPlayers: LobbyMember[];
     }) => void;
     error: (payload: { error: string }) => void;
+    //add a type for the payload below
     game_started: (payload: {
         hand: Card[];
         activePileTopCard: Card;
         dealerIndex: number;
         currentPlayerIndex: number;
     }) => void;
+    cards_played: (payload: {
+        playerId: string;
+        cardsPlayed: Card[];
+        activePileTopCard: Card;
+        handCount: number;
+    }) => void;
+    hand_update: (payload: { updatedHand: Card[] }) => void;
+    turn_started: (payload: { currentPlayerIndex: number }) => void;
 }
 
 export interface ClientToServerEvents {
     create_room: (payload: { playerName: string }) => void;
     join_room: (payload: { playerName: string; roomCode: string }) => void;
     player_ready: () => void;
+    play_cards: (payload: { cardsToPlay: Card[] }) => void;
 }

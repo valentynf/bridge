@@ -33,24 +33,23 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Game start
 
-| Event          | Dir | Audience             | Payload                                                                        |
-| -------------- | --- | -------------------- | ------------------------------------------------------------------------------ |
-| `game_started` | S→C | each player (unique) | `{ hand, dealerIndex, activePileTopCard, currentPlayerIndex, initialEffect? }` |
+| Event          | Dir | Audience             | Payload                                                        |
+| -------------- | --- | -------------------- | -------------------------------------------------------------- |
+| `game_started` | S→C | each player (unique) | `{ hand, dealerIndex, activePileTopCard, currentPlayerIndex }` |
 
-`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play).
-
-`initialEffect` is present when the face-up card (or the last card the dealer played on top of it) is a special card. It describes the effect that will apply to the first non-dealer player: `{ type: "draw", cardsToDraw }` for 7s, `{ type: "draw_and_skip", cardsToDraw }` for 8s, `{ type: "skip" }` for Aces.
+`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play). Effects from the face-up card are calculated and applied after the dealer's opening turn ends, via `effect_applied`.
 
 ---
 
 ## Gameplay — play & draw
 
-| Event          | Dir | Audience                        | Payload                                                                                                              |
-| -------------- | --- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `play_cards`   | C→S | sender                          | `{ cardsToPlay: Card[] }`                                                                                            |
-| `cards_played` | S→C | all in room (sender gets extra) | All: `{ playerId, cardsPlayed, activePileTopCard, handCount, pendingEffects }` — Sender also gets: `{ updatedHand }` |
-| `draw_card`    | C→S | sender                          | `{ }`                                                                                                                |
-| `card_drawn`   | S→C | all in room (sender gets extra) | All: `{ playerId, drawPileCount, handCount }` — Sender also gets: `{ drawnCard }`                                    |
+| Event          | Dir | Audience                        | Payload                                                                           |
+| -------------- | --- | ------------------------------- | --------------------------------------------------------------------------------- |
+| `play_cards`   | C→S | sender                          | `{ cardsToPlay: Card[] }`                                                         |
+| `cards_played` | S→C | all in room                     | `{ playerId, cardsPlayed, activePileTopCard, handCount }`                         |
+| `hand_update`  | S→C | sender only                     | `{ updatedHand }` — reusable for any hand change (play, draw, effects)            |
+| `draw_card`    | C→S | sender                          | `{ }`                                                                             |
+| `card_drawn`   | S→C | all in room (sender gets extra) | All: `{ playerId, drawPileCount, handCount }` — Sender also gets: `{ drawnCard }` |
 
 ---
 
