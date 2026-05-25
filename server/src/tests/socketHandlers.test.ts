@@ -18,12 +18,6 @@ import type {
     ServerToClientEvents,
 } from "../../../shared/types.js";
 import { lobbyRooms } from "../socketHandlers.js";
-// fancy method for tomorrow me
-// function waitFor(socket: ClientSocket, event: keyof ServerToClientEvents) {
-//   return new Promise((resolve) => {
-//     socket.once(event, resolve);
-//   });
-// }
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -313,5 +307,20 @@ describe("registerSocketEvents", () => {
                     });
                 })
         );
+        test("Should perform dealers turn (no cards)", () => {
+            const turnStartedPromise = new Promise((res) => {
+                clientSockets[0].on(
+                    "turn_started",
+                    ({ currentPlayerIndex }) => {
+                        expect(currentPlayerIndex).toBe((dealerIndex + 1) % 4);
+                        res(undefined);
+                    }
+                );
+            });
+
+            clientSockets[dealerIndex].emit("play_cards", { cardsToPlay: [] });
+
+            return turnStartedPromise;
+        });
     });
 });
