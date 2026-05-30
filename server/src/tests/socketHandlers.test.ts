@@ -257,7 +257,7 @@ describe("registerSocketEvents", () => {
             });
         });
     });
-    describe.skip("play_cards", () => {
+    describe("play_cards", () => {
         /* eslint-disable */
         let activePileTopCard: Card;
         let dealerIndex: number;

@@ -123,6 +123,53 @@ export const registerSocketEvents = (
                 });
             }
         });
+        socket.on("play_cards", ({ cardsToPlay }) => {
+            const currentRoomCode = [...socket.rooms].filter(
+                (roomId) => roomId !== socket.id
+            )[0];
+            if (!currentRoomCode) {
+                socket.emit("error", {
+                    error: `The player hasn't joined any room`,
+                });
+                return;
+            }
+            const currentRoom = lobbyRooms.get(currentRoomCode);
+            if (!currentRoom) {
+                socket.emit("error", {
+                    error: `Invalid room id`,
+                });
+                return;
+            }
+            const { gameState } = currentRoom;
+            if (!gameState) {
+                socket.emit("error", {
+                    error: `The game has not started yet`,
+                });
+                return;
+            }
+
+            const {
+                activePile,
+                currentDealerIndex,
+                currentPlayerIndex,
+                reshuffleCount,
+                players,
+            } = gameState;
+
+            const isDealersTurn: boolean =
+                activePile.length === 1 &&
+                reshuffleCount === 0 &&
+                currentPlayerIndex === currentDealerIndex;
+            if (isDealersTurn) {
+                if (cardsToPlay.length === 0) {
+                    gameState.currentPlayerIndex =
+                        (currentPlayerIndex + 1) % players.length;
+                    io.to(currentRoomCode).emit("turn_started", {
+                        currentPlayerIndex: gameState.currentPlayerIndex,
+                    });
+                }
+            }
+        });
     });
 };
 
