@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import type {
+    Card,
     ClientToServerEvents,
     LobbyMember,
     LobbyRoom,
@@ -11,7 +12,8 @@ import { generateInitialState } from "./functions/game.js";
 export const lobbyRooms: Map<string, LobbyRoom> = new Map();
 
 export const registerSocketEvents = (
-    io: Server<ClientToServerEvents, ServerToClientEvents>
+    io: Server<ClientToServerEvents, ServerToClientEvents>,
+    customShuffle?: (unshuffledDeck: Card[]) => Card[]
 ): void => {
     io.on("connection", (socket) => {
         console.log("Connected user, socketId:" + socket.id);
@@ -108,7 +110,8 @@ export const registerSocketEvents = (
                 );
                 currentRoom.gameState = generateInitialState(
                     currentRoom.members,
-                    dealerIndex
+                    dealerIndex,
+                    customShuffle
                 );
                 currentRoom.status = "in_progress";
                 const { players, activePile } = currentRoom.gameState;
