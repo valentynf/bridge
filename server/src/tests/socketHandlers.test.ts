@@ -8,6 +8,7 @@ import {
     describe,
     expect,
     test,
+    vi,
 } from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -18,6 +19,7 @@ import type {
     ServerToClientEvents,
 } from "../../../shared/types.js";
 import { lobbyRooms } from "../socketHandlers.js";
+import { shuffleDeck } from "../functions/deck.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -25,6 +27,13 @@ describe("registerSocketEvents", () => {
         ServerToClientEvents,
         ClientToServerEvents
     >[] = [];
+
+    const predictableResult = undefined;
+
+    const predictableShuffleDeck = (unshuffledDeck: Card[]): Card[] => {
+        if (predictableResult) return predictableResult;
+        return shuffleDeck(unshuffledDeck);
+    };
 
     beforeAll(() => {
         return new Promise((resolve) => {
@@ -38,7 +47,7 @@ describe("registerSocketEvents", () => {
                     const clientSocket = ioc(`http://localhost:${port}`);
                     clientSockets.push(clientSocket);
                 }
-                registerSocketEvents(io);
+                registerSocketEvents(io, predictableShuffleDeck);
                 Promise.all(
                     clientSockets.map(
                         (clientSocket) =>
@@ -262,6 +271,7 @@ describe("registerSocketEvents", () => {
         let activePileTopCard: Card;
         let dealerIndex: number;
         let currentPlayerIndex: number;
+        const mathRandomSpy = vi.spyOn(Math, "random");
 
         beforeEach(
             () =>
@@ -290,6 +300,7 @@ describe("registerSocketEvents", () => {
                         });
                     });
                     clientSockets[3].once("room_joined", () => {
+                        mathRandomSpy.mockReturnValue(0.5);
                         clientSockets[0].emit("player_ready");
                         clientSockets[1].emit("player_ready");
                         clientSockets[2].emit("player_ready");
@@ -307,6 +318,11 @@ describe("registerSocketEvents", () => {
                     });
                 })
         );
+
+        afterEach(() => {
+            mathRandomSpy.mockRestore();
+        });
+
         test("Should perform dealers turn (no cards)", () => {
             const turnStartedPromise = new Promise((res) => {
                 clientSockets[0].on(

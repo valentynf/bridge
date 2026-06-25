@@ -3,6 +3,7 @@ import {
     countHandPoints,
     createNewDeck,
     dealCards,
+    reverseDealCards,
     shuffleDeck,
 } from "../functions/deck.js";
 import {
@@ -10,7 +11,7 @@ import {
     CARD_RANKS,
     DECK_SIZE,
     START_ACTIVE_PILE_SIZE,
-    PLAYER_CARD_NUMBER,
+    START_HAND_SIZE,
     DEALER_CARD_NUMBER,
     CUSTOM_DEALER_INDEX,
     DEFAULT_PLAYERS_NUMBER,
@@ -67,7 +68,7 @@ describe("shuffleDeck", () => {
     });
 });
 
-describe("dealHands", () => {
+describe("dealCards", () => {
     const shuffledDeck = shuffleDeck(createNewDeck());
     const dealtCardsDefault = dealCards(
         DEFAULT_DEALER_INDEX,
@@ -81,7 +82,7 @@ describe("dealHands", () => {
             if (i === DEFAULT_DEALER_INDEX) {
                 expect(dealtHands[i].length).toBe(DEALER_CARD_NUMBER);
             } else {
-                expect(dealtHands[i].length).toBe(PLAYER_CARD_NUMBER);
+                expect(dealtHands[i].length).toBe(START_HAND_SIZE);
             }
         }
     });
@@ -97,7 +98,7 @@ describe("dealHands", () => {
             if (i === CUSTOM_DEALER_INDEX) {
                 expect(dealtHands[i].length).toBe(DEALER_CARD_NUMBER);
             } else {
-                expect(dealtHands[i].length).toBe(PLAYER_CARD_NUMBER);
+                expect(dealtHands[i].length).toBe(START_HAND_SIZE);
             }
         }
     });
@@ -117,6 +118,42 @@ describe("dealHands", () => {
         expect(
             cardsOnHandsNum + cardsDrawPileNum + START_ACTIVE_PILE_SIZE
         ).toBe(DECK_SIZE);
+    });
+});
+
+describe("reverseDealCards", () => {
+    test("Should return 36 cards", () => {
+        const predictableDeck = reverseDealCards([[], [], [], []]);
+        expect(predictableDeck.length).toBe(DECK_SIZE);
+    });
+
+    test("Should properly insert the cards", () => {
+        const hand: Card[] = [
+            { rank: "10", suit: "diamonds" },
+            { rank: "K", suit: "diamonds" },
+            { rank: "10", suit: "spades" },
+            { rank: "9", suit: "diamonds" },
+            { rank: "8", suit: "diamonds" },
+        ];
+        const predictableDeck: Card[] = reverseDealCards([
+            [...hand],
+            [],
+            [],
+            [],
+        ]);
+        for (
+            let i = 0;
+            i < DEFAULT_PLAYERS_NUMBER * START_HAND_SIZE;
+            i += DEFAULT_PLAYERS_NUMBER
+        ) {
+            expect(
+                hand.some(
+                    (card) =>
+                        card.rank === predictableDeck[i].rank &&
+                        card.suit === predictableDeck[i].suit
+                )
+            ).toBe(true);
+        }
     });
 });
 

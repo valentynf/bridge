@@ -342,10 +342,10 @@ export const dealerOpeningPlay = (
 export const generateInitialState = (
     members: LobbyMember[],
     dealerIndex: number,
-    customShuffle: (unshuffledDeck: Card[]) => Card[] = shuffleDeck
+    shuffle: (unshuffledDeck: Card[]) => Card[] = shuffleDeck
 ): BridgeGameState => {
     const freshDeck: Card[] = createNewDeck();
-    const shuffledDeck: Card[] = customShuffle(freshDeck);
+    const shuffledDeck: Card[] = shuffle(freshDeck);
     const numberOfPlayers: number = members.length;
     const pendingSpecialEffects: SpecialAction[] = [];
     const { hands, drawPile, activePile } = dealCards(
