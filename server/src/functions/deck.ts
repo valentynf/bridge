@@ -6,6 +6,7 @@ import {
     DECK_SIZE,
     START_HAND_SIZE,
 } from "../../../shared/consts.js";
+import { areSameCards } from "./utility.js";
 
 export const createNewDeck = (): Card[] => {
     const newDeck: Card[] = [];
@@ -76,9 +77,7 @@ export const reverseDealCards = (
         (freshCard) =>
             !predictableDeck.some((card) => {
                 if (!card) return false;
-                return (
-                    card.rank === freshCard.rank && card.suit === freshCard.suit
-                );
+                return areSameCards(card, freshCard);
             })
     );
     for (let i = 0; i < DECK_SIZE; i++) {

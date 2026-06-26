@@ -14,6 +14,7 @@ import {
     dealCards,
     shuffleDeck,
 } from "./deck.js";
+import { areSameCards } from "./utility.js";
 
 export const applyPendingEffects = (
     drawPile: Card[],
@@ -114,11 +115,7 @@ export const playCards = (
 
     if (
         !cardsToPlay.every((card) =>
-            playersHand.some(
-                (cardOnHand) =>
-                    card.rank === cardOnHand.rank &&
-                    card.suit === cardOnHand.suit
-            )
+            playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
         return unchangedData;
@@ -135,10 +132,8 @@ export const playCards = (
 
         updatedHand = updatedHand.filter(
             (card) =>
-                !cardsToPlay.some(
-                    (playedCard) =>
-                        card.rank === playedCard.rank &&
-                        card.suit === playedCard.suit
+                !cardsToPlay.some((playedCard) =>
+                    areSameCards(card, playedCard)
                 )
         );
         updatedActivePile.unshift(...cardsToPlay);
@@ -167,11 +162,7 @@ export const playCards = (
         const isJackCard = cardsToPlay[0].rank === "J";
         if (matchesByJackSuit || matchesByRank || matchesBySuit || isJackCard) {
             updatedHand = updatedHand.filter(
-                (card) =>
-                    !(
-                        card.rank === cardsToPlay[0].rank &&
-                        card.suit === cardsToPlay[0].suit
-                    )
+                (card) => !areSameCards(card, cardsToPlay[0])
             );
             updatedActivePile.unshift(cardsToPlay[0]);
         }
@@ -214,10 +205,8 @@ export const playCards = (
             ) {
                 updatedHand = updatedHand.filter(
                     (card) =>
-                        !cardsToPlay.some(
-                            (playedCard) =>
-                                card.rank === playedCard.rank &&
-                                card.suit === playedCard.suit
+                        !cardsToPlay.some((playedCard) =>
+                            areSameCards(card, playedCard)
                         )
                 );
                 updatedActivePile.unshift(...cardsToPlay);
@@ -240,10 +229,8 @@ export const playCards = (
             if (canCoverSix && areSameRankCoverCards) {
                 updatedHand = updatedHand.filter(
                     (card) =>
-                        !cardsToPlay.some(
-                            (playedCard) =>
-                                card.rank === playedCard.rank &&
-                                card.suit === playedCard.suit
+                        !cardsToPlay.some((playedCard) =>
+                            areSameCards(card, playedCard)
                         )
                 );
                 updatedActivePile.unshift(...cardsToPlay);
@@ -315,11 +302,7 @@ export const dealerOpeningPlay = (
 
     if (
         !cardsToPlay.every((card) =>
-            playersHand.some(
-                (cardOnHand) =>
-                    card.rank === cardOnHand.rank &&
-                    card.suit === cardOnHand.suit
-            )
+            playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
         return unchangedData;
@@ -329,11 +312,7 @@ export const dealerOpeningPlay = (
 
     updatedHand = updatedHand.filter(
         (card) =>
-            !cardsToPlay.some(
-                (playedCard) =>
-                    card.rank === playedCard.rank &&
-                    card.suit === playedCard.suit
-            )
+            !cardsToPlay.some((playedCard) => areSameCards(card, playedCard))
     );
     updatedActivePile.unshift(...cardsToPlay);
     return { updatedActivePile, updatedHand };
