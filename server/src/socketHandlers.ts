@@ -176,14 +176,6 @@ export const registerSocketEvents = (
     });
 };
 
-/* game_started: (payload: {
-        hand: Card[];
-        activePileTopCard: Card;
-        dealerIndex: number;
-        currentPlayerIndex: number;
-    }
-*/
-
 export const resetLobby = (
     io: Server<ClientToServerEvents, ServerToClientEvents>
 ): void => {
