@@ -266,10 +266,7 @@ describe("registerSocketEvents", () => {
         });
     });
     describe("play_cards", () => {
-        /* eslint-disable */
-        let activePileTopCard: Card;
         let dealerIndex: number;
-        let currentPlayerIndex: number;
         const mathRandomSpy = vi.spyOn(Math, "random");
 
         afterEach(() => {
@@ -327,9 +324,7 @@ describe("registerSocketEvents", () => {
                             clientSockets[3].emit("player_ready");
                         });
                         clientSockets[0].on("game_started", (payload) => {
-                            activePileTopCard = payload.activePileTopCard;
                             dealerIndex = payload.dealerIndex;
-                            currentPlayerIndex = payload.currentPlayerIndex;
                             resolve();
                         });
 
@@ -394,7 +389,7 @@ describe("registerSocketEvents", () => {
                 });
 
                 const noHandUpdatePromise = new Promise((res) => {
-                    clientSockets[1].on("hand_update", ({}) => {
+                    clientSockets[1].on("hand_update", () => {
                         expect.fail();
                     });
                     setTimeout(() => {
