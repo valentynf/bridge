@@ -61,7 +61,6 @@ export interface ServerToClientEvents {
         readyPlayers: LobbyMember[];
     }) => void;
     error: (payload: { error: string }) => void;
-    //add a type for the payload below
     game_started: (payload: {
         hand: Card[];
         activePileTopCard: Card;

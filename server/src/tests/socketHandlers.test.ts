@@ -20,6 +20,7 @@ import type {
 } from "../../../shared/types.js";
 import { lobbyRooms } from "../socketHandlers.js";
 import { reverseDealCards, shuffleDeck } from "../functions/deck.js";
+import { areSameCards } from "../functions/utility.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -354,7 +355,61 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
-            test("Should advance turn when dealer plays same rank", () => {});
+            test.skip("Should advance turn when dealer plays same rank", () => {
+                const playedCard: Card = { rank: "10", suit: "hearts" };
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[2].on(
+                        "turn_started",
+                        ({ currentPlayerIndex }) => {
+                            expect(currentPlayerIndex).toBe(
+                                (dealerIndex + 1) % 4
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[1].on(
+                        "cards_played",
+                        ({ cardsPlayed, activePileTopCard }) => {
+                            expect(cardsPlayed[0]).toEqual(playedCard);
+                            expect(activePileTopCard).toEqual(playedCard);
+                            res(undefined);
+                        }
+                    );
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[0].on("hand_update", ({ updatedHand }) => {
+                        const isPlayedCardOnHand: boolean = updatedHand.some(
+                            (card) => areSameCards(card, playedCard)
+                        );
+                        expect(isPlayedCardOnHand).toBe(false);
+                        res(undefined);
+                    });
+                });
+
+                const noHandUpdatePromise = new Promise((res) => {
+                    clientSockets[1].on("hand_update", ({}) => {
+                        expect.fail();
+                    });
+                    setTimeout(() => {
+                        res(undefined);
+                    }, 100);
+                });
+
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: [playedCard],
+                });
+
+                return Promise.all([
+                    turnStartedPromise,
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    noHandUpdatePromise,
+                ]);
+            });
         });
     });
 });
