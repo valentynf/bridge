@@ -2,13 +2,14 @@ import { Server } from "socket.io";
 import type {
     Card,
     ClientToServerEvents,
+    GamePlayer,
     LobbyMember,
     LobbyRoom,
     ServerToClientEvents,
 } from "../../shared/types.js";
 import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
-import { generateInitialState } from "./functions/game.js";
+import { dealerOpeningPlay, generateInitialState } from "./functions/game.js";
 export const lobbyRooms: Map<string, LobbyRoom> = new Map();
 
 export const registerSocketEvents = (
@@ -164,13 +165,30 @@ export const registerSocketEvents = (
                 reshuffleCount === 0 &&
                 currentPlayerIndex === currentDealerIndex;
             if (isDealersTurn) {
-                if (cardsToPlay.length === 0) {
-                    gameState.currentPlayerIndex =
-                        (currentPlayerIndex + 1) % players.length;
-                    io.to(currentRoomCode).emit("turn_started", {
-                        currentPlayerIndex: gameState.currentPlayerIndex,
+                if (cardsToPlay.length > 0) {
+                    const currentPlayer: GamePlayer =
+                        players[currentPlayerIndex];
+                    const { updatedActivePile, updatedHand } =
+                        dealerOpeningPlay(
+                            currentPlayer.hand,
+                            cardsToPlay,
+                            activePile[0]
+                        );
+                    gameState.activePile = updatedActivePile;
+                    io.to(currentRoomCode).emit("cards_played", {
+                        playerId: currentPlayer.id,
+                        cardsPlayed: cardsToPlay,
+                        activePileTopCard: updatedActivePile[0],
+                        handCount: updatedHand.length,
                     });
+                    gameState.players[currentPlayerIndex].hand = updatedHand;
+                    socket.emit("hand_update", { updatedHand });
                 }
+                gameState.currentPlayerIndex =
+                    (currentPlayerIndex + 1) % players.length;
+                io.to(currentRoomCode).emit("turn_started", {
+                    currentPlayerIndex: gameState.currentPlayerIndex,
+                });
             }
         });
     });

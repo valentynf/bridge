@@ -273,8 +273,11 @@ describe("registerSocketEvents", () => {
         const mathRandomSpy = vi.spyOn(Math, "random");
 
         afterEach(() => {
-            mathRandomSpy.mockRestore();
             predictableDeck = undefined;
+        });
+
+        afterAll(() => {
+            mathRandomSpy.mockRestore();
         });
 
         describe("Dealer turn", () => {
@@ -355,7 +358,7 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
-            test.skip("Should advance turn when dealer plays same rank", () => {
+            test("Should advance turn when dealer plays same rank", () => {
                 const playedCard: Card = { rank: "10", suit: "hearts" };
                 const turnStartedPromise = new Promise((res) => {
                     clientSockets[2].on(
