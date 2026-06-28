@@ -9,7 +9,11 @@ import type {
 } from "../../shared/types.js";
 import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
-import { dealerOpeningPlay, generateInitialState } from "./functions/game.js";
+import {
+    dealerOpeningPlay,
+    generateInitialState,
+    playCards,
+} from "./functions/game.js";
 export const lobbyRooms: Map<string, LobbyRoom> = new Map();
 
 export const registerSocketEvents = (
@@ -154,11 +158,15 @@ export const registerSocketEvents = (
 
             const {
                 activePile,
+                drawPile,
                 currentDealerIndex,
                 currentPlayerIndex,
                 reshuffleCount,
                 players,
+                jackSuit,
             } = gameState;
+
+            const currentPlayer: GamePlayer = players[currentPlayerIndex];
 
             const isDealersTurn: boolean =
                 activePile.length === 1 &&
@@ -166,8 +174,6 @@ export const registerSocketEvents = (
                 currentPlayerIndex === currentDealerIndex;
             if (isDealersTurn) {
                 if (cardsToPlay.length > 0) {
-                    const currentPlayer: GamePlayer =
-                        players[currentPlayerIndex];
                     const { updatedActivePile, updatedHand } =
                         dealerOpeningPlay(
                             currentPlayer.hand,
@@ -189,7 +195,68 @@ export const registerSocketEvents = (
                 io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
                 });
+                console.log(
+                    `dealerIndex ${currentDealerIndex} currentPlayerIndex ${currentPlayerIndex}`
+                );
+            } else {
+                //let go boii
+                console.log("boiii");
+                const { updatedHand, updatedActivePile, updatedDrawPile } =
+                    playCards(
+                        currentPlayer.hand,
+                        cardsToPlay,
+                        activePile,
+                        drawPile,
+                        jackSuit
+                    );
+
+                gameState.activePile = updatedActivePile;
+                gameState.drawPile = updatedDrawPile;
+                gameState.players[currentPlayerIndex].hand = updatedHand;
+
+                io.to(currentRoomCode).emit("cards_played", {
+                    playerId: currentPlayer.id,
+                    cardsPlayed: cardsToPlay,
+                    activePileTopCard: updatedActivePile[0],
+                    handCount: updatedHand.length,
+                });
+
+                socket.emit("hand_update", { updatedHand });
             }
+        });
+        socket.on("end_turn", () => {
+            const currentRoomCode = [...socket.rooms].filter(
+                (roomId) => roomId !== socket.id
+            )[0];
+            if (!currentRoomCode) {
+                socket.emit("error", {
+                    error: `The player hasn't joined any room`,
+                });
+                return;
+            }
+            const currentRoom = lobbyRooms.get(currentRoomCode);
+            if (!currentRoom) {
+                socket.emit("error", {
+                    error: `Invalid room id`,
+                });
+                return;
+            }
+            const { gameState } = currentRoom;
+            if (!gameState) {
+                socket.emit("error", {
+                    error: `The game has not started yet`,
+                });
+                return;
+            }
+
+            const { currentPlayerIndex, players } = gameState;
+
+            gameState.currentPlayerIndex =
+                (currentPlayerIndex + 1) % players.length;
+
+            io.to(currentRoomCode).emit("turn_started", {
+                currentPlayerIndex: gameState.currentPlayerIndex,
+            });
         });
     });
 };

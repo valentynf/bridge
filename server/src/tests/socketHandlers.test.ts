@@ -283,7 +283,7 @@ describe("registerSocketEvents", () => {
                 () =>
                     new Promise<void>((resolve) => {
                         let roomCode: string;
-                        clientSockets[0].on(
+                        clientSockets[0].once(
                             "room_created",
                             (payload) => (roomCode = payload.roomCode)
                         );
@@ -324,7 +324,7 @@ describe("registerSocketEvents", () => {
                             clientSockets[2].emit("player_ready");
                             clientSockets[3].emit("player_ready");
                         });
-                        clientSockets[0].on("game_started", (payload) => {
+                        clientSockets[0].once("game_started", (payload) => {
                             dealerIndex = payload.dealerIndex;
                             resolve();
                         });
@@ -437,7 +437,7 @@ describe("registerSocketEvents", () => {
                 () =>
                     new Promise<void>((resolve) => {
                         let roomCode: string;
-                        clientSockets[0].on(
+                        clientSockets[0].once(
                             "room_created",
                             (payload) => (roomCode = payload.roomCode)
                         );
@@ -484,19 +484,19 @@ describe("registerSocketEvents", () => {
                             clientSockets[2].emit("player_ready");
                             clientSockets[3].emit("player_ready");
                         });
-                        clientSockets[0].on("game_started", (payload) => {
+                        clientSockets[0].once("game_started", (payload) => {
                             dealerIndex = payload.dealerIndex;
                             clientSockets[dealerIndex].emit("play_cards", {
                                 cardsToPlay: [],
                             });
+                            clientSockets[2].on(
+                                "turn_started",
+                                ({ currentPlayerIndex: newIndex }) => {
+                                    currentPlayerIndex = newIndex;
+                                    resolve();
+                                }
+                            );
                         });
-                        clientSockets[2].on(
-                            "turn_started",
-                            ({ currentPlayerIndex: newIndex }) => {
-                                currentPlayerIndex = newIndex;
-                                resolve();
-                            }
-                        );
 
                         clientSockets[0].emit("create_room", {
                             playerName: "testUser1",
@@ -504,7 +504,7 @@ describe("registerSocketEvents", () => {
                     })
             );
 
-            test.skip("Should advance turn after non-special proper card was played", async () => {
+            test("Should advance turn after non-special proper card was played", async () => {
                 const cardsPlayedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].on("cards_played", () => {
                         res(undefined);
