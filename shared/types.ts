@@ -79,6 +79,7 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
     create_room: (payload: { playerName: string }) => void;
+    end_turn: () => void;
     join_room: (payload: { playerName: string; roomCode: string }) => void;
     player_ready: () => void;
     play_cards: (payload: { cardsToPlay: Card[] }) => void;
