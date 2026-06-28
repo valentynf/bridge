@@ -309,7 +309,7 @@ describe("registerSocketEvents", () => {
                                 [
                                     { rank: "6", suit: "diamonds" },
                                     { rank: "Q", suit: "clubs" },
-                                    { rank: "K", suit: "clubs" },
+                                    { rank: "10", suit: "clubs" },
                                     { rank: "10", suit: "hearts" },
                                     { rank: "10", suit: "clubs" },
                                 ],
@@ -353,7 +353,7 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
-            test("Should advance turn when dealer plays same rank", () => {
+            test("Should advance turn when dealer plays same rank card", () => {
                 const playedCard: Card = { rank: "10", suit: "hearts" };
                 const turnStartedPromise = new Promise((res) => {
                     clientSockets[2].on(
@@ -407,6 +407,27 @@ describe("registerSocketEvents", () => {
                     handUpdatedPromise,
                     noHandUpdatePromise,
                 ]);
+            });
+            test("Should advance turn when dealer plays same rank cards", () => {
+                const playedCards: Card[] = [
+                    { rank: "10", suit: "clubs" },
+                    { rank: "10", suit: "hearts" },
+                ];
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[1].on(
+                        "cards_played",
+                        ({ activePileTopCard }) => {
+                            expect(activePileTopCard).toEqual(playedCards[0]);
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: playedCards,
+                });
+
+                return cardsPlayedPromise;
             });
         });
     });
