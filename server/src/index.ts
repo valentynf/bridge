@@ -17,6 +17,7 @@ app.get("/", (_, res) => {
     res.send("Hello World!");
 });
 
+/* eslint no-console: "warn" */
 server.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });

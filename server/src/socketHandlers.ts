@@ -21,8 +21,6 @@ export const registerSocketEvents = (
     customShuffle?: (unshuffledDeck: Card[]) => Card[]
 ): void => {
     io.on("connection", (socket) => {
-        console.log("Connected user, socketId:" + socket.id);
-
         socket.on("create_room", (payload) => {
             const roomId = generateRoomCode();
             const roomMembers: LobbyMember[] = [
@@ -195,12 +193,7 @@ export const registerSocketEvents = (
                 io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
                 });
-                console.log(
-                    `dealerIndex ${currentDealerIndex} currentPlayerIndex ${currentPlayerIndex}`
-                );
             } else {
-                //let go boii
-                console.log("boiii");
                 const { updatedHand, updatedActivePile, updatedDrawPile } =
                     playCards(
                         currentPlayer.hand,
