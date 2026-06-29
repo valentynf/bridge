@@ -12,19 +12,19 @@ import {
 } from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { registerSocketEvents, resetLobby } from "../socketHandlers.js";
+import { SocketHandler } from "../socketHandler.js";
 import type {
     Card,
     ClientToServerEvents,
     ServerToClientEvents,
 } from "../../../shared/types.js";
-import { lobbyRooms } from "../socketHandlers.js";
 import { reverseDealCards, shuffleDeck } from "../functions/deck.js";
 import { areSameCards } from "../functions/utility.js";
 import { MAX_ROOM_SIZE } from "../../../shared/consts.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
+    let socketHandler: SocketHandler;
     const clientSockets: ClientSocket<
         ServerToClientEvents,
         ClientToServerEvents
@@ -42,13 +42,14 @@ describe("registerSocketEvents", () => {
             io = new Server<ClientToServerEvents, ServerToClientEvents>(
                 httpServer
             );
+            socketHandler = new SocketHandler(io, predictableShuffleDeck);
             httpServer.listen(() => {
                 const port = (httpServer.address() as AddressInfo).port;
                 for (let i = 0; i < 5; i++) {
                     const clientSocket = ioc(`http://localhost:${port}`);
                     clientSockets.push(clientSocket);
                 }
-                registerSocketEvents(io, predictableShuffleDeck);
+                socketHandler.registerSocketEvents();
                 Promise.all(
                     clientSockets.map(
                         (clientSocket) =>
@@ -75,7 +76,7 @@ describe("registerSocketEvents", () => {
         clientSockets.forEach((clientSocket) => {
             clientSocket.removeAllListeners();
         });
-        resetLobby(io);
+        socketHandler.resetLobby();
     });
 
     describe("create_room", () => {
@@ -179,7 +180,7 @@ describe("registerSocketEvents", () => {
         });
         test("Should receive error, game in progress", () => {
             return new Promise<void>((resolve) => {
-                lobbyRooms.set("ingame", {
+                socketHandler.setRoom("ingame", {
                     id: "ingame",
                     status: "in_progress",
                     members: [],
