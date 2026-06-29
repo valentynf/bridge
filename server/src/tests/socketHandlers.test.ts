@@ -21,6 +21,7 @@ import type {
 import { lobbyRooms } from "../socketHandlers.js";
 import { reverseDealCards, shuffleDeck } from "../functions/deck.js";
 import { areSameCards } from "../functions/utility.js";
+import { MAX_ROOM_SIZE } from "../../../shared/consts.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -28,6 +29,7 @@ describe("registerSocketEvents", () => {
         ServerToClientEvents,
         ClientToServerEvents
     >[] = [];
+    const mathRandomSpy = vi.spyOn(Math, "random");
     let predictableDeck: Card[] | undefined = undefined;
     const predictableShuffleDeck = (unshuffledDeck: Card[]): Card[] => {
         if (predictableDeck) return predictableDeck;
@@ -62,6 +64,7 @@ describe("registerSocketEvents", () => {
     });
 
     afterAll(() => {
+        mathRandomSpy.mockRestore();
         io.close();
         clientSockets.forEach((clientSocket) => {
             clientSocket.disconnect();
@@ -268,14 +271,9 @@ describe("registerSocketEvents", () => {
     describe("play_cards", () => {
         let dealerIndex: number;
         let currentPlayerIndex: number;
-        const mathRandomSpy = vi.spyOn(Math, "random");
 
         afterEach(() => {
             predictableDeck = undefined;
-        });
-
-        afterAll(() => {
-            mathRandomSpy.mockRestore();
         });
 
         describe("Dealer turn", () => {
@@ -533,6 +531,121 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
+        });
+    });
+    describe("end_turn", () => {
+        let dealerIndex: number;
+        let currentPlayerIndex: number;
+
+        beforeEach(
+            () =>
+                new Promise<void>((resolve) => {
+                    let roomCode: string;
+                    clientSockets[0].once(
+                        "room_created",
+                        (payload) => (roomCode = payload.roomCode)
+                    );
+                    clientSockets[0].once("room_joined", () => {
+                        clientSockets[1].emit("join_room", {
+                            playerName: "testUser2",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[1].once("room_joined", () => {
+                        clientSockets[2].emit("join_room", {
+                            playerName: "testUser3",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[2].once("room_joined", () => {
+                        clientSockets[3].emit("join_room", {
+                            playerName: "testUser4",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[3].once("room_joined", () => {
+                        predictableDeck = reverseDealCards([
+                            [
+                                { rank: "6", suit: "diamonds" },
+                                { rank: "Q", suit: "clubs" },
+                                { rank: "10", suit: "spades" },
+                                { rank: "10", suit: "hearts" },
+                                { rank: "10", suit: "clubs" },
+                            ],
+                            [
+                                { rank: "K", suit: "clubs" },
+                                { rank: "8", suit: "clubs" },
+                                { rank: "8", suit: "diamonds" },
+                                { rank: "6", suit: "clubs" },
+                                { rank: "A", suit: "clubs" },
+                            ],
+                            [],
+                            [],
+                        ]);
+                        mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                        clientSockets[0].emit("player_ready");
+                        clientSockets[1].emit("player_ready");
+                        clientSockets[2].emit("player_ready");
+                        clientSockets[3].emit("player_ready");
+                    });
+                    clientSockets[0].once("game_started", (payload) => {
+                        dealerIndex = payload.dealerIndex;
+                        clientSockets[dealerIndex].emit("play_cards", {
+                            cardsToPlay: [],
+                        });
+                        clientSockets[2].on(
+                            "turn_started",
+                            ({ currentPlayerIndex: newIndex }) => {
+                                currentPlayerIndex = newIndex;
+                                resolve();
+                            }
+                        );
+                    });
+
+                    clientSockets[0].emit("create_room", {
+                        playerName: "testUser1",
+                    });
+                })
+        );
+
+        afterEach(() => {
+            predictableDeck = undefined;
+        });
+
+        test("Should end turn and return next player index", async () => {
+            const cardsPlayedPromise = new Promise((res) => {
+                clientSockets[currentPlayerIndex].on("cards_played", () => {
+                    res(undefined);
+                });
+            });
+
+            const handUpdatedPromise = new Promise((res) => {
+                clientSockets[currentPlayerIndex].on("hand_update", () => {
+                    res(undefined);
+                });
+            });
+
+            clientSockets[currentPlayerIndex].emit("play_cards", {
+                cardsToPlay: [{ rank: "K", suit: "clubs" }],
+            });
+
+            await Promise.all([cardsPlayedPromise, handUpdatedPromise]);
+
+            clientSockets[currentPlayerIndex].emit("end_turn");
+
+            const turnStartedPromise = new Promise((res) => {
+                clientSockets[0].on(
+                    "turn_started",
+                    ({ currentPlayerIndex: newIndex }) => {
+                        expect(newIndex).toBe(
+                            (currentPlayerIndex + 1) % MAX_ROOM_SIZE
+                        );
+                        res(undefined);
+                    }
+                );
+            });
+
+            return turnStartedPromise;
         });
     });
 });
