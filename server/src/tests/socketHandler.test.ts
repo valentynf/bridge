@@ -20,7 +20,7 @@ import type {
 } from "../../../shared/types.js";
 import { reverseDealCards, shuffleDeck } from "../functions/deck.js";
 import { areSameCards } from "../functions/utility.js";
-import { MAX_ROOM_SIZE } from "../../../shared/consts.js";
+import { MAX_ROOM_SIZE, START_HAND_SIZE } from "../../../shared/consts.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
@@ -471,7 +471,7 @@ describe("registerSocketEvents", () => {
                                     { rank: "K", suit: "clubs" },
                                     { rank: "8", suit: "clubs" },
                                     { rank: "8", suit: "diamonds" },
-                                    { rank: "6", suit: "clubs" },
+                                    { rank: "7", suit: "clubs" },
                                     { rank: "A", suit: "clubs" },
                                 ],
                                 [],
@@ -528,6 +528,61 @@ describe("registerSocketEvents", () => {
                     clientSockets[0].on("turn_started", () => {
                         res(undefined);
                     });
+                });
+
+                return turnStartedPromise;
+            });
+
+            test.skip("Should peform special effects, two 8s", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                const fourCardsReceivedPromise = new Promise((res) => {
+                    clientSockets[(currentPlayerIndex + 1) % MAX_ROOM_SIZE].on(
+                        "hand_update",
+                        ({ updatedHand }) => {
+                            expect(updatedHand.length).toBe(
+                                START_HAND_SIZE + 4
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [
+                        { rank: "8", suit: "diamonds" },
+                        { rank: "8", suit: "clubs" },
+                    ],
+                });
+
+                await Promise.all([
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    fourCardsReceivedPromise,
+                ]);
+
+                clientSockets[currentPlayerIndex].emit("end_turn");
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex: newIndex }) => {
+                            expect(newIndex).toBe(
+                                (currentPlayerIndex + 2) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
                 });
 
                 return turnStartedPromise;
