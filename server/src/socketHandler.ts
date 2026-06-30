@@ -10,6 +10,7 @@ import type {
 import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
 import {
+    applyPendingEffects,
     dealerOpeningPlay,
     generateInitialState,
     playCards,
@@ -159,7 +160,6 @@ export class SocketHandler {
                     });
                     return;
                 }
-
                 const {
                     activePile,
                     drawPile,
@@ -169,13 +169,12 @@ export class SocketHandler {
                     players,
                     jackSuit,
                 } = gameState;
-
                 const currentPlayer: GamePlayer = players[currentPlayerIndex];
-
                 const isDealersTurn: boolean =
                     activePile.length === 1 &&
                     reshuffleCount === 0 &&
                     currentPlayerIndex === currentDealerIndex;
+
                 if (isDealersTurn) {
                     if (cardsToPlay.length > 0) {
                         const { updatedActivePile, updatedHand } =
@@ -201,14 +200,18 @@ export class SocketHandler {
                         currentPlayerIndex: gameState.currentPlayerIndex,
                     });
                 } else {
-                    const { updatedHand, updatedActivePile, updatedDrawPile } =
-                        playCards(
-                            currentPlayer.hand,
-                            cardsToPlay,
-                            activePile,
-                            drawPile,
-                            jackSuit
-                        );
+                    const {
+                        updatedHand,
+                        updatedActivePile,
+                        updatedDrawPile,
+                        specialEffects,
+                    } = playCards(
+                        currentPlayer.hand,
+                        cardsToPlay,
+                        activePile,
+                        drawPile,
+                        jackSuit
+                    );
 
                     gameState.activePile = updatedActivePile;
                     gameState.drawPile = updatedDrawPile;
@@ -222,6 +225,42 @@ export class SocketHandler {
                     });
 
                     socket.emit("hand_update", { updatedHand });
+
+                    if (specialEffects.length > 0) {
+                        const affectedPlayerIndex =
+                            (currentPlayerIndex + 1) % players.length;
+                        const {
+                            updatedDrawPile: drawPileAfterEffects,
+                            updatedHand: affectedPlayerHand,
+                            updatedActivePile: activePileAfterEffects,
+                            skipTurn,
+                            reshuffled,
+                        } = applyPendingEffects(
+                            gameState.drawPile,
+                            gameState.activePile,
+                            gameState.players[affectedPlayerIndex].hand,
+                            specialEffects
+                        );
+
+                        if (reshuffled) gameState.reshuffleCount++;
+                        if (skipTurn) gameState.shouldSkipNextPlayer = true;
+                        if (
+                            !(
+                                affectedPlayerHand.length ===
+                                players[affectedPlayerIndex].hand.length
+                            )
+                        ) {
+                            gameState.players[affectedPlayerIndex].hand =
+                                affectedPlayerHand;
+                            this.io
+                                .to(players[affectedPlayerIndex].id)
+                                .emit("hand_update", {
+                                    updatedHand: affectedPlayerHand,
+                                });
+                        }
+                        gameState.drawPile = drawPileAfterEffects;
+                        gameState.activePile = activePileAfterEffects;
+                    }
                 }
             });
             socket.on("end_turn", () => {
@@ -249,10 +288,14 @@ export class SocketHandler {
                     return;
                 }
 
-                const { currentPlayerIndex, players } = gameState;
+                const { currentPlayerIndex, players, shouldSkipNextPlayer } =
+                    gameState;
+                const numberOfPlayers = players.length;
+                const nextPlayerIndex =
+                    currentPlayerIndex +
+                    ((shouldSkipNextPlayer ? 2 : 1) % numberOfPlayers);
 
-                gameState.currentPlayerIndex =
-                    (currentPlayerIndex + 1) % players.length;
+                gameState.currentPlayerIndex = nextPlayerIndex;
 
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,

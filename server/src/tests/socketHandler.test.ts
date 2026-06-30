@@ -394,7 +394,7 @@ describe("registerSocketEvents", () => {
                     });
                     setTimeout(() => {
                         res(undefined);
-                    }, 100);
+                    }, 50);
                 });
 
                 clientSockets[dealerIndex].emit("play_cards", {
@@ -533,7 +533,7 @@ describe("registerSocketEvents", () => {
                 return turnStartedPromise;
             });
 
-            test.skip("Should peform special effects, two 8s", async () => {
+            test("Should peform special effects, two 8s", async () => {
                 const cardsPlayedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].on("cards_played", () => {
                         res(undefined);
@@ -578,6 +578,110 @@ describe("registerSocketEvents", () => {
                         "turn_started",
                         ({ currentPlayerIndex: newIndex }) => {
                             expect(newIndex).toBe(
+                                (currentPlayerIndex + 2) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                return turnStartedPromise;
+            });
+
+            test("Should peform special effects, 7", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                const oneCardReceivedPromise = new Promise((res) => {
+                    clientSockets[(currentPlayerIndex + 1) % MAX_ROOM_SIZE].on(
+                        "hand_update",
+                        ({ updatedHand }) => {
+                            expect(updatedHand.length).toBe(
+                                START_HAND_SIZE + 1
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "7", suit: "clubs" }],
+                });
+
+                await Promise.all([
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    oneCardReceivedPromise,
+                ]);
+
+                clientSockets[currentPlayerIndex].emit("end_turn");
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex: newIndex }) => {
+                            expect(newIndex).toBe(
+                                (currentPlayerIndex + 1) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                return turnStartedPromise;
+            });
+
+            test("Should peform special effects, Ace", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdateNotReceived = new Promise((res) => {
+                    clientSockets[(currentPlayerIndex + 1) % MAX_ROOM_SIZE].on(
+                        "hand_update",
+                        () => {
+                            expect.fail();
+                        }
+                    );
+                    setTimeout(() => {
+                        res(undefined);
+                    }, 50);
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "A", suit: "clubs" }],
+                });
+
+                await Promise.all([
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    handUpdateNotReceived,
+                ]);
+
+                clientSockets[currentPlayerIndex].emit("end_turn");
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex: newPlayerIndex }) => {
+                            expect(newPlayerIndex).toBe(
                                 (currentPlayerIndex + 2) % MAX_ROOM_SIZE
                             );
                             res(undefined);

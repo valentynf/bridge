@@ -38,6 +38,7 @@ export type BridgeGameState = {
     jackSuit: CardSuit;
     pendingSpecialEffects: SpecialAction[];
     reshuffleCount: number;
+    shouldSkipNextPlayer: boolean;
 };
 
 export type LobbyMember = {

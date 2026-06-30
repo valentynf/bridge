@@ -8,8 +8,8 @@ import {
 function App() {
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
 
-    socket.on("room_created", (args) => {
-        console.log(args);
+    socket.on("room_created", () => {
+        //console.log(args);
     });
 
     socket.on("room_joined", () => {

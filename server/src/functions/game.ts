@@ -350,8 +350,9 @@ export const generateInitialState = (
         currentPlayerIndex: dealerIndex,
         drawPile,
         activePile,
-        jackSuit: "diamonds", //it doesn't matter which suit is here
+        jackSuit: "diamonds",
         pendingSpecialEffects,
         reshuffleCount: 0,
+        shouldSkipNextPlayer: false,
     };
 };
