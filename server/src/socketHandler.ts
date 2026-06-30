@@ -296,6 +296,7 @@ export class SocketHandler {
                     ((shouldSkipNextPlayer ? 2 : 1) % numberOfPlayers);
 
                 gameState.currentPlayerIndex = nextPlayerIndex;
+                gameState.shouldSkipNextPlayer = false;
 
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,

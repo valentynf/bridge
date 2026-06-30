@@ -122,8 +122,12 @@ describe("dealCards", () => {
 });
 
 describe("reverseDealCards", () => {
-    test("Should return 36 cards", () => {
+    test("Should return 36 unique cards", () => {
         const predictableDeck = reverseDealCards([[], [], [], []]);
+        const cardsSet = new Set(
+            predictableDeck.map((card) => `${card.rank}+${card.suit}`)
+        );
+        expect(cardsSet.size).toBe(DECK_SIZE);
         expect(predictableDeck.length).toBe(DECK_SIZE);
     });
 
