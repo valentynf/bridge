@@ -174,6 +174,9 @@ export class SocketHandler {
                     activePile.length === 1 &&
                     reshuffleCount === 0 &&
                     currentPlayerIndex === currentDealerIndex;
+                const onlyPlayedJacks: boolean =
+                    cardsToPlay.length > 0 &&
+                    cardsToPlay.every((card) => card.rank === "J");
 
                 if (isDealersTurn) {
                     if (cardsToPlay.length > 0) {
@@ -262,6 +265,10 @@ export class SocketHandler {
                         gameState.activePile = activePileAfterEffects;
                     }
                 }
+                if (onlyPlayedJacks) {
+                    socket.emit("set_jack_suit");
+                    gameState.isPendingSuitDeclaration = true;
+                }
             });
             socket.on("end_turn", () => {
                 const currentRoomCode = [...socket.rooms].filter(
@@ -287,13 +294,23 @@ export class SocketHandler {
                     });
                     return;
                 }
+                const {
+                    currentPlayerIndex,
+                    players,
+                    shouldSkipNextPlayer,
+                    isPendingSuitDeclaration,
+                } = gameState;
+                if (isPendingSuitDeclaration) {
+                    socket.emit("error", {
+                        error: "Must declare suit before ending the turn",
+                    });
+                    return;
+                }
 
-                const { currentPlayerIndex, players, shouldSkipNextPlayer } =
-                    gameState;
                 const numberOfPlayers = players.length;
                 const nextPlayerIndex =
-                    currentPlayerIndex +
-                    ((shouldSkipNextPlayer ? 2 : 1) % numberOfPlayers);
+                    (currentPlayerIndex + (shouldSkipNextPlayer ? 2 : 1)) %
+                    numberOfPlayers;
 
                 gameState.currentPlayerIndex = nextPlayerIndex;
                 gameState.shouldSkipNextPlayer = false;
@@ -301,6 +318,35 @@ export class SocketHandler {
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
                 });
+            });
+            socket.on("declare_suit", ({ suit }) => {
+                const currentRoomCode = [...socket.rooms].filter(
+                    (roomId) => roomId !== socket.id
+                )[0];
+                if (!currentRoomCode) {
+                    socket.emit("error", {
+                        error: `The player hasn't joined any room`,
+                    });
+                    return;
+                }
+                const currentRoom = this.lobbyRooms.get(currentRoomCode);
+                if (!currentRoom) {
+                    socket.emit("error", {
+                        error: `Invalid room id`,
+                    });
+                    return;
+                }
+                const { gameState } = currentRoom;
+                if (!gameState) {
+                    socket.emit("error", {
+                        error: `The game has not started yet`,
+                    });
+                    return;
+                }
+
+                gameState.jackSuit = suit;
+                gameState.isPendingSuitDeclaration = false;
+                this.io.to(currentRoomCode).emit("suit_declared", { suit });
             });
         });
     }

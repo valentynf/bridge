@@ -80,7 +80,7 @@ Other players never see another player's actual cards. They see `handCount` inst
 | --------------- | --- | ----------- | ----------------------------- |
 | `set_jack_suit` | S→C | sender only | `{ }` — prompt to pick a suit |
 | `declare_suit`  | C→S | sender      | `{ suit: Suit }`              |
-| `suit_declared` | S→C | all in room | `{ playerId, suit }`          |
+| `suit_declared` | S→C | all in room | `{ suit }`                    |
 
 ### Bridge
 

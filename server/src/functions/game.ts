@@ -354,5 +354,6 @@ export const generateInitialState = (
         pendingSpecialEffects,
         reshuffleCount: 0,
         shouldSkipNextPlayer: false,
+        isPendingSuitDeclaration: false,
     };
 };

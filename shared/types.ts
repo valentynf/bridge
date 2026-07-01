@@ -39,6 +39,7 @@ export type BridgeGameState = {
     pendingSpecialEffects: SpecialAction[];
     reshuffleCount: number;
     shouldSkipNextPlayer: boolean;
+    isPendingSuitDeclaration: boolean;
 };
 
 export type LobbyMember = {
@@ -76,6 +77,8 @@ export interface ServerToClientEvents {
     }) => void;
     hand_update: (payload: { updatedHand: Card[] }) => void;
     turn_started: (payload: { currentPlayerIndex: number }) => void;
+    set_jack_suit: () => void;
+    suit_declared: (payload: { suit: CardSuit }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -84,4 +87,5 @@ export interface ClientToServerEvents {
     join_room: (payload: { playerName: string; roomCode: string }) => void;
     player_ready: () => void;
     play_cards: (payload: { cardsToPlay: Card[] }) => void;
+    declare_suit: (payload: { suit: CardSuit }) => void;
 }
