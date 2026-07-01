@@ -79,6 +79,10 @@ export interface ServerToClientEvents {
     turn_started: (payload: { currentPlayerIndex: number }) => void;
     set_jack_suit: () => void;
     suit_declared: (payload: { suit: CardSuit }) => void;
+    can_bridge: () => void;
+    bridge_declared: () => void;
+    round_won: (payload: { winnerIndex: number }) => void;
+    round_ended: () => void; //add payload later
 }
 
 export interface ClientToServerEvents {
@@ -88,4 +92,5 @@ export interface ClientToServerEvents {
     player_ready: () => void;
     play_cards: (payload: { cardsToPlay: Card[] }) => void;
     declare_suit: (payload: { suit: CardSuit }) => void;
+    declare_bridge: () => void;
 }

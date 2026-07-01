@@ -853,6 +853,56 @@ describe("registerSocketEvents", () => {
 
                 return errorReceivedPromise;
             });
+            test("Should end round after bridge declaring", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                const canBridgePromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("can_bridge", () => {
+                        res(undefined);
+                    });
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [
+                        { rank: "10", suit: "spades" },
+                        { rank: "10", suit: "hearts" },
+                        { rank: "10", suit: "diamonds" },
+                    ],
+                });
+
+                await Promise.all([
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    canBridgePromise,
+                ]);
+
+                clientSockets[currentPlayerIndex].emit("declare_bridge");
+
+                const roundWonPromise = new Promise((res) => {
+                    clientSockets[0].on("round_won", ({ winnerIndex }) => {
+                        expect(winnerIndex).toBe(currentPlayerIndex);
+                        res(undefined);
+                    });
+                });
+
+                const roundEndedPromise = new Promise((res) => {
+                    clientSockets[0].on("round_ended", () => {
+                        res(undefined);
+                    });
+                });
+
+                return Promise.all([roundWonPromise, roundEndedPromise]);
+            });
         });
     });
     describe("end_turn", () => {

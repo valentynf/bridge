@@ -265,6 +265,16 @@ export class SocketHandler {
                         gameState.activePile = activePileAfterEffects;
                     }
                 }
+                if (gameState.activePile.length > 3) {
+                    const canBridge =
+                        new Set(
+                            gameState.activePile
+                                .slice(0, 4)
+                                .map((card) => card.rank)
+                        ).size === 1;
+                    if (canBridge) socket.emit("can_bridge");
+                }
+
                 if (onlyPlayedJacks) {
                     socket.emit("set_jack_suit");
                     gameState.isPendingSuitDeclaration = true;
@@ -347,6 +357,39 @@ export class SocketHandler {
                 gameState.jackSuit = suit;
                 gameState.isPendingSuitDeclaration = false;
                 this.io.to(currentRoomCode).emit("suit_declared", { suit });
+            });
+            socket.on("declare_bridge", () => {
+                const currentRoomCode = [...socket.rooms].filter(
+                    (roomId) => roomId !== socket.id
+                )[0];
+                if (!currentRoomCode) {
+                    socket.emit("error", {
+                        error: `The player hasn't joined any room`,
+                    });
+                    return;
+                }
+                const currentRoom = this.lobbyRooms.get(currentRoomCode);
+                if (!currentRoom) {
+                    socket.emit("error", {
+                        error: `Invalid room id`,
+                    });
+                    return;
+                }
+                const { gameState } = currentRoom;
+                if (!gameState) {
+                    socket.emit("error", {
+                        error: `The game has not started yet`,
+                    });
+                    return;
+                }
+
+                const { currentPlayerIndex } = gameState;
+
+                this.io.to(currentRoomCode).emit("bridge_declared");
+                this.io
+                    .to(currentRoomCode)
+                    .emit("round_won", { winnerIndex: currentPlayerIndex });
+                this.io.to(currentRoomCode).emit("round_ended");
             });
         });
     }

@@ -90,7 +90,7 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 | ----------------- | --- | ----------- | --------------------------------- |
 | `can_bridge`      | S→C | sender only | `{ }` — player can declare bridge |
 | `declare_bridge`  | C→S | sender      | `{ }`                             |
-| `bridge_declared` | S→C | all in room | `{ playerId }`                    |
+| `bridge_declared` | S→C | all in room | `{ }`                             |
 
 ---
 
