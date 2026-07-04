@@ -220,6 +220,10 @@ export class SocketHandler {
                         }
                         gameState.drawPile = drawPileAfterEffects;
                         gameState.activePile = activePileAfterEffects;
+                        this.io.to(currentRoomCode).emit("effects_applied", {
+                            specialEffects,
+                            affectedPlayerIndex,
+                        });
                     }
 
                     gameState.currentPlayerIndex =
@@ -295,6 +299,10 @@ export class SocketHandler {
                         }
                         gameState.drawPile = drawPileAfterEffects;
                         gameState.activePile = activePileAfterEffects;
+                        this.io.to(currentRoomCode).emit("effects_applied", {
+                            specialEffects,
+                            affectedPlayerIndex,
+                        });
                     }
                 }
                 gameState.hasActedThisTurn = true;

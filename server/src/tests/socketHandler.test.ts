@@ -558,6 +558,25 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
+                const effectsAppliedReceivedPromise = new Promise((res) => {
+                    clientSockets[3].on(
+                        "effects_applied",
+                        ({ specialEffects, affectedPlayerIndex }) => {
+                            expect(specialEffects).toEqual([
+                                "TAKE_CARD",
+                                "TAKE_CARD",
+                                "TAKE_CARD",
+                                "TAKE_CARD",
+                                "SKIP_TURN",
+                            ]);
+                            expect(affectedPlayerIndex).toBe(
+                                (currentPlayerIndex + 1) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
                 clientSockets[currentPlayerIndex].emit("play_cards", {
                     cardsToPlay: [
                         { rank: "8", suit: "diamonds" },
@@ -569,6 +588,7 @@ describe("registerSocketEvents", () => {
                     cardsPlayedPromise,
                     handUpdatedPromise,
                     fourCardsReceivedPromise,
+                    effectsAppliedReceivedPromise,
                 ]);
 
                 clientSockets[currentPlayerIndex].emit("end_turn");
@@ -613,6 +633,19 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
+                const effectsAppliedReceivedPromise = new Promise((res) => {
+                    clientSockets[3].on(
+                        "effects_applied",
+                        ({ specialEffects, affectedPlayerIndex }) => {
+                            expect(specialEffects).toEqual(["TAKE_CARD"]);
+                            expect(affectedPlayerIndex).toBe(
+                                (currentPlayerIndex + 1) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
                 clientSockets[currentPlayerIndex].emit("play_cards", {
                     cardsToPlay: [{ rank: "7", suit: "clubs" }],
                 });
@@ -621,6 +654,7 @@ describe("registerSocketEvents", () => {
                     cardsPlayedPromise,
                     handUpdatedPromise,
                     oneCardReceivedPromise,
+                    effectsAppliedReceivedPromise,
                 ]);
 
                 clientSockets[currentPlayerIndex].emit("end_turn");
@@ -665,6 +699,19 @@ describe("registerSocketEvents", () => {
                     }, 50);
                 });
 
+                const effectsAppliedReceivedPromise = new Promise((res) => {
+                    clientSockets[3].on(
+                        "effects_applied",
+                        ({ specialEffects, affectedPlayerIndex }) => {
+                            expect(specialEffects).toEqual(["SKIP_TURN"]);
+                            expect(affectedPlayerIndex).toBe(
+                                (currentPlayerIndex + 1) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
                 clientSockets[currentPlayerIndex].emit("play_cards", {
                     cardsToPlay: [{ rank: "A", suit: "clubs" }],
                 });
@@ -673,6 +720,7 @@ describe("registerSocketEvents", () => {
                     cardsPlayedPromise,
                     handUpdatedPromise,
                     handUpdateNotReceived,
+                    effectsAppliedReceivedPromise,
                 ]);
 
                 clientSockets[currentPlayerIndex].emit("end_turn");

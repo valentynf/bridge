@@ -64,11 +64,9 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Gameplay — effects (applied immediately after cards_played)
 
-| Event            | Dir | Audience                        | Payload                                                                                           |
-| ---------------- | --- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `effect_applied` | S→C | all in room (targets get extra) | 7s: `{ type: "draw", targetIndex, cardsToDraw }` — target also gets: `{ drawnCards }`             |
-|                  |     |                                 | 8s: `{ type: "draw_and_skip", targets[], cardsToDraw }` — each target also gets: `{ drawnCards }` |
-|                  |     |                                 | Ace: `{ type: "skip", skippedIndexes[] }`                                                         |
+| Event             | Dir | Audience    | Payload                                                    |
+| ----------------- | --- | ----------- | ---------------------------------------------------------- |
+| `effects_applied` | S→C | all in room | `{ specialEffects: SpecialEffect[], affectedPlayerIndex }` |
 
 ---
 

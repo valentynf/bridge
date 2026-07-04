@@ -89,6 +89,10 @@ export interface ServerToClientEvents {
         drawPileCount: number;
         handCount: number;
     }) => void;
+    effects_applied: (payload: {
+        specialEffects: SpecialEffect[];
+        affectedPlayerIndex: number;
+    }) => void;
 }
 
 export interface ClientToServerEvents {
