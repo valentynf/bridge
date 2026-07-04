@@ -240,20 +240,7 @@ export const playCards = (
         }
     }
 
-    for (const card of cardsToPlay) {
-        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
-        if (card.rank === "8")
-            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
-        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
-    }
-    /* since distributing As and 8s across different players is not a v1 feature,
-    we stick to 1 SKIP_TURN, because effects will always affect next player only */
-    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
-        pendingEffects = pendingEffects.filter(
-            (effect) => effect === "TAKE_CARD"
-        );
-        pendingEffects.push("SKIP_TURN");
-    }
+    pendingEffects = countSpecialEffects(cardsToPlay);
 
     return {
         updatedHand,
@@ -287,6 +274,25 @@ export const countPoints = (
     });
 
     return updatedScores;
+};
+
+export const countSpecialEffects = (cards: Card[]): SpecialEffect[] => {
+    let pendingEffects: SpecialEffect[] = [];
+    for (const card of cards) {
+        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
+        if (card.rank === "8")
+            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
+        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
+    }
+    /* since distributing As and 8s across different players is not a v1 feature,
+    we stick to 1 SKIP_TURN, because effects will always affect next player only */
+    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
+        pendingEffects = pendingEffects.filter(
+            (effect) => effect === "TAKE_CARD"
+        );
+        pendingEffects.push("SKIP_TURN");
+    }
+    return pendingEffects;
 };
 
 export const dealerOpeningPlay = (

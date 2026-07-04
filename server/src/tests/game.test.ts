@@ -3,6 +3,7 @@ import {
     applyPendingEffects,
     checkCanPlay,
     countPoints,
+    countSpecialEffects,
     dealerOpeningPlay,
     generateInitialState,
     playCards,
@@ -818,6 +819,38 @@ describe("countPoints", () => {
             twoJacksToDouble
         );
         expect(updatedScores).toEqual([130, 200, 30, 10]);
+    });
+});
+
+describe("countSpecialEffects", () => {
+    test("Should return one skipped turn (no distribution)", () => {
+        const cards: Card[] = [
+            { rank: "A", suit: "clubs" },
+            { rank: "A", suit: "diamonds" },
+        ];
+        const effects: SpecialEffect[] = countSpecialEffects(cards);
+        expect(effects).toEqual(["SKIP_TURN"]);
+    });
+    test("Should return skipped turn, two take cards", () => {
+        const cards: Card[] = [{ rank: "8", suit: "clubs" }];
+        const effects: SpecialEffect[] = countSpecialEffects(cards);
+        expect(effects).toEqual(["TAKE_CARD", "TAKE_CARD", "SKIP_TURN"]);
+    });
+    test("Should return two take cards", () => {
+        const cards: Card[] = [
+            { rank: "7", suit: "clubs" },
+            { rank: "7", suit: "diamonds" },
+        ];
+        const effects: SpecialEffect[] = countSpecialEffects(cards);
+        expect(effects).toEqual(["TAKE_CARD", "TAKE_CARD"]);
+    });
+    test("Should return empty array", () => {
+        const cards: Card[] = [
+            { rank: "10", suit: "clubs" },
+            { rank: "10", suit: "diamonds" },
+        ];
+        const effects: SpecialEffect[] = countSpecialEffects(cards);
+        expect(effects).toEqual([]);
     });
 });
 
