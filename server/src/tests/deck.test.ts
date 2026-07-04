@@ -3,6 +3,7 @@ import {
     countHandPoints,
     createNewDeck,
     dealCards,
+    reshuffleDeck,
     reverseDealCards,
     shuffleDeck,
 } from "../functions/deck.js";
@@ -65,6 +66,56 @@ describe("shuffleDeck", () => {
             .map((card) => card.rank + card.suit)
             .sort((a, b) => a.localeCompare(b));
         expect(sortedUnshuffledDeck).toEqual(sortedShuffledDeck);
+    });
+});
+
+describe("reshuffleDeck", () => {
+    const testActivePile: Card[] = [
+        { rank: "7", suit: "clubs" },
+        { rank: "7", suit: "diamonds" },
+        { rank: "7", suit: "hearts" },
+        { rank: "7", suit: "spades" },
+        { rank: "8", suit: "clubs" },
+        { rank: "8", suit: "diamonds" },
+        { rank: "9", suit: "clubs" },
+        { rank: "10", suit: "spades" },
+        { rank: "Q", suit: "clubs" },
+        { rank: "J", suit: "diamonds" },
+        { rank: "Q", suit: "hearts" },
+        { rank: "10", suit: "clubs" },
+        { rank: "K", suit: "diamonds" },
+        { rank: "6", suit: "clubs" },
+    ];
+
+    test("Should be same number of cards after shuffle", () => {
+        const { updatedActivePile, updatedDrawPile } =
+            reshuffleDeck(testActivePile);
+        expect(testActivePile.length).toBe(
+            updatedActivePile.length + updatedDrawPile.length
+        );
+    });
+
+    test("Should be a same set of cards after shuffle", () => {
+        const cardsSetBefore = new Set(
+            testActivePile.map((card) => `${card.rank}+${card.suit}`)
+        );
+        const { updatedActivePile, updatedDrawPile } =
+            reshuffleDeck(testActivePile);
+
+        const cardsSetAfter = new Set(
+            [...updatedActivePile, ...updatedDrawPile].map(
+                (card) => `${card.rank}+${card.suit}`
+            )
+        );
+
+        expect(cardsSetBefore).toEqual(cardsSetAfter);
+    });
+
+    test("Should preserve top active pile card after shuffle", () => {
+        const topActivePileCardBefore = testActivePile[0];
+        const { updatedActivePile } = reshuffleDeck(testActivePile);
+        const topActiveCardAfter = updatedActivePile[0];
+        expect(topActivePileCardBefore).toEqual(topActiveCardAfter);
     });
 });
 
