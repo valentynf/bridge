@@ -40,6 +40,7 @@ export type BridgeGameState = {
     reshuffleCount: number;
     shouldSkipNextPlayer: boolean;
     isPendingSuitDeclaration: boolean;
+    hasActedThisTurn: boolean;
 };
 
 export type LobbyMember = {
@@ -83,6 +84,11 @@ export interface ServerToClientEvents {
     bridge_declared: () => void;
     round_won: (payload: { winnerIndex: number }) => void;
     round_ended: () => void; //add payload later
+    card_drawn: (payload: {
+        playerId: string;
+        drawPileCount: number;
+        handCount: number;
+    }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -93,4 +99,5 @@ export interface ClientToServerEvents {
     play_cards: (payload: { cardsToPlay: Card[] }) => void;
     declare_suit: (payload: { suit: CardSuit }) => void;
     declare_bridge: () => void;
+    draw_card: () => void;
 }

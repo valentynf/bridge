@@ -43,13 +43,13 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Gameplay — play & draw
 
-| Event          | Dir | Audience                        | Payload                                                                           |
-| -------------- | --- | ------------------------------- | --------------------------------------------------------------------------------- |
-| `play_cards`   | C→S | sender                          | `{ cardsToPlay: Card[] }`                                                         |
-| `cards_played` | S→C | all in room                     | `{ playerId, cardsPlayed, activePileTopCard, handCount }`                         |
-| `hand_update`  | S→C | sender only                     | `{ updatedHand }` — reusable for any hand change (play, draw, effects)            |
-| `draw_card`    | C→S | sender                          | `{ }`                                                                             |
-| `card_drawn`   | S→C | all in room (sender gets extra) | All: `{ playerId, drawPileCount, handCount }` — Sender also gets: `{ drawnCard }` |
+| Event          | Dir | Audience    | Payload                                                                |
+| -------------- | --- | ----------- | ---------------------------------------------------------------------- |
+| `play_cards`   | C→S | sender      | `{ cardsToPlay: Card[] }`                                              |
+| `cards_played` | S→C | all in room | `{ playerId, cardsPlayed, activePileTopCard, handCount }`              |
+| `hand_update`  | S→C | sender only | `{ updatedHand }` — reusable for any hand change (play, draw, effects) |
+| `draw_card`    | C→S | sender      | `{ }`                                                                  |
+| `card_drawn`   | S→C | all in room | `{ playerId, drawPileCount, handCount }`                               |
 
 ---
 

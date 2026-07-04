@@ -27,6 +27,19 @@ export const shuffleDeck = (unshuffledDeck: Card[]): Card[] => {
     return shuffledDeck;
 };
 
+export const reshuffleDeck = (
+    activePile: Card[]
+): { updatedActivePile: Card[]; updatedDrawPile: Card[] } => {
+    let updatedActivePile = [...activePile];
+    const activePileTopCard = updatedActivePile.shift();
+    if (!activePileTopCard) {
+        return { updatedActivePile: activePile, updatedDrawPile: [] };
+    }
+    const updatedDrawPile = shuffleDeck([...updatedActivePile]);
+    updatedActivePile = [activePileTopCard];
+    return { updatedActivePile, updatedDrawPile };
+};
+
 export const dealCards = (
     dealerIndex: number,
     numberOfPlayers: number,

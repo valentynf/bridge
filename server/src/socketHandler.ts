@@ -18,6 +18,7 @@ import {
     playCards,
 } from "./functions/game.js";
 import type { Socket } from "socket.io";
+import { reshuffleDeck } from "./functions/deck.js";
 
 export class SocketHandler {
     private lobbyRooms: Map<string, LobbyRoom> = new Map();
@@ -228,6 +229,12 @@ export class SocketHandler {
                         currentPlayerIndex: gameState.currentPlayerIndex,
                     });
                 } else {
+                    if (cardsToPlay.length === 0) {
+                        socket.emit("error", {
+                            error: `Cannot play empty hand`,
+                        });
+                        return;
+                    }
                     const {
                         updatedHand,
                         updatedActivePile,
@@ -290,6 +297,7 @@ export class SocketHandler {
                         gameState.activePile = activePileAfterEffects;
                     }
                 }
+                gameState.hasActedThisTurn = true;
                 if (gameState.activePile.length > 3) {
                     const canBridge =
                         new Set(
@@ -360,6 +368,41 @@ export class SocketHandler {
                     .to(currentRoomCode)
                     .emit("round_won", { winnerIndex: currentPlayerIndex });
                 this.io.to(currentRoomCode).emit("round_ended");
+            });
+            socket.on("draw_card", () => {
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
+                    return;
+                }
+                const { gameState, currentRoomCode } = gameContext;
+                const { currentPlayerIndex, hasActedThisTurn } = gameState;
+                if (hasActedThisTurn) {
+                    socket.emit("error", {
+                        error: "You have already acted during this turn",
+                    });
+                    return;
+                }
+                let topDrawPileCard = gameState.drawPile.shift();
+                if (!topDrawPileCard) {
+                    const { updatedActivePile, updatedDrawPile } =
+                        reshuffleDeck(gameState.activePile);
+                    gameState.activePile = updatedActivePile;
+                    gameState.drawPile = updatedDrawPile;
+                    topDrawPileCard = gameState.drawPile.shift();
+                    if (!topDrawPileCard) return;
+                }
+                gameState.players[currentPlayerIndex].hand.push(
+                    topDrawPileCard
+                );
+                const updatedHand: Card[] =
+                    gameState.players[currentPlayerIndex].hand;
+                gameState.hasActedThisTurn = true;
+                this.io.to(currentRoomCode).emit("card_drawn", {
+                    playerId: socket.id,
+                    drawPileCount: gameState.drawPile.length,
+                    handCount: updatedHand.length,
+                });
+                socket.emit("hand_update", { updatedHand });
             });
         });
     }

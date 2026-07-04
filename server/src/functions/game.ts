@@ -12,6 +12,7 @@ import {
     countHandPoints,
     createNewDeck,
     dealCards,
+    reshuffleDeck,
     shuffleDeck,
 } from "./deck.js";
 import { areSameCards } from "./utility.js";
@@ -39,11 +40,14 @@ export const applyPendingEffects = (
             if (topDrawPileCard) {
                 updatedHand.push(topDrawPileCard);
             } else {
-                // if (!reshuffled), implement scenario with empty deck (only 1 card on the table)
-                const topActivePileCard = updatedActivePile.shift();
-                updatedDrawPile = shuffleDeck(updatedActivePile);
+                const {
+                    updatedActivePile: activePileAfterReshuffle,
+                    updatedDrawPile: drawPileAfterReshuffle,
+                } = reshuffleDeck(updatedActivePile);
+                updatedDrawPile = drawPileAfterReshuffle;
+                updatedActivePile = activePileAfterReshuffle;
+
                 const topDrawPileCard = updatedDrawPile.shift();
-                if (topActivePileCard) updatedActivePile = [topActivePileCard];
                 if (topDrawPileCard) updatedHand.push(topDrawPileCard);
                 reshuffled = true;
             }
@@ -361,5 +365,6 @@ export const generateInitialState = (
         reshuffleCount: 0,
         shouldSkipNextPlayer: false,
         isPendingSuitDeclaration: false,
+        hasActedThisTurn: false,
     };
 };
