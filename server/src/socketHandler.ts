@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import type {
+    BridgeGameState,
     Card,
     ClientToServerEvents,
     GamePlayer,
@@ -16,6 +17,7 @@ import {
     generateInitialState,
     playCards,
 } from "./functions/game.js";
+import type { Socket } from "socket.io";
 
 export class SocketHandler {
     private lobbyRooms: Map<string, LobbyRoom> = new Map();
@@ -138,29 +140,11 @@ export class SocketHandler {
                 }
             });
             socket.on("play_cards", ({ cardsToPlay }) => {
-                const currentRoomCode = [...socket.rooms].filter(
-                    (roomId) => roomId !== socket.id
-                )[0];
-                if (!currentRoomCode) {
-                    socket.emit("error", {
-                        error: `The player hasn't joined any room`,
-                    });
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
                     return;
                 }
-                const currentRoom = this.lobbyRooms.get(currentRoomCode);
-                if (!currentRoom) {
-                    socket.emit("error", {
-                        error: `Invalid room id`,
-                    });
-                    return;
-                }
-                const { gameState } = currentRoom;
-                if (!gameState) {
-                    socket.emit("error", {
-                        error: `The game has not started yet`,
-                    });
-                    return;
-                }
+                const { gameState, currentRoomCode } = gameContext;
                 const {
                     activePile,
                     drawPile,
@@ -321,29 +305,11 @@ export class SocketHandler {
                 }
             });
             socket.on("end_turn", () => {
-                const currentRoomCode = [...socket.rooms].filter(
-                    (roomId) => roomId !== socket.id
-                )[0];
-                if (!currentRoomCode) {
-                    socket.emit("error", {
-                        error: `The player hasn't joined any room`,
-                    });
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
                     return;
                 }
-                const currentRoom = this.lobbyRooms.get(currentRoomCode);
-                if (!currentRoom) {
-                    socket.emit("error", {
-                        error: `Invalid room id`,
-                    });
-                    return;
-                }
-                const { gameState } = currentRoom;
-                if (!gameState) {
-                    socket.emit("error", {
-                        error: `The game has not started yet`,
-                    });
-                    return;
-                }
+                const { gameState, currentRoomCode } = gameContext;
                 const {
                     currentPlayerIndex,
                     players,
@@ -370,58 +336,22 @@ export class SocketHandler {
                 });
             });
             socket.on("declare_suit", ({ suit }) => {
-                const currentRoomCode = [...socket.rooms].filter(
-                    (roomId) => roomId !== socket.id
-                )[0];
-                if (!currentRoomCode) {
-                    socket.emit("error", {
-                        error: `The player hasn't joined any room`,
-                    });
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
                     return;
                 }
-                const currentRoom = this.lobbyRooms.get(currentRoomCode);
-                if (!currentRoom) {
-                    socket.emit("error", {
-                        error: `Invalid room id`,
-                    });
-                    return;
-                }
-                const { gameState } = currentRoom;
-                if (!gameState) {
-                    socket.emit("error", {
-                        error: `The game has not started yet`,
-                    });
-                    return;
-                }
+                const { gameState, currentRoomCode } = gameContext;
 
                 gameState.jackSuit = suit;
                 gameState.isPendingSuitDeclaration = false;
                 this.io.to(currentRoomCode).emit("suit_declared", { suit });
             });
             socket.on("declare_bridge", () => {
-                const currentRoomCode = [...socket.rooms].filter(
-                    (roomId) => roomId !== socket.id
-                )[0];
-                if (!currentRoomCode) {
-                    socket.emit("error", {
-                        error: `The player hasn't joined any room`,
-                    });
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
                     return;
                 }
-                const currentRoom = this.lobbyRooms.get(currentRoomCode);
-                if (!currentRoom) {
-                    socket.emit("error", {
-                        error: `Invalid room id`,
-                    });
-                    return;
-                }
-                const { gameState } = currentRoom;
-                if (!gameState) {
-                    socket.emit("error", {
-                        error: `The game has not started yet`,
-                    });
-                    return;
-                }
+                const { gameState, currentRoomCode } = gameContext;
 
                 const { currentPlayerIndex } = gameState;
 
@@ -445,5 +375,35 @@ export class SocketHandler {
 
     setRoom(roomCode: string, room: LobbyRoom) {
         this.lobbyRooms.set(roomCode, room);
+    }
+
+    private getGameContext(
+        socket: Socket<ClientToServerEvents, ServerToClientEvents>
+    ): { currentRoomCode: string; gameState: BridgeGameState } | undefined {
+        const currentRoomCode = [...socket.rooms].filter(
+            (roomId) => roomId !== socket.id
+        )[0];
+        if (!currentRoomCode) {
+            socket.emit("error", {
+                error: `The player hasn't joined any room`,
+            });
+            return;
+        }
+        const currentRoom = this.lobbyRooms.get(currentRoomCode);
+        if (!currentRoom) {
+            socket.emit("error", {
+                error: `Invalid room id`,
+            });
+            return;
+        }
+        const { gameState } = currentRoom;
+        if (!gameState) {
+            socket.emit("error", {
+                error: `The game has not started yet`,
+            });
+            return;
+        }
+
+        return { currentRoomCode, gameState };
     }
 }
