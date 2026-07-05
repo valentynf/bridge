@@ -1230,6 +1230,23 @@ describe("registerSocketEvents", () => {
 
                 return Promise.all([roundWonPromise, roundEndedPromise]);
             });
+            test("Should not successfuly declare bridge - illegal play", () => {
+                const bridgeDeclaredNotReceivedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on(
+                        "bridge_declared",
+                        () => {
+                            expect.fail();
+                        }
+                    );
+                    setTimeout(() => {
+                        res(undefined);
+                    }, 50);
+                });
+
+                clientSockets[currentPlayerIndex].emit("declare_bridge");
+
+                return bridgeDeclaredNotReceivedPromise;
+            });
         });
     });
     describe("end_turn", () => {

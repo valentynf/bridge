@@ -389,8 +389,20 @@ export class SocketHandler {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-                const { currentPlayerIndex, players, reshuffleCount } =
-                    gameState;
+                const {
+                    currentPlayerIndex,
+                    players,
+                    reshuffleCount,
+                    activePile,
+                } = gameState;
+                const canBridge =
+                    activePile.length >= 4 &&
+                    new Set(activePile.slice(0, 4).map((card) => card.rank))
+                        .size === 1;
+                if (!canBridge) {
+                    socket.emit("error", { error: "Not eligible to bridge" });
+                    return;
+                }
                 let scores: number[] = countPoints(
                     players.map((player) => player.hand),
                     currentPlayerIndex,
