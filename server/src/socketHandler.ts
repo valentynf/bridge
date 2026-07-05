@@ -226,8 +226,14 @@ export class SocketHandler {
                         });
                     }
 
-                    gameState.currentPlayerIndex =
-                        (currentPlayerIndex + 1) % players.length;
+                    if (gameState.shouldSkipNextPlayer) {
+                        gameState.currentPlayerIndex =
+                            (currentPlayerIndex + 2) % players.length;
+                        gameState.shouldSkipNextPlayer = false;
+                    } else {
+                        gameState.currentPlayerIndex =
+                            (currentPlayerIndex + 1) % players.length;
+                    }
 
                     this.io.to(currentRoomCode).emit("turn_started", {
                         currentPlayerIndex: gameState.currentPlayerIndex,

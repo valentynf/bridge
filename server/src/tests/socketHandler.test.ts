@@ -431,6 +431,261 @@ describe("registerSocketEvents", () => {
             });
         });
 
+        describe("Dealer turn with effects", () => {
+            let dealerIndex: number = 0;
+
+            afterEach(() => {
+                predictableDeck = undefined;
+            });
+
+            test("Should skip next player turn, Ace", async () => {
+                await new Promise<void>((resolve) => {
+                    let roomCode: string;
+                    clientSockets[0].once(
+                        "room_created",
+                        (payload) => (roomCode = payload.roomCode)
+                    );
+                    clientSockets[0].once("room_joined", () => {
+                        clientSockets[1].emit("join_room", {
+                            playerName: "testUser2",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[1].once("room_joined", () => {
+                        clientSockets[2].emit("join_room", {
+                            playerName: "testUser3",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[2].once("room_joined", () => {
+                        clientSockets[3].emit("join_room", {
+                            playerName: "testUser4",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[3].once("room_joined", () => {
+                        predictableDeck = reverseDealCards([
+                            [
+                                { rank: "6", suit: "diamonds" },
+                                { rank: "Q", suit: "clubs" },
+                                { rank: "10", suit: "clubs" },
+                                { rank: "10", suit: "hearts" },
+                                { rank: "A", suit: "clubs" },
+                            ],
+                            [],
+                            [],
+                            [],
+                        ]);
+                        mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                        clientSockets[0].emit("player_ready");
+                        clientSockets[1].emit("player_ready");
+                        clientSockets[2].emit("player_ready");
+                        clientSockets[3].emit("player_ready");
+                    });
+                    clientSockets[0].once("game_started", (payload) => {
+                        dealerIndex = payload.dealerIndex;
+                        resolve();
+                    });
+
+                    clientSockets[0].emit("create_room", {
+                        playerName: "testUser1",
+                    });
+                });
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex }) => {
+                            expect(currentPlayerIndex).toBe(
+                                (dealerIndex + 2) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: [],
+                });
+
+                return turnStartedPromise;
+            });
+            test("Should skip next player turn, draw two cards, 8", async () => {
+                await new Promise<void>((resolve) => {
+                    let roomCode: string;
+                    clientSockets[0].once(
+                        "room_created",
+                        (payload) => (roomCode = payload.roomCode)
+                    );
+                    clientSockets[0].once("room_joined", () => {
+                        clientSockets[1].emit("join_room", {
+                            playerName: "testUser2",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[1].once("room_joined", () => {
+                        clientSockets[2].emit("join_room", {
+                            playerName: "testUser3",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[2].once("room_joined", () => {
+                        clientSockets[3].emit("join_room", {
+                            playerName: "testUser4",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[3].once("room_joined", () => {
+                        predictableDeck = reverseDealCards([
+                            [
+                                { rank: "8", suit: "diamonds" },
+                                { rank: "Q", suit: "clubs" },
+                                { rank: "10", suit: "clubs" },
+                                { rank: "10", suit: "hearts" },
+                                { rank: "8", suit: "clubs" },
+                            ],
+                            [],
+                            [],
+                            [],
+                        ]);
+                        mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                        clientSockets[0].emit("player_ready");
+                        clientSockets[1].emit("player_ready");
+                        clientSockets[2].emit("player_ready");
+                        clientSockets[3].emit("player_ready");
+                    });
+                    clientSockets[0].once("game_started", (payload) => {
+                        dealerIndex = payload.dealerIndex;
+                        resolve();
+                    });
+
+                    clientSockets[0].emit("create_room", {
+                        playerName: "testUser1",
+                    });
+                });
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex }) => {
+                            expect(currentPlayerIndex).toBe(
+                                (dealerIndex + 2) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                const twoCardsReceivedPromise = new Promise((res) => {
+                    clientSockets[(dealerIndex + 1) % MAX_ROOM_SIZE].on(
+                        "hand_update",
+                        ({ updatedHand }) => {
+                            expect(updatedHand.length).toBe(
+                                START_HAND_SIZE + 2
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: [],
+                });
+
+                return Promise.all([
+                    turnStartedPromise,
+                    twoCardsReceivedPromise,
+                ]);
+            });
+            test("Should start next turn draw two cards, 7s", async () => {
+                await new Promise<void>((resolve) => {
+                    let roomCode: string;
+                    clientSockets[0].once(
+                        "room_created",
+                        (payload) => (roomCode = payload.roomCode)
+                    );
+                    clientSockets[0].once("room_joined", () => {
+                        clientSockets[1].emit("join_room", {
+                            playerName: "testUser2",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[1].once("room_joined", () => {
+                        clientSockets[2].emit("join_room", {
+                            playerName: "testUser3",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[2].once("room_joined", () => {
+                        clientSockets[3].emit("join_room", {
+                            playerName: "testUser4",
+                            roomCode,
+                        });
+                    });
+                    clientSockets[3].once("room_joined", () => {
+                        predictableDeck = reverseDealCards([
+                            [
+                                { rank: "7", suit: "diamonds" },
+                                { rank: "Q", suit: "clubs" },
+                                { rank: "10", suit: "clubs" },
+                                { rank: "10", suit: "hearts" },
+                                { rank: "7", suit: "clubs" },
+                            ],
+                            [],
+                            [],
+                            [],
+                        ]);
+                        mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                        clientSockets[0].emit("player_ready");
+                        clientSockets[1].emit("player_ready");
+                        clientSockets[2].emit("player_ready");
+                        clientSockets[3].emit("player_ready");
+                    });
+                    clientSockets[0].once("game_started", (payload) => {
+                        dealerIndex = payload.dealerIndex;
+                        resolve();
+                    });
+
+                    clientSockets[0].emit("create_room", {
+                        playerName: "testUser1",
+                    });
+                });
+
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex }) => {
+                            expect(currentPlayerIndex).toBe(
+                                (dealerIndex + 1) % MAX_ROOM_SIZE
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                const twoCardsReceivedPromise = new Promise((res) => {
+                    clientSockets[(dealerIndex + 1) % MAX_ROOM_SIZE].on(
+                        "hand_update",
+                        ({ updatedHand }) => {
+                            expect(updatedHand.length).toBe(
+                                START_HAND_SIZE + 2
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "7", suit: "diamonds" }],
+                });
+
+                return Promise.all([
+                    turnStartedPromise,
+                    twoCardsReceivedPromise,
+                ]);
+            });
+        });
+
         describe("Usual turn", () => {
             beforeEach(
                 () =>
