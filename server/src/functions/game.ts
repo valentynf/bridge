@@ -93,13 +93,15 @@ export const playCards = (
     activePile: Card[],
     drawPile: Card[],
     jackSuit: CardSuit
-): {
-    updatedHand: Card[];
-    updatedActivePile: Card[];
-    updatedDrawPile: Card[];
-    specialEffects: SpecialEffect[];
-    needsCover: boolean;
-} => {
+):
+    | {
+          updatedHand: Card[];
+          updatedActivePile: Card[];
+          updatedDrawPile: Card[];
+          specialEffects: SpecialEffect[];
+          needsCover: boolean;
+      }
+    | undefined => {
     const activePileTopCard = activePile[0];
     let updatedHand: Card[] = [...playersHand];
     const updatedActivePile: Card[] = [...activePile];
@@ -107,22 +109,14 @@ export const playCards = (
     let pendingEffects: SpecialEffect[] = [];
     let needsCover: boolean = false;
 
-    const unchangedData = {
-        updatedHand: playersHand,
-        updatedActivePile: activePile,
-        updatedDrawPile: drawPile,
-        specialEffects: [],
-        needsCover,
-    };
-
-    if (cardsToPlay.length === 0) return unchangedData;
+    if (cardsToPlay.length === 0) return undefined;
 
     if (
         !cardsToPlay.every((card) =>
             playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
-        return unchangedData;
+        return undefined;
 
     if (cardsToPlay.every((card) => card.rank === "6")) {
         const topSixCard = cardsToPlay[0];
@@ -132,7 +126,7 @@ export const playCards = (
                 (card.rank !== "6" && card.suit === topSixCard.suit)
         );
 
-        if (canCoverSix) return unchangedData;
+        if (canCoverSix) return undefined;
 
         updatedHand = updatedHand.filter(
             (card) =>
@@ -155,9 +149,9 @@ export const playCards = (
     if (cardsToPlay.length === 1) {
         if (activePileTopCard.rank === "J") {
             if (!checkCanPlay(activePileTopCard, cardsToPlay, jackSuit))
-                return unchangedData;
+                return undefined;
         } else if (!checkCanPlay(activePileTopCard, cardsToPlay))
-            return unchangedData;
+            return undefined;
 
         const matchesByJackSuit =
             activePileTopCard.rank === "J" && cardsToPlay[0].suit === jackSuit;
@@ -182,11 +176,11 @@ export const playCards = (
                     jackSuit
                 )
             )
-                return unchangedData;
+                return undefined;
         } else if (
             !checkCanPlay(activePileTopCard, [cardsToPlay[bottomCardIndex]])
         )
-            return unchangedData;
+            return undefined;
 
         const matchesByJackSuit =
             activePileTopCard.rank === "J" &&
@@ -240,7 +234,7 @@ export const playCards = (
                 updatedActivePile.unshift(...cardsToPlay);
             }
         } else {
-            return unchangedData;
+            return undefined;
         }
     }
 
@@ -303,22 +297,21 @@ export const dealerOpeningPlay = (
     playersHand: Card[],
     cardsToPlay: Card[],
     topActivePileCard: Card
-): { updatedHand: Card[]; updatedActivePile: Card[] } => {
+): { updatedHand: Card[]; updatedActivePile: Card[] } | undefined => {
     let updatedHand: Card[] = [...playersHand];
     const updatedActivePile: Card[] = [topActivePileCard];
-    const unchangedData = { updatedActivePile, updatedHand };
 
-    if (cardsToPlay.length === 0) return unchangedData;
+    if (cardsToPlay.length === 0) return { updatedActivePile, updatedHand };
 
     if (
         !cardsToPlay.every((card) =>
             playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
-        return unchangedData;
+        return undefined;
 
     if (!cardsToPlay.every((card) => card.rank === topActivePileCard.rank))
-        return unchangedData;
+        return undefined;
 
     updatedHand = updatedHand.filter(
         (card) =>

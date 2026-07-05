@@ -166,12 +166,16 @@ export class SocketHandler {
 
                 if (isDealersTurn) {
                     if (cardsToPlay.length > 0) {
-                        const { updatedActivePile, updatedHand } =
-                            dealerOpeningPlay(
-                                currentPlayer.hand,
-                                cardsToPlay,
-                                activePile[0]
-                            );
+                        const playResults = dealerOpeningPlay(
+                            currentPlayer.hand,
+                            cardsToPlay,
+                            activePile[0]
+                        );
+                        if (!playResults) {
+                            socket.emit("error", { error: "Illegal play" });
+                            return;
+                        }
+                        const { updatedActivePile, updatedHand } = playResults;
                         gameState.activePile = updatedActivePile;
                         this.io.to(currentRoomCode).emit("cards_played", {
                             playerId: currentPlayer.id,
@@ -245,18 +249,25 @@ export class SocketHandler {
                         });
                         return;
                     }
-                    const {
-                        updatedHand,
-                        updatedActivePile,
-                        updatedDrawPile,
-                        specialEffects,
-                    } = playCards(
+                    const playResults = playCards(
                         currentPlayer.hand,
                         cardsToPlay,
                         activePile,
                         drawPile,
                         jackSuit
                     );
+
+                    if (!playResults) {
+                        socket.emit("error", { error: "Illegal play" });
+                        return;
+                    }
+
+                    const {
+                        updatedHand,
+                        updatedActivePile,
+                        updatedDrawPile,
+                        specialEffects,
+                    } = playResults;
 
                     gameState.activePile = updatedActivePile;
                     gameState.drawPile = updatedDrawPile;

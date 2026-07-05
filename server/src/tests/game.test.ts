@@ -420,6 +420,9 @@ describe("playCards", () => {
             defaultDrawPile,
             defaultJackSuit
         );
+        if (!updatedData) {
+            expect.fail();
+        }
         const { needsCover } = updatedData;
         expect(needsCover).toBe(true);
     });
@@ -432,13 +435,7 @@ describe("playCards", () => {
             defaultDrawPile,
             defaultJackSuit
         );
-        expect(dataAfterTurn).toEqual({
-            updatedHand: defaultHand,
-            updatedActivePile: defaultActivePile,
-            updatedDrawPile: defaultDrawPile,
-            specialEffects: [],
-            needsCover: false,
-        });
+        expect(dataAfterTurn).toEqual(undefined);
     });
     test("Should return updated pile, match by Jack suit", () => {
         const cardsToPlay: Card[] = [{ rank: "7", suit: "diamonds" }];
@@ -606,7 +603,7 @@ describe("playCards", () => {
             needsCover: false,
         });
     });
-    test("Should return same data, illegal hand (wrong rank and suit)", () => {
+    test("Should return undefined, illegal hand (wrong rank and suit)", () => {
         const anotherHand: Card[] = [
             { rank: "J", suit: "clubs" },
             { rank: "8", suit: "spades" },
@@ -623,15 +620,9 @@ describe("playCards", () => {
             defaultJackSuit
         );
 
-        expect(dataAfterTurn).toEqual({
-            updatedHand: anotherHand,
-            updatedActivePile: defaultActivePile,
-            updatedDrawPile: defaultDrawPile,
-            specialEffects: [],
-            needsCover: false,
-        });
+        expect(dataAfterTurn).toEqual(undefined);
     });
-    test("Should return same data, cards not on hand", () => {
+    test("Should return undefined, cards not on hand", () => {
         const anotherHand: Card[] = [
             { rank: "J", suit: "clubs" },
             { rank: "8", suit: "spades" },
@@ -648,15 +639,9 @@ describe("playCards", () => {
             defaultJackSuit
         );
 
-        expect(dataAfterTurn).toEqual({
-            updatedHand: anotherHand,
-            updatedActivePile: defaultActivePile,
-            updatedDrawPile: defaultDrawPile,
-            specialEffects: [],
-            needsCover: false,
-        });
+        expect(dataAfterTurn).toEqual(undefined);
     });
-    test("Should return same data, different ranks pair", () => {
+    test("Should return undefined, different ranks pair", () => {
         const anotherHand: Card[] = [
             { rank: "J", suit: "clubs" },
             { rank: "9", suit: "spades" },
@@ -676,13 +661,7 @@ describe("playCards", () => {
             defaultJackSuit
         );
 
-        expect(dataAfterTurn).toEqual({
-            updatedHand: anotherHand,
-            updatedActivePile: defaultActivePile,
-            updatedDrawPile: defaultDrawPile,
-            specialEffects: [],
-            needsCover: false,
-        });
+        expect(dataAfterTurn).toEqual(undefined);
     });
     test("Should return updated data, 6 covered by 7/8", () => {
         const handWithSixSevenEigth: Card[] = [
@@ -705,15 +684,21 @@ describe("playCards", () => {
             defaultDrawPile,
             defaultJackSuit
         );
+        if (!dataWithSevenEffects) {
+            expect.fail();
+        }
         expect(dataWithSevenEffects.specialEffects).toEqual(["TAKE_CARD"]);
-        const dataWithEigthEffects = playCards(
+        const dataWithEightEffects = playCards(
             handWithSixSevenEigth,
             handEightCoverSix,
             defaultActivePile,
             defaultDrawPile,
             defaultJackSuit
         );
-        expect(dataWithEigthEffects.specialEffects).toEqual([
+        if (!dataWithEightEffects) {
+            expect.fail();
+        }
+        expect(dataWithEightEffects.specialEffects).toEqual([
             "TAKE_CARD",
             "TAKE_CARD",
             "SKIP_TURN",
@@ -895,29 +880,23 @@ describe("dealerOpeningPlay", () => {
             updatedHand: defaultHand,
         });
     });
-    test("Should return same active pile, doesn't match by rank", () => {
+    test("Should return undefined, doesn't match by rank", () => {
         const differentRankCard: Card = { rank: "K", suit: "clubs" };
         const data = dealerOpeningPlay(
             defaultHand,
             [differentRankCard],
             defaultTopActivePileCard
         );
-        expect(data).toEqual({
-            updatedActivePile: [defaultTopActivePileCard],
-            updatedHand: defaultHand,
-        });
+        expect(data).toEqual(undefined);
     });
-    test("Should return same active pile, playing card not on hand", () => {
+    test("Should return undefined, playing card not on hand", () => {
         const cardNotOnHand: Card = { rank: "Q", suit: "clubs" };
         const data = dealerOpeningPlay(
             defaultHand,
             [cardNotOnHand],
             defaultTopActivePileCard
         );
-        expect(data).toEqual({
-            updatedActivePile: [defaultTopActivePileCard],
-            updatedHand: defaultHand,
-        });
+        expect(data).toEqual(undefined);
     });
 });
 
