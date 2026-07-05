@@ -12,6 +12,7 @@ import { generateRoomCode } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
 import {
     applyPendingEffects,
+    checkCanPlay,
     countSpecialEffects,
     dealerOpeningPlay,
     generateInitialState,
@@ -272,6 +273,7 @@ export class SocketHandler {
                     gameState.activePile = updatedActivePile;
                     gameState.drawPile = updatedDrawPile;
                     gameState.players[currentPlayerIndex].hand = updatedHand;
+                    gameState.hasActedThisTurn = true;
 
                     this.io.to(currentRoomCode).emit("cards_played", {
                         playerId: currentPlayer.id,
@@ -322,7 +324,7 @@ export class SocketHandler {
                         });
                     }
                 }
-                gameState.hasActedThisTurn = true;
+
                 if (gameState.activePile.length > 3) {
                     const canBridge =
                         new Set(
@@ -363,6 +365,7 @@ export class SocketHandler {
 
                 gameState.currentPlayerIndex = nextPlayerIndex;
                 gameState.shouldSkipNextPlayer = false;
+                gameState.hasActedThisTurn = false;
 
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
@@ -400,10 +403,39 @@ export class SocketHandler {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-                const { currentPlayerIndex, hasActedThisTurn } = gameState;
+                const {
+                    currentPlayerIndex,
+                    currentDealerIndex,
+                    hasActedThisTurn,
+                    activePile,
+                    players,
+                    jackSuit,
+                    reshuffleCount,
+                } = gameState;
+                const isDealersTurn =
+                    activePile.length === 1 &&
+                    reshuffleCount === 0 &&
+                    currentPlayerIndex === currentDealerIndex;
+                if (isDealersTurn) {
+                    socket.emit("error", {
+                        error: "You cannot draw cards during first dealer turn",
+                    });
+                    return;
+                }
                 if (hasActedThisTurn) {
                     socket.emit("error", {
                         error: "You have already acted during this turn",
+                    });
+                    return;
+                }
+                const hasPlayableCards = checkCanPlay(
+                    activePile[0],
+                    players[currentPlayerIndex].hand,
+                    jackSuit
+                );
+                if (hasPlayableCards) {
+                    socket.emit("error", {
+                        error: "You can already play cards",
                     });
                     return;
                 }
