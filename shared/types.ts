@@ -8,7 +8,7 @@ export type GamePhase = "PLAYING" | "ROUND_OVER" | "GAME_OVER";
 export type JackEndEffect = {
     option: "DOUBLE_ALL" | "MINUS_20";
     count: number;
-} | null;
+};
 
 export type SpecialAction = {
     targetIndex: number;
@@ -83,7 +83,13 @@ export interface ServerToClientEvents {
     can_bridge: () => void;
     bridge_declared: () => void;
     round_won: (payload: { winnerIndex: number }) => void;
-    round_ended: () => void; //add payload later
+    round_ended: (payload: {
+        scores: number[];
+        eliminatedIndexes: number[];
+        reshuffleMultiplier: number;
+        nextDealerIndex: number;
+        jackBonus?: JackEndEffect;
+    }) => void;
     card_drawn: (payload: {
         playerId: string;
         drawPileCount: number;

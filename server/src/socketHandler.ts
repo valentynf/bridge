@@ -13,6 +13,7 @@ import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
 import {
     applyPendingEffects,
     checkCanPlay,
+    countPoints,
     countSpecialEffects,
     dealerOpeningPlay,
     generateInitialState,
@@ -388,14 +389,56 @@ export class SocketHandler {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
+                const { currentPlayerIndex, players, reshuffleCount } =
+                    gameState;
+                let scores: number[] = countPoints(
+                    players.map((player) => player.hand),
+                    currentPlayerIndex,
+                    reshuffleCount,
+                    players.map((player) => player.score)
+                );
+                const eliminatedIndexes: number[] = scores.reduce(
+                    (acc, score, index) => {
+                        if (score > 120) acc.push(index);
+                        return acc;
+                    },
+                    [] as number[]
+                );
+                scores = scores.map((score) => {
+                    if (score === 120) return 0;
+                    return score;
+                });
+                gameState.players.forEach((player, index) => {
+                    player.score = scores[index];
+                    if (eliminatedIndexes.includes(index)) {
+                        player.isEliminated = true;
+                    }
+                });
 
-                const { currentPlayerIndex } = gameState;
+                let highestScore: number = -1;
+                let nextDealerIndex: number = 0;
+                for (let i = 0; i < scores.length; i++) {
+                    if (eliminatedIndexes.includes(i)) continue;
+                    if (scores[i] > highestScore) {
+                        highestScore = scores[i];
+                        nextDealerIndex = i;
+                    } else if (scores[i] === highestScore) {
+                        nextDealerIndex =
+                            Math.random() > 0.5 ? nextDealerIndex : i;
+                    }
+                }
 
                 this.io.to(currentRoomCode).emit("bridge_declared");
                 this.io
                     .to(currentRoomCode)
                     .emit("round_won", { winnerIndex: currentPlayerIndex });
-                this.io.to(currentRoomCode).emit("round_ended");
+
+                this.io.to(currentRoomCode).emit("round_ended", {
+                    scores,
+                    eliminatedIndexes,
+                    reshuffleMultiplier: reshuffleCount,
+                    nextDealerIndex,
+                });
             });
             socket.on("draw_card", () => {
                 const gameContext = this.getGameContext(socket);

@@ -1039,8 +1039,20 @@ describe("registerSocketEvents", () => {
                                     { rank: "10", suit: "hearts" },
                                     { rank: "10", suit: "diamonds" },
                                 ],
-                                [],
-                                [],
+                                [
+                                    { rank: "Q", suit: "spades" },
+                                    { rank: "Q", suit: "hearts" },
+                                    { rank: "8", suit: "clubs" },
+                                    { rank: "J", suit: "clubs" },
+                                    { rank: "J", suit: "diamonds" },
+                                ],
+                                [
+                                    { rank: "A", suit: "clubs" },
+                                    { rank: "A", suit: "hearts" },
+                                    { rank: "A", suit: "diamonds" },
+                                    { rank: "A", suit: "spades" },
+                                    { rank: "K", suit: "spades" },
+                                ],
                             ]);
                             mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
                             clientSockets[0].emit("player_ready");
@@ -1199,9 +1211,21 @@ describe("registerSocketEvents", () => {
                 });
 
                 const roundEndedPromise = new Promise((res) => {
-                    clientSockets[0].on("round_ended", () => {
-                        res(undefined);
-                    });
+                    clientSockets[0].on(
+                        "round_ended",
+                        ({
+                            scores,
+                            eliminatedIndexes,
+                            reshuffleMultiplier,
+                            nextDealerIndex,
+                        }) => {
+                            expect(scores).toEqual([10, 20, 60, 70]);
+                            expect(eliminatedIndexes).toEqual([]);
+                            expect(reshuffleMultiplier).toBe(0);
+                            expect(nextDealerIndex).toBe(3);
+                            res(undefined);
+                        }
+                    );
                 });
 
                 return Promise.all([roundWonPromise, roundEndedPromise]);
