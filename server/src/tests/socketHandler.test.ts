@@ -394,7 +394,7 @@ describe("registerSocketEvents", () => {
                     });
                     setTimeout(() => {
                         res(undefined);
-                    }, 50);
+                    }, 10);
                 });
 
                 clientSockets[dealerIndex].emit("play_cards", {
@@ -951,7 +951,7 @@ describe("registerSocketEvents", () => {
                     );
                     setTimeout(() => {
                         res(undefined);
-                    }, 50);
+                    }, 10);
                 });
 
                 const effectsAppliedReceivedPromise = new Promise((res) => {
@@ -1240,7 +1240,7 @@ describe("registerSocketEvents", () => {
                     );
                     setTimeout(() => {
                         res(undefined);
-                    }, 50);
+                    }, 10);
                 });
 
                 clientSockets[currentPlayerIndex].emit("declare_bridge");
@@ -1335,7 +1335,7 @@ describe("registerSocketEvents", () => {
                 });
                 return cardsPlayedPromise;
             });
-            test.skip("Should emit error if six played without existing cover", async () => {
+            test("Should emit error if six played without existing cover", async () => {
                 const errorReceivedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].on("error", () => {
                         res(undefined);
@@ -1348,7 +1348,7 @@ describe("registerSocketEvents", () => {
             });
         });
 
-        test.skip("Should cover six with a drawn card", async () => {
+        test("Should cover six with a drawn card", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -1464,7 +1464,7 @@ describe("registerSocketEvents", () => {
             return sixPlayedPromise;
         });
 
-        describe.skip("6 case, cover in pile after another 6", () => {
+        describe("6 case, cover in pile after another 6", () => {
             beforeEach(
                 () =>
                     new Promise<void>((resolve) => {
@@ -1556,32 +1556,34 @@ describe("registerSocketEvents", () => {
                         });
                     })
             );
-            test.skip("Should not end turn without covering six", () => {
+            test("Should not end turn without covering six", () => {
                 const errorReceivedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].once("error", () => {
+                        clearTimeout(timeout);
                         res(undefined);
                     });
-                    setTimeout(() => {
+                    const timeout = setTimeout(() => {
                         expect.fail();
-                    }, 50);
+                    }, 10);
                 });
 
                 clientSockets[currentPlayerIndex].emit("end_turn");
 
                 return errorReceivedPromise;
             });
-            test.skip("Should not draw card again if can play from hand", () => {
+            test("Should not draw card again if can play from hand", () => {
                 const errorReceivedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].once("card_drawn", () => {
                         clientSockets[currentPlayerIndex].once("error", () => {
+                            clearTimeout(timeout);
                             res(undefined);
                         });
 
                         clientSockets[currentPlayerIndex].emit("draw_card");
 
-                        setTimeout(() => {
+                        const timeout = setTimeout(() => {
                             expect.fail();
-                        }, 50);
+                        }, 10);
                     });
                 });
 
@@ -1589,7 +1591,7 @@ describe("registerSocketEvents", () => {
 
                 return errorReceivedPromise;
             });
-            test.skip("Should play another six (drawn) and cover with 9 (drawn)", () => {
+            test("Should play another six (drawn) and cover with 9 (drawn)", () => {
                 const sixCoveredPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].once("card_drawn", () => {
                         clientSockets[currentPlayerIndex].once(
@@ -1637,7 +1639,7 @@ describe("registerSocketEvents", () => {
             });
         });
 
-        test.skip("Dealer turn: Should cover six with a card from hand", async () => {
+        test("Dealer turn: Should cover six with a card from hand", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -1712,7 +1714,7 @@ describe("registerSocketEvents", () => {
             return sixCoveredPromise;
         });
 
-        test.skip("Dealer turn: Should cover six with a drawn card", async () => {
+        test("Dealer turn: Should cover six with a drawn card", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -1741,7 +1743,7 @@ describe("registerSocketEvents", () => {
                     predictableDeck = reverseDealCards(
                         [
                             [
-                                { rank: "6", suit: "diamonds" },
+                                { rank: "7", suit: "diamonds" },
                                 { rank: "Q", suit: "spades" },
                                 { rank: "10", suit: "spades" },
                                 { rank: "10", suit: "clubs" },
@@ -2080,7 +2082,7 @@ describe("registerSocketEvents", () => {
                 });
                 setTimeout(() => {
                     res(undefined);
-                }, 50);
+                }, 10);
             });
 
             clientSockets[currentPlayerIndex].emit("draw_card");
@@ -2147,7 +2149,7 @@ describe("registerSocketEvents", () => {
                 });
                 setTimeout(() => {
                     res(undefined);
-                }, 50);
+                }, 10);
             });
 
             clientSockets[dealerIndex].emit("draw_card");

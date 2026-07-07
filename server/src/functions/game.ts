@@ -359,5 +359,6 @@ export const generateInitialState = (
         shouldSkipNextPlayer: false,
         isPendingSuitDeclaration: false,
         hasActedThisTurn: false,
+        isCoveringRequired: false,
     };
 };

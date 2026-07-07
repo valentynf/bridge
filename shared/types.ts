@@ -41,6 +41,7 @@ export type BridgeGameState = {
     shouldSkipNextPlayer: boolean;
     isPendingSuitDeclaration: boolean;
     hasActedThisTurn: boolean;
+    isCoveringRequired: boolean;
 };
 
 export type LobbyMember = {

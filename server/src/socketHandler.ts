@@ -129,6 +129,8 @@ export class SocketHandler {
                         dealerIndex,
                         this.customShuffle
                     );
+                    if (currentRoom.gameState.activePile[0].rank === "6")
+                        currentRoom.gameState.isCoveringRequired = true;
                     currentRoom.status = "in_progress";
                     const { players, activePile } = currentRoom.gameState;
 
@@ -156,6 +158,7 @@ export class SocketHandler {
                     reshuffleCount,
                     players,
                     jackSuit,
+                    isCoveringRequired,
                 } = gameState;
                 const currentPlayer: GamePlayer = players[currentPlayerIndex];
                 const isDealersTurn: boolean =
@@ -168,16 +171,38 @@ export class SocketHandler {
 
                 if (isDealersTurn) {
                     if (cardsToPlay.length > 0) {
-                        const playResults = dealerOpeningPlay(
-                            currentPlayer.hand,
-                            cardsToPlay,
-                            activePile[0]
-                        );
-                        if (!playResults) {
-                            socket.emit("error", { error: "Illegal play" });
-                            return;
+                        let updatedActivePile, updatedHand;
+                        if (isCoveringRequired) {
+                            const playResults = playCards(
+                                currentPlayer.hand,
+                                cardsToPlay,
+                                activePile,
+                                drawPile,
+                                jackSuit
+                            );
+                            if (!playResults) {
+                                socket.emit("error", { error: "Illegal play" });
+                                return;
+                            }
+                            if (!playResults.needsCover)
+                                gameState.isCoveringRequired = false;
+
+                            updatedActivePile = playResults.updatedActivePile;
+                            updatedHand = playResults.updatedHand;
+                        } else {
+                            const playResults = dealerOpeningPlay(
+                                currentPlayer.hand,
+                                cardsToPlay,
+                                activePile[0]
+                            );
+                            if (!playResults) {
+                                socket.emit("error", { error: "Illegal play" });
+                                return;
+                            }
+                            updatedActivePile = playResults.updatedActivePile;
+                            updatedHand = playResults.updatedHand;
                         }
-                        const { updatedActivePile, updatedHand } = playResults;
+
                         gameState.activePile = updatedActivePile;
                         this.io.to(currentRoomCode).emit("cards_played", {
                             playerId: currentPlayer.id,
@@ -269,12 +294,21 @@ export class SocketHandler {
                         updatedActivePile,
                         updatedDrawPile,
                         specialEffects,
+                        needsCover,
                     } = playResults;
 
                     gameState.activePile = updatedActivePile;
                     gameState.drawPile = updatedDrawPile;
                     gameState.players[currentPlayerIndex].hand = updatedHand;
-                    gameState.hasActedThisTurn = true;
+
+                    if (needsCover) {
+                        gameState.isCoveringRequired = true;
+                    } else if (gameState.isCoveringRequired) {
+                        gameState.isCoveringRequired = false;
+                        gameState.hasActedThisTurn = true;
+                    } else {
+                        gameState.hasActedThisTurn = true;
+                    }
 
                     this.io.to(currentRoomCode).emit("cards_played", {
                         playerId: currentPlayer.id,
@@ -351,7 +385,16 @@ export class SocketHandler {
                     players,
                     shouldSkipNextPlayer,
                     isPendingSuitDeclaration,
+                    isCoveringRequired,
                 } = gameState;
+
+                if (isCoveringRequired) {
+                    socket.emit("error", {
+                        error: "Must cover six before ending turn",
+                    });
+                    return;
+                }
+
                 if (isPendingSuitDeclaration) {
                     socket.emit("error", {
                         error: "Must declare suit before ending the turn",
@@ -466,18 +509,19 @@ export class SocketHandler {
                     players,
                     jackSuit,
                     reshuffleCount,
+                    isCoveringRequired,
                 } = gameState;
                 const isDealersTurn =
                     activePile.length === 1 &&
                     reshuffleCount === 0 &&
                     currentPlayerIndex === currentDealerIndex;
-                if (isDealersTurn) {
+                if (isDealersTurn && !isCoveringRequired) {
                     socket.emit("error", {
                         error: "You cannot draw cards during first dealer turn",
                     });
                     return;
                 }
-                if (hasActedThisTurn) {
+                if (hasActedThisTurn && !isCoveringRequired) {
                     socket.emit("error", {
                         error: "You have already acted during this turn",
                     });
@@ -506,9 +550,11 @@ export class SocketHandler {
                 gameState.players[currentPlayerIndex].hand.push(
                     topDrawPileCard
                 );
+
                 const updatedHand: Card[] =
                     gameState.players[currentPlayerIndex].hand;
-                gameState.hasActedThisTurn = true;
+                if (!isCoveringRequired) gameState.hasActedThisTurn = true;
+
                 this.io.to(currentRoomCode).emit("card_drawn", {
                     playerId: socket.id,
                     drawPileCount: gameState.drawPile.length,
