@@ -100,6 +100,11 @@ export interface ServerToClientEvents {
         specialEffects: SpecialEffect[];
         affectedPlayerIndex: number;
     }) => void;
+    pile_reshuffled: (payload: {
+        drawPileCount: number;
+        reshuffleMultiplier: number;
+    }) => void;
+    score_reset: (payload: { playerIndex: number }) => void;
 }
 
 export interface ClientToServerEvents {

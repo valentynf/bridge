@@ -233,7 +233,16 @@ export class SocketHandler {
                             specialEffects
                         );
 
-                        if (reshuffled) gameState.reshuffleCount++;
+                        if (reshuffled) {
+                            gameState.reshuffleCount++;
+                            this.io
+                                .to(currentRoomCode)
+                                .emit("pile_reshuffled", {
+                                    drawPileCount: drawPileAfterEffects.length,
+                                    reshuffleMultiplier:
+                                        gameState.reshuffleCount,
+                                });
+                        }
                         if (skipTurn) gameState.shouldSkipNextPlayer = true;
                         if (
                             !(
@@ -335,7 +344,16 @@ export class SocketHandler {
                             specialEffects
                         );
 
-                        if (reshuffled) gameState.reshuffleCount++;
+                        if (reshuffled) {
+                            gameState.reshuffleCount++;
+                            this.io
+                                .to(currentRoomCode)
+                                .emit("pile_reshuffled", {
+                                    drawPileCount: drawPileAfterEffects.length,
+                                    reshuffleMultiplier:
+                                        gameState.reshuffleCount,
+                                });
+                        }
                         if (skipTurn) gameState.shouldSkipNextPlayer = true;
                         if (
                             !(
@@ -459,8 +477,13 @@ export class SocketHandler {
                     },
                     [] as number[]
                 );
-                scores = scores.map((score) => {
-                    if (score === 120) return 0;
+                scores = scores.map((score, index) => {
+                    if (score === 120) {
+                        this.io
+                            .to(currentRoomCode)
+                            .emit("score_reset", { playerIndex: index });
+                        return 0;
+                    }
                     return score;
                 });
                 gameState.players.forEach((player, index) => {
@@ -542,6 +565,12 @@ export class SocketHandler {
                 if (!topDrawPileCard) {
                     const { updatedActivePile, updatedDrawPile } =
                         reshuffleDeck(gameState.activePile);
+                    gameState.reshuffleCount++;
+                    this.io.to(currentRoomCode).emit("pile_reshuffled", {
+                        drawPileCount: updatedDrawPile.length,
+                        reshuffleMultiplier: gameState.reshuffleCount,
+                    });
+
                     gameState.activePile = updatedActivePile;
                     gameState.drawPile = updatedDrawPile;
                     topDrawPileCard = gameState.drawPile.shift();
