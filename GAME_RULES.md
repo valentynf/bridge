@@ -115,13 +115,11 @@ These rules trigger based on what the **previous player** just played. They appl
 
 ## Endgame Rules — Cards you cannot finish on
 
-A player **cannot win the round** by playing an Ace as their last card if the Ace's skip effect means it cycles back to them.
+A player **cannot finish on a 6**, because the 6 must be covered (see Special Cards section above). If a 6 is the player's last card, they are forced to draw.
 
-- **Example:** 3 players remain. Player A plays 2 Aces as their last cards. Both remaining players skip. It is Player A's turn again. Player A is not eliminated — they must draw a card from the pile. If they can play it, they do. If not, the game continues on the next turn.
+> **Implementation note:** Before declaring a player the winner, the engine must check: was the last card a 6 that requires covering? If true, the win is invalid and the player draws.
 
-A player also **cannot finish on a 6**, because the 6 must be covered (see Special Cards section above). If a 6 is the player's last card, they are forced to draw.
-
-> **Implementation note:** Before declaring a player the winner, the engine must check two things: (1) did the last card(s) played cause a skip that cycles back to the same player? (2) was the last card a 6 that requires covering? If either is true, the win is invalid and the player draws.
+> **Deferred to v2 (toggle):** Ace-last-card edge case — a player cannot win by playing Ace(s) if the skip cycles back to them. Not enforced in v1.
 
 ---
 

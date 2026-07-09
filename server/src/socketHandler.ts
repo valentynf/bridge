@@ -507,12 +507,9 @@ export class SocketHandler {
                 }
 
                 this.io.to(currentRoomCode).emit("bridge_declared");
-                this.io
-                    .to(currentRoomCode)
-                    .emit("round_won", { winnerIndex: currentPlayerIndex });
-
                 this.io.to(currentRoomCode).emit("round_ended", {
                     scores,
+                    winnerIndex: currentPlayerIndex,
                     eliminatedIndexes,
                     reshuffleMultiplier: reshuffleCount,
                     nextDealerIndex,

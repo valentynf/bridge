@@ -102,14 +102,13 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Round & game end
 
-| Event               | Dir | Audience    | Payload                                                                               |
-| ------------------- | --- | ----------- | ------------------------------------------------------------------------------------- |
-| `round_won`         | S→C | all in room | `{ winnerIndex }`                                                                     |
-| `score_reset`       | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                          |
-| `choose_jack_bonus` | S→C | winner only | `{ jackCount }`                                                                       |
-| `jack_bonus_chosen` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                              |
-| `round_ended`       | S→C | all in room | `{ scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
-| `game_over`         | S→C | all in room | `{ finalScores[], winnerIndex }`                                                      |
+| Event               | Dir | Audience    | Payload                                                                                            |
+| ------------------- | --- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `score_reset`       | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                                       |
+| `choose_jack_bonus` | S→C | winner only | `{ jackCount }`                                                                                    |
+| `jack_bonus_chosen` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                                           |
+| `round_ended`       | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
+| `game_over`         | S→C | all in room | `{ finalScores[], winnerIndex }`                                                                   |
 
 ---
 
@@ -146,13 +145,12 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 ### Round ending
 
 1. Player plays their last card(s) → `cards_played` with `handCount: 0`
-2. Server checks win validity (Ace-last edge case)
-3. `round_won` (S→C to all)
-4. If winner finished with Jack(s): `choose_jack_bonus` → `jack_bonus_chosen`
-5. Server calculates scores → `round_ended` (S→C to all)
-6. If any player hit exactly 120: `score_reset` for each (S→C to all)
-7. If players remain: new round starts with `game_started`
-8. If only one player left: `game_over`
+2. Server checks win validity (can't finish on 6)
+3. If winner finished with Jack(s): `choose_jack_bonus` → `jack_bonus_chosen`
+4. Server calculates scores → `round_ended` (S→C to all, includes `winnerIndex`)
+5. If any player hit exactly 120: `score_reset` for each (S→C to all)
+6. If players remain: new round starts with `game_started`
+7. If only one player left: `game_over`
 
 ---
 

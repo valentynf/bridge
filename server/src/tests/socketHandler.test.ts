@@ -1203,18 +1203,12 @@ describe("registerSocketEvents", () => {
 
                 clientSockets[currentPlayerIndex].emit("declare_bridge");
 
-                const roundWonPromise = new Promise((res) => {
-                    clientSockets[0].on("round_won", ({ winnerIndex }) => {
-                        expect(winnerIndex).toBe(currentPlayerIndex);
-                        res(undefined);
-                    });
-                });
-
                 const roundEndedPromise = new Promise((res) => {
                     clientSockets[0].on(
                         "round_ended",
                         ({
                             scores,
+                            winnerIndex,
                             eliminatedIndexes,
                             reshuffleMultiplier,
                             nextDealerIndex,
@@ -1223,12 +1217,13 @@ describe("registerSocketEvents", () => {
                             expect(eliminatedIndexes).toEqual([]);
                             expect(reshuffleMultiplier).toBe(0);
                             expect(nextDealerIndex).toBe(3);
+                            expect(winnerIndex).toBe(currentPlayerIndex);
                             res(undefined);
                         }
                     );
                 });
 
-                return Promise.all([roundWonPromise, roundEndedPromise]);
+                return roundEndedPromise;
             });
             test("Should not successfuly declare bridge - illegal play", () => {
                 const bridgeDeclaredNotReceivedPromise = new Promise((res) => {
@@ -1803,6 +1798,89 @@ describe("registerSocketEvents", () => {
             clientSockets[dealerIndex].emit("draw_card");
 
             return sixCoveredPromise;
+        });
+
+        test.skip("Usual round win", async () => {
+            await new Promise<void>((resolve) => {
+                let roomCode: string;
+                clientSockets[0].once(
+                    "room_created",
+                    (payload) => (roomCode = payload.roomCode)
+                );
+                clientSockets[0].once("room_joined", () => {
+                    clientSockets[1].emit("join_room", {
+                        playerName: "testUser2",
+                        roomCode,
+                    });
+                });
+                clientSockets[1].once("room_joined", () => {
+                    clientSockets[2].emit("join_room", {
+                        playerName: "testUser3",
+                        roomCode,
+                    });
+                });
+                clientSockets[2].once("room_joined", () => {
+                    clientSockets[3].emit("join_room", {
+                        playerName: "testUser4",
+                        roomCode,
+                    });
+                });
+                clientSockets[3].once("room_joined", () => {
+                    predictableDeck = reverseDealCards([
+                        [
+                            { rank: "7", suit: "diamonds" },
+                            { rank: "Q", suit: "spades" },
+                            { rank: "10", suit: "spades" },
+                            { rank: "10", suit: "clubs" },
+                            { rank: "9", suit: "diamonds" },
+                        ],
+                        [],
+                        [],
+                        [],
+                    ]);
+                    mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                    clientSockets[0].emit("player_ready");
+                    clientSockets[1].emit("player_ready");
+                    clientSockets[2].emit("player_ready");
+                    clientSockets[3].emit("player_ready");
+                });
+                clientSockets[0].once("game_started", (payload) => {
+                    const currentRoom = socketHandler.getRoom(roomCode);
+                    if (currentRoom && currentRoom.gameState) {
+                        currentRoom.gameState.players[1].hand = [
+                            { rank: "10", suit: "diamonds" },
+                        ];
+                    }
+                    dealerIndex = payload.dealerIndex;
+                    clientSockets[dealerIndex].emit("play_cards", {
+                        cardsToPlay: [],
+                    });
+                    clientSockets[2].on(
+                        "turn_started",
+                        ({ currentPlayerIndex: newIndex }) => {
+                            currentPlayerIndex = newIndex;
+                            resolve();
+                        }
+                    );
+                });
+
+                clientSockets[0].emit("create_room", {
+                    playerName: "testUser1",
+                });
+            });
+
+            const roundEndedPromise = new Promise((res) => {
+                clientSockets[3].once("round_ended", ({ winnerIndex }) => {
+                    expect(winnerIndex).toBe(currentPlayerIndex);
+                    res(undefined);
+                });
+            });
+
+            clientSockets[currentPlayerIndex].emit("play_cards", {
+                cardsToPlay: [{ rank: "10", suit: "diamonds" }],
+            });
+
+            return roundEndedPromise;
         });
     });
     describe("end_turn", () => {

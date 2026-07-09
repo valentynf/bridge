@@ -83,9 +83,9 @@ export interface ServerToClientEvents {
     suit_declared: (payload: { suit: CardSuit }) => void;
     can_bridge: () => void;
     bridge_declared: () => void;
-    round_won: (payload: { winnerIndex: number }) => void;
     round_ended: (payload: {
         scores: number[];
+        winnerIndex: number;
         eliminatedIndexes: number[];
         reshuffleMultiplier: number;
         nextDealerIndex: number;
