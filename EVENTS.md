@@ -33,11 +33,21 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Game start
 
-| Event          | Dir | Audience             | Payload                                                        |
-| -------------- | --- | -------------------- | -------------------------------------------------------------- |
-| `game_started` | S→C | each player (unique) | `{ hand, dealerIndex, activePileTopCard, currentPlayerIndex }` |
+| Event          | Dir | Audience    | Payload |
+| -------------- | --- | ----------- | ------- |
+| `game_started` | S→C | all in room | (none)  |
 
-`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play). Effects from the face-up card are calculated and applied after the dealer's opening turn ends, via `effect_applied`.
+Signal-only event. Tells clients to switch from lobby view to game view. No payload — all game data comes from `round_started`.
+
+## Round start
+
+| Event           | Dir | Audience             | Payload                                                                                |
+| --------------- | --- | -------------------- | -------------------------------------------------------------------------------------- |
+| `round_started` | S→C | each player (unique) | `{ players: RoundPlayer[], hand, activePileTopCard, dealerIndex, currentPlayerIndex }` |
+
+Fires at the start of every round (including the first). Each player receives their own `hand`. `players` is the authoritative list of active players: `{ nickname, id, score }[]` — array index is the player index. After eliminations, spliced players are gone and indexes shift.
+
+`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play). Effects from the face-up card are calculated and applied after the dealer's opening turn ends, via `effects_applied`.
 
 ---
 
@@ -102,13 +112,13 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Round & game end
 
-| Event               | Dir | Audience    | Payload                                                                                            |
-| ------------------- | --- | ----------- | -------------------------------------------------------------------------------------------------- |
-| `score_reset`       | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                                       |
-| `choose_jack_bonus` | S→C | winner only | `{ jackCount }`                                                                                    |
-| `jack_bonus_chosen` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                                           |
-| `round_ended`       | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
-| `game_over`         | S→C | all in room | `{ finalScores[], winnerIndex }`                                                                   |
+| Event                | Dir | Audience    | Payload                                                                                            |
+| -------------------- | --- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                                       |
+| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                                                    |
+| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                                           |
+| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
+| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                                                   |
 
 ---
 
@@ -146,11 +156,17 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 1. Player plays their last card(s) → `cards_played` with `handCount: 0`
 2. Server checks win validity (can't finish on 6)
-3. If winner finished with Jack(s): `choose_jack_bonus` → `jack_bonus_chosen`
+3. If winner finished with Jack(s): `choose_jack_bonus` → `declare_jack_bonus`
 4. Server calculates scores → `round_ended` (S→C to all, includes `winnerIndex`)
 5. If any player hit exactly 120: `score_reset` for each (S→C to all)
-6. If players remain: new round starts with `game_started`
-7. If only one player left: `game_over`
+6. Server splices eliminated players from the array
+7. If players remain: `round_started` (S→C, each player unique — fresh snapshot with updated player list)
+8. If only one player left: `game_over`
+
+### First game start
+
+1. All players ready → `game_started` (S→C to all, no payload — switch to game view)
+2. `round_started` (S→C, each player unique — full game state snapshot)
 
 ---
 

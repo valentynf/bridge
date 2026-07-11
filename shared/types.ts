@@ -28,6 +28,8 @@ export type GamePlayer = {
     isEliminated: boolean;
 };
 
+export type RoundPlayer = Omit<GamePlayer, "hand" | "isEliminated">;
+
 export type BridgeGameState = {
     currentPhase: GamePhase;
     players: GamePlayer[];
@@ -65,12 +67,14 @@ export interface ServerToClientEvents {
         readyPlayers: LobbyMember[];
     }) => void;
     error: (payload: { error: string }) => void;
-    game_started: (payload: {
+    round_started: (payload: {
         hand: Card[];
         activePileTopCard: Card;
         dealerIndex: number;
         currentPlayerIndex: number;
+        players: RoundPlayer[];
     }) => void;
+    game_started: () => void;
     cards_played: (payload: {
         playerId: string;
         cardsPlayed: Card[];
@@ -105,6 +109,11 @@ export interface ServerToClientEvents {
         reshuffleMultiplier: number;
     }) => void;
     score_reset: (payload: { playerIndex: number }) => void;
+    choose_jack_bonus: (payload: { jackCount: number }) => void;
+    game_over: (payload: {
+        finalScores: number[];
+        winnerIndex: number;
+    }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -116,4 +125,5 @@ export interface ClientToServerEvents {
     declare_suit: (payload: { suit: CardSuit }) => void;
     declare_bridge: () => void;
     draw_card: () => void;
+    declare_jack_bonus: (payload: { option: JackEndEffect["option"] }) => void;
 }

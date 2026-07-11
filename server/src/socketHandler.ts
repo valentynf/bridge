@@ -6,6 +6,7 @@ import type {
     GamePlayer,
     LobbyMember,
     LobbyRoom,
+    RoundPlayer,
     ServerToClientEvents,
 } from "../../shared/types.js";
 import { generateRoomCode } from "./functions/utility.js";
@@ -134,12 +135,23 @@ export class SocketHandler {
                     currentRoom.status = "in_progress";
                     const { players, activePile } = currentRoom.gameState;
 
+                    const roundPlayers: RoundPlayer[] = players.map(
+                        (player) => ({
+                            nickname: player.nickname,
+                            id: player.id,
+                            score: player.score,
+                        })
+                    );
+
+                    this.io.to(currentRoomCode).emit("game_started");
+
                     players.forEach(({ id, hand }) => {
-                        this.io.to(id).emit("game_started", {
+                        this.io.to(id).emit("round_started", {
                             hand,
                             activePileTopCard: activePile[0],
                             dealerIndex,
                             currentPlayerIndex: dealerIndex,
+                            players: roundPlayers,
                         });
                     });
                 }
