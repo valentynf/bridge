@@ -113,6 +113,10 @@ export class GameServer {
                     });
                     return;
                 }
+                if (currentRoomMember.isReady) {
+                    socket.emit("error", { error: "Player is already ready!" });
+                    return;
+                }
                 currentRoomMember.isReady = true;
                 const readyPlayers = currentRoom.members.filter(
                     (member) => member.isReady
@@ -177,6 +181,12 @@ export class GameServer {
                     jackSuit,
                     isCoveringRequired,
                 } = gameState;
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
                 const currentPlayer: GamePlayer = players[currentPlayerIndex];
                 const isDealersTurn: boolean =
                     activePile.length === 1 &&
@@ -438,22 +448,33 @@ export class GameServer {
                     shouldSkipNextPlayer,
                     isPendingSuitDeclaration,
                     isCoveringRequired,
+                    hasActedThisTurn,
                 } = gameState;
 
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
+                if (!hasActedThisTurn) {
+                    socket.emit("error", {
+                        error: "Player has not acted this turn",
+                    });
+                    return;
+                }
                 if (isCoveringRequired) {
                     socket.emit("error", {
                         error: "Must cover six before ending turn",
                     });
                     return;
                 }
-
                 if (isPendingSuitDeclaration) {
                     socket.emit("error", {
                         error: "Must declare suit before ending the turn",
                     });
                     return;
                 }
-
                 const numberOfPlayers = players.length;
                 const nextPlayerIndex =
                     (currentPlayerIndex + (shouldSkipNextPlayer ? 2 : 1)) %
@@ -473,7 +494,23 @@ export class GameServer {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-
+                const {
+                    players,
+                    currentPlayerIndex,
+                    isPendingSuitDeclaration,
+                } = gameState;
+                if (!isPendingSuitDeclaration) {
+                    socket.emit("error", {
+                        error: "No pending suit declaration",
+                    });
+                    return;
+                }
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
                 gameState.jackSuit = suit;
                 gameState.isPendingSuitDeclaration = false;
                 this.io.to(currentRoomCode).emit("suit_declared", { suit });
@@ -484,7 +521,13 @@ export class GameServer {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-                const { currentPlayerIndex, activePile } = gameState;
+                const { currentPlayerIndex, activePile, players } = gameState;
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
                 const canBridge =
                     activePile.length >= 4 &&
                     new Set(activePile.slice(0, 4).map((card) => card.rank))
@@ -517,6 +560,14 @@ export class GameServer {
                     reshuffleCount,
                     isCoveringRequired,
                 } = gameState;
+
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
+
                 const isDealersTurn =
                     activePile.length === 1 &&
                     reshuffleCount === 0 &&
@@ -580,7 +631,14 @@ export class GameServer {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-                const { currentPlayerIndex, pendingJackBonusCount } = gameState;
+                const { currentPlayerIndex, pendingJackBonusCount, players } =
+                    gameState;
+                if (socket.id !== players[currentPlayerIndex].id) {
+                    socket.emit("error", {
+                        error: "Illegal play - different player turn",
+                    });
+                    return;
+                }
                 if (!pendingJackBonusCount) {
                     socket.emit("error", {
                         error: "Illegal play - not eligible to declare jack bonus",
