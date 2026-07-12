@@ -5,7 +5,6 @@ import type {
     GamePlayer,
     JackEndEffect,
     LobbyMember,
-    SpecialAction,
     SpecialEffect,
 } from "../../../shared/types.js";
 import {
@@ -329,7 +328,6 @@ export const generateInitialState = (
     const freshDeck: Card[] = createNewDeck();
     const shuffledDeck: Card[] = shuffle(freshDeck);
     const numberOfPlayers: number = members.length;
-    const pendingSpecialEffects: SpecialAction[] = [];
     const { hands, drawPile, activePile } = dealCards(
         dealerIndex,
         numberOfPlayers,
@@ -337,7 +335,7 @@ export const generateInitialState = (
     );
     const players: GamePlayer[] = members.map((member, i) => {
         const player: GamePlayer = {
-            nickname: member.name,
+            nickname: member.nickname,
             id: member.id,
             score: 0,
             hand: hands[i],
@@ -347,14 +345,12 @@ export const generateInitialState = (
     });
 
     return {
-        currentPhase: "PLAYING",
         players,
         currentDealerIndex: dealerIndex,
         currentPlayerIndex: dealerIndex,
         drawPile,
         activePile,
         jackSuit: "diamonds",
-        pendingSpecialEffects,
         reshuffleCount: 0,
         shouldSkipNextPlayer: false,
         isPendingSuitDeclaration: false,

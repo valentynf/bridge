@@ -902,10 +902,10 @@ describe("dealerOpeningPlay", () => {
 
 describe("generateInitialState", () => {
     const fourMembersLobby: LobbyMember[] = [
-        { name: "player1", id: "id1", isReady: true },
-        { name: "player2", id: "id2", isReady: true },
-        { name: "player3", id: "id3", isReady: true },
-        { name: "player4", id: "id4", isReady: true },
+        { nickname: "player1", id: "id1", isReady: true },
+        { nickname: "player2", id: "id2", isReady: true },
+        { nickname: "player3", id: "id3", isReady: true },
+        { nickname: "player4", id: "id4", isReady: true },
     ];
     test("Should have default values, 4 players", () => {
         const initialStateFourPlayers: BridgeGameState = generateInitialState(
@@ -929,7 +929,7 @@ describe("generateInitialState", () => {
         expect(
             players.every(
                 (player, i) =>
-                    player.nickname === fourMembersLobby[i].name &&
+                    player.nickname === fourMembersLobby[i].nickname &&
                     player.id === fourMembersLobby[i].id
             )
         ).toBe(true);

@@ -5,15 +5,15 @@ import {
     type ClientToServerEvents,
     type ServerToClientEvents,
 } from "../../shared/types.js";
-import { SocketHandler } from "./socketHandler.js";
+import { GameServer } from "./gameServer.js";
 
 const port: number = 3000;
 const app: Application = express();
 const server = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
-const socketHandler = new SocketHandler(io);
+const gameServer = new GameServer(io);
 
-socketHandler.registerSocketEvents();
+gameServer.registerSocketEvents();
 
 app.get("/", (_, res) => {
     res.send("Hello World!");

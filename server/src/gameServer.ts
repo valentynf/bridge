@@ -24,7 +24,7 @@ import {
 import type { Socket } from "socket.io";
 import { reshuffleDeck } from "./functions/deck.js";
 
-export class SocketHandler {
+export class GameServer {
     private lobbyRooms: Map<string, LobbyRoom> = new Map();
 
     constructor(
@@ -37,7 +37,11 @@ export class SocketHandler {
             socket.on("create_room", (payload) => {
                 const roomId = generateRoomCode();
                 const roomMembers: LobbyMember[] = [
-                    { name: payload.playerName, id: socket.id, isReady: false },
+                    {
+                        nickname: payload.playerName,
+                        id: socket.id,
+                        isReady: false,
+                    },
                 ];
                 const newRoom: LobbyRoom = {
                     id: roomId,
@@ -73,7 +77,7 @@ export class SocketHandler {
                     return;
                 }
                 const newLobbyMember: LobbyMember = {
-                    name: playerName,
+                    nickname: playerName,
                     id: socket.id,
                     isReady: false,
                 };
@@ -716,7 +720,7 @@ export class SocketHandler {
                 gameState,
                 generateInitialState(
                     nextRoundPlayers.map((player) => ({
-                        name: player.nickname,
+                        nickname: player.nickname,
                         id: player.id,
                         isReady: true,
                     })),

@@ -12,7 +12,7 @@ import {
 } from "vitest";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { SocketHandler } from "../socketHandler.js";
+import { GameServer } from "../gameServer.js";
 import type {
     Card,
     ClientToServerEvents,
@@ -24,7 +24,7 @@ import { MAX_ROOM_SIZE, START_HAND_SIZE } from "../../../shared/consts.js";
 
 describe("registerSocketEvents", () => {
     let io: Server;
-    let socketHandler: SocketHandler;
+    let gameServer: GameServer;
     const clientSockets: ClientSocket<
         ServerToClientEvents,
         ClientToServerEvents
@@ -42,14 +42,14 @@ describe("registerSocketEvents", () => {
             io = new Server<ClientToServerEvents, ServerToClientEvents>(
                 httpServer
             );
-            socketHandler = new SocketHandler(io, predictableShuffleDeck);
+            gameServer = new GameServer(io, predictableShuffleDeck);
             httpServer.listen(() => {
                 const port = (httpServer.address() as AddressInfo).port;
                 for (let i = 0; i < 5; i++) {
                     const clientSocket = ioc(`http://localhost:${port}`);
                     clientSockets.push(clientSocket);
                 }
-                socketHandler.registerSocketEvents();
+                gameServer.registerSocketEvents();
                 Promise.all(
                     clientSockets.map(
                         (clientSocket) =>
@@ -76,7 +76,7 @@ describe("registerSocketEvents", () => {
         clientSockets.forEach((clientSocket) => {
             clientSocket.removeAllListeners();
         });
-        socketHandler.resetLobby();
+        gameServer.resetLobby();
     });
 
     describe("create_room", () => {
@@ -180,7 +180,7 @@ describe("registerSocketEvents", () => {
         });
         test("Should receive error, game in progress", () => {
             return new Promise<void>((resolve) => {
-                socketHandler.setRoom("ingame", {
+                gameServer.setRoom("ingame", {
                     id: "ingame",
                     status: "in_progress",
                     members: [],
@@ -1853,7 +1853,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
                 clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
+                    const currentRoom = gameServer.getRoom(roomCode);
                     if (currentRoom && currentRoom.gameState) {
                         currentRoom.gameState.players[1].hand = [
                             { rank: "10", suit: "diamonds" },
@@ -1936,7 +1936,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
                 clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
+                    const currentRoom = gameServer.getRoom(roomCode);
                     if (currentRoom && currentRoom.gameState) {
                         currentRoom.gameState.players[1].hand = [
                             { rank: "6", suit: "diamonds" },
@@ -2021,7 +2021,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
                 clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
+                    const currentRoom = gameServer.getRoom(roomCode);
                     if (currentRoom && currentRoom.gameState) {
                         currentRoom.gameState.players[1].hand = [
                             { rank: "J", suit: "diamonds" },
@@ -2103,7 +2103,7 @@ describe("registerSocketEvents", () => {
                 });
                 clientSockets[3].once("room_joined", () => {
                     clientSockets[0].once("round_started", (payload) => {
-                        const currentRoom = socketHandler.getRoom(roomCode);
+                        const currentRoom = gameServer.getRoom(roomCode);
                         if (currentRoom && currentRoom.gameState) {
                             currentRoom.gameState.players[1].hand = [
                                 { rank: "J", suit: "diamonds" },
@@ -2116,7 +2116,7 @@ describe("registerSocketEvents", () => {
                             "turn_started",
                             ({ currentPlayerIndex: newIndex }) => {
                                 const currentRoom =
-                                    socketHandler.getRoom(roomCode);
+                                    gameServer.getRoom(roomCode);
                                 if (currentRoom && currentRoom.gameState)
                                     currentRoom.gameState.reshuffleCount = 1;
                                 currentPlayerIndex = newIndex;
@@ -2216,7 +2216,7 @@ describe("registerSocketEvents", () => {
                 });
                 clientSockets[3].once("room_joined", () => {
                     clientSockets[0].once("round_started", (payload) => {
-                        const currentRoom = socketHandler.getRoom(roomCode);
+                        const currentRoom = gameServer.getRoom(roomCode);
                         if (currentRoom && currentRoom.gameState) {
                             currentRoom.gameState.players[1].hand = [
                                 { rank: "K", suit: "diamonds" },
@@ -2312,7 +2312,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[1].emit("player_ready");
                 });
                 clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
+                    const currentRoom = gameServer.getRoom(roomCode);
                     if (currentRoom && currentRoom.gameState) {
                         currentRoom.gameState.players[1].hand = [
                             { rank: "K", suit: "diamonds" },
