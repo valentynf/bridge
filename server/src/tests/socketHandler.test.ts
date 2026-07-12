@@ -1810,7 +1810,7 @@ describe("registerSocketEvents", () => {
             return sixCoveredPromise;
         });
 
-        test.skip("Should end round", async () => {
+        test("Should end round", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -1893,7 +1893,7 @@ describe("registerSocketEvents", () => {
             return roundEndedPromise;
         });
 
-        test.skip("Should not be able to end round with a 6", async () => {
+        test("Should not be able to end round with a 6", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -1978,7 +1978,7 @@ describe("registerSocketEvents", () => {
             return roundEndedNotReceivedPromise;
         });
 
-        test.skip("Should end round with Jack + double effect", async () => {
+        test("Should end round with Jack + double effect", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -2078,7 +2078,7 @@ describe("registerSocketEvents", () => {
             ]);
         });
 
-        test.skip("Should end round with two Jacks + minus20 effect + multiplier", async () => {
+        test("Should end round with two Jacks + minus20 effect + multiplier", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -2133,7 +2133,6 @@ describe("registerSocketEvents", () => {
                             { rank: "J", suit: "spades" },
                         ];
                         currentRoom.gameState.players[1].score = 110;
-                        currentRoom.gameState.reshuffleCount = 1;
                     }
                     dealerIndex = payload.dealerIndex;
                     clientSockets[dealerIndex].emit("play_cards", {
@@ -2142,6 +2141,9 @@ describe("registerSocketEvents", () => {
                     clientSockets[2].on(
                         "turn_started",
                         ({ currentPlayerIndex: newIndex }) => {
+                            const currentRoom = socketHandler.getRoom(roomCode);
+                            if (currentRoom && currentRoom.gameState)
+                                currentRoom.gameState.reshuffleCount = 1;
                             currentPlayerIndex = newIndex;
                             resolve();
                         }

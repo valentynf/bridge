@@ -360,5 +360,6 @@ export const generateInitialState = (
         isPendingSuitDeclaration: false,
         hasActedThisTurn: false,
         isCoveringRequired: false,
+        pendingJackBonusCount: undefined,
     };
 };

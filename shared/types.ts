@@ -44,6 +44,7 @@ export type BridgeGameState = {
     isPendingSuitDeclaration: boolean;
     hasActedThisTurn: boolean;
     isCoveringRequired: boolean;
+    pendingJackBonusCount: number | undefined;
 };
 
 export type LobbyMember = {

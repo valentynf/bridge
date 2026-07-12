@@ -4,6 +4,7 @@ import type {
     Card,
     ClientToServerEvents,
     GamePlayer,
+    JackEndEffect,
     LobbyMember,
     LobbyRoom,
     RoundPlayer,
@@ -388,6 +389,23 @@ export class SocketHandler {
                             affectedPlayerIndex,
                         });
                     }
+
+                    if (updatedHand.length === 0 && !needsCover) {
+                        if (onlyPlayedJacks) {
+                            gameState.pendingJackBonusCount =
+                                cardsToPlay.length;
+                            socket.emit("choose_jack_bonus", {
+                                jackCount: cardsToPlay.length,
+                            });
+                            return;
+                        }
+                        this.handleRoundEnd(
+                            gameState,
+                            currentRoomCode,
+                            currentPlayerIndex
+                        );
+                        return;
+                    }
                 }
 
                 if (gameState.activePile.length > 3) {
@@ -462,12 +480,7 @@ export class SocketHandler {
                     return;
                 }
                 const { gameState, currentRoomCode } = gameContext;
-                const {
-                    currentPlayerIndex,
-                    players,
-                    reshuffleCount,
-                    activePile,
-                } = gameState;
+                const { currentPlayerIndex, activePile } = gameState;
                 const canBridge =
                     activePile.length >= 4 &&
                     new Set(activePile.slice(0, 4).map((card) => card.rank))
@@ -476,56 +489,13 @@ export class SocketHandler {
                     socket.emit("error", { error: "Not eligible to bridge" });
                     return;
                 }
-                let scores: number[] = countPoints(
-                    players.map((player) => player.hand),
-                    currentPlayerIndex,
-                    reshuffleCount,
-                    players.map((player) => player.score)
-                );
-                const eliminatedIndexes: number[] = scores.reduce(
-                    (acc, score, index) => {
-                        if (score > 120) acc.push(index);
-                        return acc;
-                    },
-                    [] as number[]
-                );
-                scores = scores.map((score, index) => {
-                    if (score === 120) {
-                        this.io
-                            .to(currentRoomCode)
-                            .emit("score_reset", { playerIndex: index });
-                        return 0;
-                    }
-                    return score;
-                });
-                gameState.players.forEach((player, index) => {
-                    player.score = scores[index];
-                    if (eliminatedIndexes.includes(index)) {
-                        player.isEliminated = true;
-                    }
-                });
-
-                let highestScore: number = -1;
-                let nextDealerIndex: number = 0;
-                for (let i = 0; i < scores.length; i++) {
-                    if (eliminatedIndexes.includes(i)) continue;
-                    if (scores[i] > highestScore) {
-                        highestScore = scores[i];
-                        nextDealerIndex = i;
-                    } else if (scores[i] === highestScore) {
-                        nextDealerIndex =
-                            Math.random() > 0.5 ? nextDealerIndex : i;
-                    }
-                }
 
                 this.io.to(currentRoomCode).emit("bridge_declared");
-                this.io.to(currentRoomCode).emit("round_ended", {
-                    scores,
-                    winnerIndex: currentPlayerIndex,
-                    eliminatedIndexes,
-                    reshuffleMultiplier: reshuffleCount,
-                    nextDealerIndex,
-                });
+                this.handleRoundEnd(
+                    gameState,
+                    currentRoomCode,
+                    currentPlayerIndex
+                );
             });
             socket.on("draw_card", () => {
                 const gameContext = this.getGameContext(socket);
@@ -600,6 +570,31 @@ export class SocketHandler {
                 });
                 socket.emit("hand_update", { updatedHand });
             });
+            socket.on("declare_jack_bonus", ({ option }) => {
+                const gameContext = this.getGameContext(socket);
+                if (!gameContext) {
+                    return;
+                }
+                const { gameState, currentRoomCode } = gameContext;
+                const { currentPlayerIndex, pendingJackBonusCount } = gameState;
+                if (!pendingJackBonusCount) {
+                    socket.emit("error", {
+                        error: "Illegal play - not eligible to declare jack bonus",
+                    });
+                    return;
+                }
+                const jackEndEffect: JackEndEffect = {
+                    option,
+                    count: pendingJackBonusCount,
+                };
+                this.handleRoundEnd(
+                    gameState,
+                    currentRoomCode,
+                    currentPlayerIndex,
+                    jackEndEffect
+                );
+                gameState.pendingJackBonusCount = undefined;
+            });
         });
     }
 
@@ -644,5 +639,64 @@ export class SocketHandler {
         }
 
         return { currentRoomCode, gameState };
+    }
+
+    private handleRoundEnd(
+        gameState: BridgeGameState,
+        currentRoomCode: string,
+        winnerIndex: number,
+        jackEndEffect?: JackEndEffect
+    ) {
+        const { players, reshuffleCount } = gameState;
+
+        let scores: number[] = countPoints(
+            players.map((player) => player.hand),
+            winnerIndex,
+            reshuffleCount,
+            players.map((player) => player.score),
+            jackEndEffect
+        );
+        const eliminatedIndexes: number[] = scores.reduce(
+            (acc, score, index) => {
+                if (score > 120) acc.push(index);
+                return acc;
+            },
+            [] as number[]
+        );
+        scores = scores.map((score, index) => {
+            if (score === 120) {
+                this.io
+                    .to(currentRoomCode)
+                    .emit("score_reset", { playerIndex: index });
+                return 0;
+            }
+            return score;
+        });
+        gameState.players.forEach((player, index) => {
+            player.score = scores[index];
+            if (eliminatedIndexes.includes(index)) {
+                player.isEliminated = true;
+            }
+        });
+
+        let highestScore: number = -1;
+        let nextDealerIndex: number = 0;
+        for (let i = 0; i < scores.length; i++) {
+            if (eliminatedIndexes.includes(i)) continue;
+            if (scores[i] > highestScore) {
+                highestScore = scores[i];
+                nextDealerIndex = i;
+            } else if (scores[i] === highestScore) {
+                nextDealerIndex = Math.random() > 0.5 ? nextDealerIndex : i;
+            }
+        }
+
+        this.io.to(currentRoomCode).emit("round_ended", {
+            scores,
+            winnerIndex,
+            eliminatedIndexes,
+            reshuffleMultiplier: reshuffleCount,
+            nextDealerIndex,
+        });
     }
 }
