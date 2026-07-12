@@ -36,7 +36,7 @@ No 2s, 3s, 4s, or 5s.
 
 **First round:** The first dealer is chosen randomly.
 
-**Subsequent rounds:** The player with the lowest cumulative score deals. If multiple players share the lowest score, the player sitting clockwise after the round winner deals.
+**Subsequent rounds:** The player with the highest cumulative score deals (closest to 120). If multiple players share the highest score, the player sitting clockwise after the round winner deals.
 
 **Process:**
 

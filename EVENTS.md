@@ -112,13 +112,13 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Round & game end
 
-| Event                | Dir | Audience    | Payload                                                                                            |
-| -------------------- | --- | ----------- | -------------------------------------------------------------------------------------------------- |
-| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                                       |
-| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                                                    |
-| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                                           |
-| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
-| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                                                   |
+| Event                | Dir | Audience    | Payload                                                                           |
+| -------------------- | --- | ----------- | --------------------------------------------------------------------------------- |
+| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                      |
+| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                                   |
+| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                          |
+| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier }` |
+| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                                  |
 
 ---
 

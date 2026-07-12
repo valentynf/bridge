@@ -93,7 +93,6 @@ export interface ServerToClientEvents {
         winnerIndex: number;
         eliminatedIndexes: number[];
         reshuffleMultiplier: number;
-        nextDealerIndex: number;
         jackBonus?: JackEndEffect;
     }) => void;
     card_drawn: (payload: {
