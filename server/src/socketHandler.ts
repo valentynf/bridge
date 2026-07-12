@@ -587,13 +587,13 @@ export class SocketHandler {
                     option,
                     count: pendingJackBonusCount,
                 };
+                gameState.pendingJackBonusCount = undefined;
                 this.handleRoundEnd(
                     gameState,
                     currentRoomCode,
                     currentPlayerIndex,
                     jackEndEffect
                 );
-                gameState.pendingJackBonusCount = undefined;
             });
         });
     }
@@ -679,24 +679,76 @@ export class SocketHandler {
             }
         });
 
-        let highestScore: number = -1;
-        let nextDealerIndex: number = 0;
-        for (let i = 0; i < scores.length; i++) {
-            if (eliminatedIndexes.includes(i)) continue;
-            if (scores[i] > highestScore) {
-                highestScore = scores[i];
-                nextDealerIndex = i;
-            } else if (scores[i] === highestScore) {
-                nextDealerIndex = Math.random() > 0.5 ? nextDealerIndex : i;
-            }
-        }
-
         this.io.to(currentRoomCode).emit("round_ended", {
             scores,
             winnerIndex,
             eliminatedIndexes,
             reshuffleMultiplier: reshuffleCount,
-            nextDealerIndex,
         });
+
+        const nextRoundPlayers = gameState.players.filter(
+            (player) => player.isEliminated === false
+        );
+
+        gameState.players = nextRoundPlayers;
+
+        if (nextRoundPlayers.length === 1) {
+            const gameWinnerIndex = scores.findIndex(
+                (_, i) => !eliminatedIndexes.includes(i)
+            );
+            this.io.to(currentRoomCode).emit("game_over", {
+                finalScores: scores,
+                winnerIndex: gameWinnerIndex,
+            });
+        } else {
+            let highestScore: number = -1;
+            let nextDealerIndex: number = 0;
+            for (let i = 0; i < nextRoundPlayers.length; i++) {
+                if (nextRoundPlayers[i].score > highestScore) {
+                    highestScore = nextRoundPlayers[i].score;
+                    nextDealerIndex = i;
+                } else if (nextRoundPlayers[i].score === highestScore) {
+                    nextDealerIndex = Math.random() > 0.5 ? nextDealerIndex : i;
+                }
+            }
+
+            Object.assign(
+                gameState,
+                generateInitialState(
+                    nextRoundPlayers.map((player) => ({
+                        name: player.nickname,
+                        id: player.id,
+                        isReady: true,
+                    })),
+                    nextDealerIndex,
+                    this.customShuffle
+                )
+            );
+
+            for (let i = 0; i < nextRoundPlayers.length; i++) {
+                gameState.players[i].score = nextRoundPlayers[i].score;
+            }
+
+            if (gameState.activePile[0].rank === "6")
+                gameState.isCoveringRequired = true;
+
+            const roundPlayers: RoundPlayer[] = gameState.players.map(
+                (player) => ({
+                    nickname: player.nickname,
+                    id: player.id,
+                    score: player.score,
+                })
+            );
+
+            gameState.players.forEach(({ id, hand }) => {
+                this.io.to(id).emit("round_started", {
+                    hand,
+                    activePileTopCard: gameState.activePile[0],
+                    dealerIndex: gameState.currentDealerIndex,
+                    currentPlayerIndex: gameState.currentDealerIndex,
+                    players: roundPlayers,
+                });
+            });
+        }
     }
 }

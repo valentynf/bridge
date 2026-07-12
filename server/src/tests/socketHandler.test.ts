@@ -1221,12 +1221,10 @@ describe("registerSocketEvents", () => {
                             winnerIndex,
                             eliminatedIndexes,
                             reshuffleMultiplier,
-                            nextDealerIndex,
                         }) => {
                             expect(scores).toEqual([10, 20, 60, 70]);
                             expect(eliminatedIndexes).toEqual([]);
                             expect(reshuffleMultiplier).toBe(0);
-                            expect(nextDealerIndex).toBe(3);
                             expect(winnerIndex).toBe(currentPlayerIndex);
                             res(undefined);
                         }
@@ -2104,6 +2102,31 @@ describe("registerSocketEvents", () => {
                     });
                 });
                 clientSockets[3].once("room_joined", () => {
+                    clientSockets[0].once("round_started", (payload) => {
+                        const currentRoom = socketHandler.getRoom(roomCode);
+                        if (currentRoom && currentRoom.gameState) {
+                            currentRoom.gameState.players[1].hand = [
+                                { rank: "J", suit: "diamonds" },
+                                { rank: "J", suit: "spades" },
+                            ];
+                            currentRoom.gameState.players[1].score = 110;
+                        }
+                        dealerIndex = payload.dealerIndex;
+                        clientSockets[2].once(
+                            "turn_started",
+                            ({ currentPlayerIndex: newIndex }) => {
+                                const currentRoom =
+                                    socketHandler.getRoom(roomCode);
+                                if (currentRoom && currentRoom.gameState)
+                                    currentRoom.gameState.reshuffleCount = 1;
+                                currentPlayerIndex = newIndex;
+                                resolve();
+                            }
+                        );
+                        clientSockets[dealerIndex].emit("play_cards", {
+                            cardsToPlay: [],
+                        });
+                    });
                     predictableDeck = reverseDealCards([
                         [
                             { rank: "7", suit: "diamonds" },
@@ -2124,30 +2147,6 @@ describe("registerSocketEvents", () => {
                     clientSockets[1].emit("player_ready");
                     clientSockets[2].emit("player_ready");
                     clientSockets[3].emit("player_ready");
-                });
-                clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
-                    if (currentRoom && currentRoom.gameState) {
-                        currentRoom.gameState.players[1].hand = [
-                            { rank: "J", suit: "diamonds" },
-                            { rank: "J", suit: "spades" },
-                        ];
-                        currentRoom.gameState.players[1].score = 110;
-                    }
-                    dealerIndex = payload.dealerIndex;
-                    clientSockets[dealerIndex].emit("play_cards", {
-                        cardsToPlay: [],
-                    });
-                    clientSockets[2].on(
-                        "turn_started",
-                        ({ currentPlayerIndex: newIndex }) => {
-                            const currentRoom = socketHandler.getRoom(roomCode);
-                            if (currentRoom && currentRoom.gameState)
-                                currentRoom.gameState.reshuffleCount = 1;
-                            currentPlayerIndex = newIndex;
-                            resolve();
-                        }
-                    );
                 });
 
                 clientSockets[0].emit("create_room", {
@@ -2190,7 +2189,7 @@ describe("registerSocketEvents", () => {
             ]);
         });
 
-        test.skip("Should end round with eliminated player", async () => {
+        test("Should end round with eliminated player", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
@@ -2216,6 +2215,26 @@ describe("registerSocketEvents", () => {
                     });
                 });
                 clientSockets[3].once("room_joined", () => {
+                    clientSockets[0].once("round_started", (payload) => {
+                        const currentRoom = socketHandler.getRoom(roomCode);
+                        if (currentRoom && currentRoom.gameState) {
+                            currentRoom.gameState.players[1].hand = [
+                                { rank: "K", suit: "diamonds" },
+                            ];
+                            currentRoom.gameState.players[0].score = 100;
+                        }
+                        dealerIndex = payload.dealerIndex;
+                        clientSockets[dealerIndex].emit("play_cards", {
+                            cardsToPlay: [],
+                        });
+                        clientSockets[2].once(
+                            "turn_started",
+                            ({ currentPlayerIndex: newIndex }) => {
+                                currentPlayerIndex = newIndex;
+                                resolve();
+                            }
+                        );
+                    });
                     predictableDeck = reverseDealCards([
                         [
                             { rank: "7", suit: "diamonds" },
@@ -2233,26 +2252,6 @@ describe("registerSocketEvents", () => {
                     clientSockets[1].emit("player_ready");
                     clientSockets[2].emit("player_ready");
                     clientSockets[3].emit("player_ready");
-                });
-                clientSockets[0].once("round_started", (payload) => {
-                    const currentRoom = socketHandler.getRoom(roomCode);
-                    if (currentRoom && currentRoom.gameState) {
-                        currentRoom.gameState.players[1].hand = [
-                            { rank: "K", suit: "diamonds" },
-                        ];
-                        currentRoom.gameState.players[0].score = 100;
-                    }
-                    dealerIndex = payload.dealerIndex;
-                    clientSockets[dealerIndex].emit("play_cards", {
-                        cardsToPlay: [],
-                    });
-                    clientSockets[2].on(
-                        "turn_started",
-                        ({ currentPlayerIndex: newIndex }) => {
-                            currentPlayerIndex = newIndex;
-                            resolve();
-                        }
-                    );
                 });
 
                 clientSockets[0].emit("create_room", {
@@ -2284,7 +2283,7 @@ describe("registerSocketEvents", () => {
             return Promise.all([roundEndedPromise, roundStartedPromise]);
         });
 
-        test.skip("Should end game", async () => {
+        test("Should end game", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;
                 clientSockets[0].once(
