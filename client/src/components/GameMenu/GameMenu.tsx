@@ -4,7 +4,9 @@ function GameMenu() {
     return (
         <>
             <div>
-                <button>Create game</button>
+                <button className={`${styles["button-create"]}`}>
+                    Create game
+                </button>
                 <button>Join game</button>
             </div>
         </>
