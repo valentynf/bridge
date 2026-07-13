@@ -15,11 +15,7 @@ const gameServer = new GameServer(io);
 
 gameServer.registerSocketEvents();
 
-app.get("/", (_, res) => {
-    res.send("Hello World!");
-});
-
-/* eslint no-console: "warn" */
 server.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+    /* eslint no-console: "off" */
+    console.log(`listening on port ${port}`);
 });

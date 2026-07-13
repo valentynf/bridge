@@ -174,23 +174,26 @@ Special card handling on the server:
 
 The server rejects any invalid action and emits an error back to that client only.
 
-**This is the hardest phase.** Expect bugs. That is what the Phase 1 tests are for.
-
 ### Phase 1 logic updates required
 
-These changes to the existing game engine were identified during Phase 3 (event contract design) and must be applied before or during Phase 5:
+These changes to the existing game engine were identified during Phase 3 (event contract design) and were applied during Phase 5:
 
-1. **Move effects out of `applyPendingEffects` into `playCards` pipeline.** Effects (7s, 8s, Aces) must apply immediately after a play, not at the start of the next turn. `applyPendingEffects` as a standalone turn-start function goes away. Instead, `playCards` (or a wrapper) returns the applied effects as part of its result so the server can broadcast them immediately.
+1. **Move effects out of `applyPendingEffects` into `playCards` pipeline.** Effects (7s, 8s, Aces) apply immediately after a play, not at the start of the next turn.
 
-2. **Make 6-cover interactive over WebSocket.** Currently `playCards` auto-resolves the 6-cover draw loop server-side in one shot. Change this so the server signals the player that they must cover (via `cards_played` with a pending cover indicator), then the player draws card-by-card via `draw_card` events until they can cover, then plays the cover via `play_cards`. The server validates that the cover is legal (matches the 6's suit, is not another 6).
+2. **Make 6-cover interactive over WebSocket.** The server signals the player that they must cover, then the player draws card-by-card via `draw_card` events until they can cover, then plays the cover via `play_cards`.
 
-3. **Allow post-cover same-rank follow-up.** After a 6 is covered, the player may hold additional cards of the same rank as the cover card. The server should check for this and allow the player to play them before ending their turn. Same interactive flow — player draws one-by-one to find a cover, covers, then optionally plays same-rank cards on top.
+3. **Allow post-cover same-rank follow-up.** After a 6 is covered, the player may play additional cards of the same rank as the cover card before ending their turn.
 
-4. **Dealer's opening turn uses different validation.** The dealer can only play cards matching the face-up card's rank (not suit). The server must detect that `currentPlayerIndex === dealerIndex` on the first turn and apply rank-only validation instead of the normal rank-or-suit check.
+4. **Dealer's opening turn uses different validation.** The dealer can only play cards matching the face-up card's rank (not suit).
 
-5. **Bridge check must happen before Jack suit prompt.** After `cards_played`, check if bridge is possible (top 4 cards same rank). If yes, prompt the player. Only if they decline bridge (or it's not possible) should the Jack suit declaration prompt fire. Bridge with Jacks means no suit declaration and no Jack finish bonus.
+5. **Bridge check must happen before Jack suit prompt.** After `cards_played`, bridge is checked first. Bridge with Jacks means no suit declaration and no Jack finish bonus.
 
 **Exit condition:** 4 players can play a complete round through the server, including all special card effects, reshuffle, and correct end-of-round scoring.
+
+### Phase 5 backlog (deferred)
+
+1. **`mockReturnValue(0.1)` fragility** — dealer index selection in tests relies on a specific `Math.random` mock value. Frafile if the formula changes.
+2. **Unify dealer turn + regular turn flow** — the `play_cards` handler has two large branches (dealer vs usual) with duplicated effects application code. Extract the shared effects block into a private method.
 
 ---
 

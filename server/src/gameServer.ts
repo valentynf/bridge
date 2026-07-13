@@ -25,12 +25,19 @@ import type { Socket } from "socket.io";
 import { reshuffleDeck } from "./functions/deck.js";
 
 export class GameServer {
-    private lobbyRooms: Map<string, LobbyRoom> = new Map();
+    private rooms: Map<string, LobbyRoom>;
+    private customShuffle: ((unshuffledDeck: Card[]) => Card[]) | undefined;
 
     constructor(
         private io: Server<ClientToServerEvents, ServerToClientEvents>,
-        private customShuffle?: (unshuffledDeck: Card[]) => Card[]
-    ) {}
+        options?: {
+            customShuffle?: (unshuffledDeck: Card[]) => Card[];
+            rooms?: Map<string, LobbyRoom>;
+        }
+    ) {
+        this.rooms = options?.rooms ?? new Map();
+        this.customShuffle = options?.customShuffle;
+    }
 
     registerSocketEvents() {
         this.io.on("connection", (socket) => {
@@ -49,14 +56,14 @@ export class GameServer {
                     members: roomMembers,
                     gameState: undefined,
                 };
-                this.lobbyRooms.set(roomId, newRoom);
+                this.rooms.set(roomId, newRoom);
                 socket.emit("room_created", { roomCode: roomId });
                 socket.join(roomId);
                 this.io.to(roomId).emit("room_joined", { roomMembers });
             });
             socket.on("join_room", ({ playerName, roomCode }) => {
                 const roomToJoin: LobbyRoom | undefined =
-                    this.lobbyRooms.get(roomCode);
+                    this.rooms.get(roomCode);
                 if (!roomToJoin) {
                     socket.emit("error", {
                         error: `The room id: ${roomCode} doesn't exist`,
@@ -97,7 +104,7 @@ export class GameServer {
                     });
                     return;
                 }
-                const currentRoom = this.lobbyRooms.get(currentRoomCode);
+                const currentRoom = this.rooms.get(currentRoomCode);
                 if (!currentRoom) {
                     socket.emit("error", {
                         error: `Room id: ${currentRoomCode} does not exist`,
@@ -109,7 +116,7 @@ export class GameServer {
                 );
                 if (!currentRoomMember) {
                     socket.emit("error", {
-                        error: `Player is not a member of the room (BUG: socket.rooms and lobbyRooms inconsistency!)`,
+                        error: `Player is not a member of the room (BUG: socket.rooms and rooms inconsistency!)`,
                     });
                     return;
                 }
@@ -660,19 +667,6 @@ export class GameServer {
         });
     }
 
-    resetLobby() {
-        this.lobbyRooms.forEach((_, roomId) => this.io.socketsLeave(roomId));
-        this.lobbyRooms.clear();
-    }
-
-    getRoom(roomCode: string): LobbyRoom | undefined {
-        return this.lobbyRooms.get(roomCode);
-    }
-
-    setRoom(roomCode: string, room: LobbyRoom) {
-        this.lobbyRooms.set(roomCode, room);
-    }
-
     private getGameContext(
         socket: Socket<ClientToServerEvents, ServerToClientEvents>
     ): { currentRoomCode: string; gameState: BridgeGameState } | undefined {
@@ -685,7 +679,7 @@ export class GameServer {
             });
             return;
         }
-        const currentRoom = this.lobbyRooms.get(currentRoomCode);
+        const currentRoom = this.rooms.get(currentRoomCode);
         if (!currentRoom) {
             socket.emit("error", {
                 error: `Invalid room id`,

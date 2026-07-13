@@ -20,14 +20,14 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Lobby & rooms
 
-| Event                 | Dir | Audience    | Payload                    |
-| --------------------- | --- | ----------- | -------------------------- |
-| `create_room`         | C→S | sender      | `{ playerName }`           |
-| `room_created`        | S→C | sender      | `{ roomCode }`             |
-| `join_room`           | C→S | sender      | `{ playerName, roomCode }` |
-| `room_joined`         | S→C | all in room | `{ lobbyMembers[] }`       |
-| `player_ready`        | C→S | sender      | `{ }`                      |
-| `player_ready_update` | S→C | all in room | `{ readyPlayers[] }`       |
+| Event                 | Dir | Audience    | Payload                                     |
+| --------------------- | --- | ----------- | ------------------------------------------- |
+| `create_room`         | C→S | sender      | `{ playerName }`                            |
+| `room_created`        | S→C | sender      | `{ roomCode }`                              |
+| `join_room`           | C→S | sender      | `{ playerName, roomCode }`                  |
+| `room_joined`         | S→C | all in room | `{ roomMembers: LobbyMember[] }`            |
+| `player_ready`        | C→S | sender      | `{ }`                                       |
+| `player_ready_update` | S→C | all in room | `{ readyPlayerId: string, readyPlayers[] }` |
 
 ---
 
@@ -112,21 +112,21 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Round & game end
 
-| Event                | Dir | Audience    | Payload                                                                           |
-| -------------------- | --- | ----------- | --------------------------------------------------------------------------------- |
-| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                      |
-| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                                   |
-| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                          |
-| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier }` |
-| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                                  |
+| Event                | Dir | Audience    | Payload                                                               |
+| -------------------- | --- | ----------- | --------------------------------------------------------------------- |
+| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0          |
+| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                       |
+| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                              |
+| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], reshuffleMultiplier }` |
+| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                      |
 
 ---
 
 ## Errors
 
-| Event   | Dir | Audience    | Payload              |
-| ------- | --- | ----------- | -------------------- |
-| `error` | S→C | sender only | `{ message, code? }` |
+| Event   | Dir | Audience    | Payload             |
+| ------- | --- | ----------- | ------------------- |
+| `error` | S→C | sender only | `{ error: string }` |
 
 ---
 
@@ -137,7 +137,7 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 1. `turn_started` → player sees it's their turn
 2. Player plays → `play_cards` (C→S)
 3. Server validates → `cards_played` (S→C to all)
-4. If effects (7s/8s/Aces): `effect_applied` fires immediately
+4. If effects (7s/8s/Aces): `effects_applied` fires immediately
 5. If bridge possible: `can_bridge` → player chooses → `declare_bridge` → `bridge_declared` → round ends (skip step 6)
 6. If Jack (and no bridge): `set_jack_suit` → `declare_suit` → `suit_declared`
 7. Player clicks end → `end_turn` (C→S)
@@ -152,14 +152,23 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 5. If still can't play → `end_turn` (C→S)
 6. Server advances → `turn_started` for next player
 
+### 6-cover flow
+
+1. Player plays a 6 they cannot cover from hand → `cards_played` with `needsCover` state set server-side
+2. Player draws card-by-card via `draw_card` → `card_drawn` + `hand_update` each time
+3. Once player has a playable cover card, they play it via `play_cards` → `cards_played`
+4. Cover card must match the 6's suit (not rank) or be a Jack — another 6 is not a valid cover but triggers a new cover requirement
+5. After covering, player may play additional same-rank cards on top, then `end_turn`
+6. Player cannot `end_turn` while a 6 is uncovered — server rejects with error
+
 ### Round ending
 
 1. Player plays their last card(s) → `cards_played` with `handCount: 0`
 2. Server checks win validity (can't finish on 6)
 3. If winner finished with Jack(s): `choose_jack_bonus` → `declare_jack_bonus`
-4. Server calculates scores → `round_ended` (S→C to all, includes `winnerIndex`)
-5. If any player hit exactly 120: `score_reset` for each (S→C to all)
-6. Server splices eliminated players from the array
+4. If any player hit exactly 120: `score_reset` for each (S→C to all)
+5. Server calculates scores → `round_ended` (S→C to all, includes `winnerIndex`)
+6. Server filters out eliminated players from the array
 7. If players remain: `round_started` (S→C, each player unique — fresh snapshot with updated player list)
 8. If only one player left: `game_over`
 
