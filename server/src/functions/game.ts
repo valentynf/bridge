@@ -5,15 +5,16 @@ import type {
     GamePlayer,
     JackEndEffect,
     LobbyMember,
-    SpecialAction,
     SpecialEffect,
 } from "../../../shared/types.js";
 import {
     countHandPoints,
     createNewDeck,
     dealCards,
+    reshuffleDeck,
     shuffleDeck,
 } from "./deck.js";
+import { areSameCards } from "./utility.js";
 
 export const applyPendingEffects = (
     drawPile: Card[],
@@ -38,11 +39,14 @@ export const applyPendingEffects = (
             if (topDrawPileCard) {
                 updatedHand.push(topDrawPileCard);
             } else {
-                // if (!reshuffled), implement scenario with empty deck (only 1 card on the table)
-                const topActivePileCard = updatedActivePile.shift();
-                updatedDrawPile = shuffleDeck(updatedActivePile);
+                const {
+                    updatedActivePile: activePileAfterReshuffle,
+                    updatedDrawPile: drawPileAfterReshuffle,
+                } = reshuffleDeck(updatedActivePile);
+                updatedDrawPile = drawPileAfterReshuffle;
+                updatedActivePile = activePileAfterReshuffle;
+
                 const topDrawPileCard = updatedDrawPile.shift();
-                if (topActivePileCard) updatedActivePile = [topActivePileCard];
                 if (topDrawPileCard) updatedHand.push(topDrawPileCard);
                 reshuffled = true;
             }
@@ -88,13 +92,15 @@ export const playCards = (
     activePile: Card[],
     drawPile: Card[],
     jackSuit: CardSuit
-): {
-    updatedHand: Card[];
-    updatedActivePile: Card[];
-    updatedDrawPile: Card[];
-    specialEffects: SpecialEffect[];
-    needsCover: boolean;
-} => {
+):
+    | {
+          updatedHand: Card[];
+          updatedActivePile: Card[];
+          updatedDrawPile: Card[];
+          specialEffects: SpecialEffect[];
+          needsCover: boolean;
+      }
+    | undefined => {
     const activePileTopCard = activePile[0];
     let updatedHand: Card[] = [...playersHand];
     const updatedActivePile: Card[] = [...activePile];
@@ -102,26 +108,14 @@ export const playCards = (
     let pendingEffects: SpecialEffect[] = [];
     let needsCover: boolean = false;
 
-    const unchangedData = {
-        updatedHand: playersHand,
-        updatedActivePile: activePile,
-        updatedDrawPile: drawPile,
-        specialEffects: [],
-        needsCover,
-    };
-
-    if (cardsToPlay.length === 0) return unchangedData;
+    if (cardsToPlay.length === 0) return undefined;
 
     if (
         !cardsToPlay.every((card) =>
-            playersHand.some(
-                (cardOnHand) =>
-                    card.rank === cardOnHand.rank &&
-                    card.suit === cardOnHand.suit
-            )
+            playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
-        return unchangedData;
+        return undefined;
 
     if (cardsToPlay.every((card) => card.rank === "6")) {
         const topSixCard = cardsToPlay[0];
@@ -131,14 +125,12 @@ export const playCards = (
                 (card.rank !== "6" && card.suit === topSixCard.suit)
         );
 
-        if (canCoverSix) return unchangedData;
+        if (canCoverSix) return undefined;
 
         updatedHand = updatedHand.filter(
             (card) =>
-                !cardsToPlay.some(
-                    (playedCard) =>
-                        card.rank === playedCard.rank &&
-                        card.suit === playedCard.suit
+                !cardsToPlay.some((playedCard) =>
+                    areSameCards(card, playedCard)
                 )
         );
         updatedActivePile.unshift(...cardsToPlay);
@@ -156,9 +148,9 @@ export const playCards = (
     if (cardsToPlay.length === 1) {
         if (activePileTopCard.rank === "J") {
             if (!checkCanPlay(activePileTopCard, cardsToPlay, jackSuit))
-                return unchangedData;
+                return undefined;
         } else if (!checkCanPlay(activePileTopCard, cardsToPlay))
-            return unchangedData;
+            return undefined;
 
         const matchesByJackSuit =
             activePileTopCard.rank === "J" && cardsToPlay[0].suit === jackSuit;
@@ -167,11 +159,7 @@ export const playCards = (
         const isJackCard = cardsToPlay[0].rank === "J";
         if (matchesByJackSuit || matchesByRank || matchesBySuit || isJackCard) {
             updatedHand = updatedHand.filter(
-                (card) =>
-                    !(
-                        card.rank === cardsToPlay[0].rank &&
-                        card.suit === cardsToPlay[0].suit
-                    )
+                (card) => !areSameCards(card, cardsToPlay[0])
             );
             updatedActivePile.unshift(cardsToPlay[0]);
         }
@@ -187,11 +175,11 @@ export const playCards = (
                     jackSuit
                 )
             )
-                return unchangedData;
+                return undefined;
         } else if (
             !checkCanPlay(activePileTopCard, [cardsToPlay[bottomCardIndex]])
         )
-            return unchangedData;
+            return undefined;
 
         const matchesByJackSuit =
             activePileTopCard.rank === "J" &&
@@ -214,10 +202,8 @@ export const playCards = (
             ) {
                 updatedHand = updatedHand.filter(
                     (card) =>
-                        !cardsToPlay.some(
-                            (playedCard) =>
-                                card.rank === playedCard.rank &&
-                                card.suit === playedCard.suit
+                        !cardsToPlay.some((playedCard) =>
+                            areSameCards(card, playedCard)
                         )
                 );
                 updatedActivePile.unshift(...cardsToPlay);
@@ -240,33 +226,18 @@ export const playCards = (
             if (canCoverSix && areSameRankCoverCards) {
                 updatedHand = updatedHand.filter(
                     (card) =>
-                        !cardsToPlay.some(
-                            (playedCard) =>
-                                card.rank === playedCard.rank &&
-                                card.suit === playedCard.suit
+                        !cardsToPlay.some((playedCard) =>
+                            areSameCards(card, playedCard)
                         )
                 );
                 updatedActivePile.unshift(...cardsToPlay);
             }
         } else {
-            return unchangedData;
+            return undefined;
         }
     }
 
-    for (const card of cardsToPlay) {
-        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
-        if (card.rank === "8")
-            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
-        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
-    }
-    /* since distributing As and 8s across different players is not a v1 feature,
-    we stick to 1 SKIP_TURN, because effects will always affect next player only */
-    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
-        pendingEffects = pendingEffects.filter(
-            (effect) => effect === "TAKE_CARD"
-        );
-        pendingEffects.push("SKIP_TURN");
-    }
+    pendingEffects = countSpecialEffects(cardsToPlay);
 
     return {
         updatedHand,
@@ -302,38 +273,48 @@ export const countPoints = (
     return updatedScores;
 };
 
+export const countSpecialEffects = (cards: Card[]): SpecialEffect[] => {
+    let pendingEffects: SpecialEffect[] = [];
+    for (const card of cards) {
+        if (card.rank === "7") pendingEffects.push("TAKE_CARD");
+        if (card.rank === "8")
+            pendingEffects.push("TAKE_CARD", "TAKE_CARD", "SKIP_TURN");
+        if (card.rank === "A") pendingEffects.push("SKIP_TURN");
+    }
+    /* since distributing As and 8s across different players is not a v1 feature,
+    we stick to 1 SKIP_TURN, because effects will always affect next player only */
+    if (pendingEffects.some((effect) => effect === "SKIP_TURN")) {
+        pendingEffects = pendingEffects.filter(
+            (effect) => effect === "TAKE_CARD"
+        );
+        pendingEffects.push("SKIP_TURN");
+    }
+    return pendingEffects;
+};
+
 export const dealerOpeningPlay = (
     playersHand: Card[],
     cardsToPlay: Card[],
     topActivePileCard: Card
-): { updatedHand: Card[]; updatedActivePile: Card[] } => {
+): { updatedHand: Card[]; updatedActivePile: Card[] } | undefined => {
     let updatedHand: Card[] = [...playersHand];
     const updatedActivePile: Card[] = [topActivePileCard];
-    const unchangedData = { updatedActivePile, updatedHand };
 
-    if (cardsToPlay.length === 0) return unchangedData;
+    if (cardsToPlay.length === 0) return { updatedActivePile, updatedHand };
 
     if (
         !cardsToPlay.every((card) =>
-            playersHand.some(
-                (cardOnHand) =>
-                    card.rank === cardOnHand.rank &&
-                    card.suit === cardOnHand.suit
-            )
+            playersHand.some((cardOnHand) => areSameCards(card, cardOnHand))
         )
     )
-        return unchangedData;
+        return undefined;
 
     if (!cardsToPlay.every((card) => card.rank === topActivePileCard.rank))
-        return unchangedData;
+        return undefined;
 
     updatedHand = updatedHand.filter(
         (card) =>
-            !cardsToPlay.some(
-                (playedCard) =>
-                    card.rank === playedCard.rank &&
-                    card.suit === playedCard.suit
-            )
+            !cardsToPlay.some((playedCard) => areSameCards(card, playedCard))
     );
     updatedActivePile.unshift(...cardsToPlay);
     return { updatedActivePile, updatedHand };
@@ -341,12 +322,12 @@ export const dealerOpeningPlay = (
 
 export const generateInitialState = (
     members: LobbyMember[],
-    dealerIndex: number
+    dealerIndex: number,
+    shuffle: (unshuffledDeck: Card[]) => Card[] = shuffleDeck
 ): BridgeGameState => {
     const freshDeck: Card[] = createNewDeck();
-    const shuffledDeck: Card[] = shuffleDeck(freshDeck);
+    const shuffledDeck: Card[] = shuffle(freshDeck);
     const numberOfPlayers: number = members.length;
-    const pendingSpecialEffects: SpecialAction[] = [];
     const { hands, drawPile, activePile } = dealCards(
         dealerIndex,
         numberOfPlayers,
@@ -354,7 +335,7 @@ export const generateInitialState = (
     );
     const players: GamePlayer[] = members.map((member, i) => {
         const player: GamePlayer = {
-            nickname: member.name,
+            nickname: member.nickname,
             id: member.id,
             score: 0,
             hand: hands[i],
@@ -364,14 +345,17 @@ export const generateInitialState = (
     });
 
     return {
-        currentPhase: "PLAYING",
         players,
         currentDealerIndex: dealerIndex,
         currentPlayerIndex: dealerIndex,
         drawPile,
         activePile,
-        jackSuit: "diamonds", //it doesn't matter which suit is here
-        pendingSpecialEffects,
+        jackSuit: "diamonds",
         reshuffleCount: 0,
+        shouldSkipNextPlayer: false,
+        isPendingSuitDeclaration: false,
+        hasActedThisTurn: false,
+        isCoveringRequired: false,
+        pendingJackBonusCount: undefined,
     };
 };

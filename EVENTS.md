@@ -20,37 +20,46 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Lobby & rooms
 
-| Event                 | Dir | Audience    | Payload                    |
-| --------------------- | --- | ----------- | -------------------------- |
-| `create_room`         | C→S | sender      | `{ playerName }`           |
-| `room_created`        | S→C | sender      | `{ roomCode }`             |
-| `join_room`           | C→S | sender      | `{ playerName, roomCode }` |
-| `room_joined`         | S→C | all in room | `{ lobbyMembers[] }`       |
-| `player_ready`        | C→S | sender      | `{ }`                      |
-| `player_ready_update` | S→C | all in room | `{ readyPlayers[] }`       |
+| Event                 | Dir | Audience    | Payload                                     |
+| --------------------- | --- | ----------- | ------------------------------------------- |
+| `create_room`         | C→S | sender      | `{ playerName }`                            |
+| `room_created`        | S→C | sender      | `{ roomCode }`                              |
+| `join_room`           | C→S | sender      | `{ playerName, roomCode }`                  |
+| `room_joined`         | S→C | all in room | `{ roomMembers: LobbyMember[] }`            |
+| `player_ready`        | C→S | sender      | `{ }`                                       |
+| `player_ready_update` | S→C | all in room | `{ readyPlayerId: string, readyPlayers[] }` |
 
 ---
 
 ## Game start
 
-| Event          | Dir | Audience             | Payload                                                                        |
-| -------------- | --- | -------------------- | ------------------------------------------------------------------------------ |
-| `game_started` | S→C | each player (unique) | `{ hand, dealerIndex, activePileTopCard, currentPlayerIndex, initialEffect? }` |
+| Event          | Dir | Audience    | Payload |
+| -------------- | --- | ----------- | ------- |
+| `game_started` | S→C | all in room | (none)  |
 
-`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play).
+Signal-only event. Tells clients to switch from lobby view to game view. No payload — all game data comes from `round_started`.
 
-`initialEffect` is present when the face-up card (or the last card the dealer played on top of it) is a special card. It describes the effect that will apply to the first non-dealer player: `{ type: "draw", cardsToDraw }` for 7s, `{ type: "draw_and_skip", cardsToDraw }` for 8s, `{ type: "skip" }` for Aces.
+## Round start
+
+| Event           | Dir | Audience             | Payload                                                                                |
+| --------------- | --- | -------------------- | -------------------------------------------------------------------------------------- |
+| `round_started` | S→C | each player (unique) | `{ players: RoundPlayer[], hand, activePileTopCard, dealerIndex, currentPlayerIndex }` |
+
+Fires at the start of every round (including the first). Each player receives their own `hand`. `players` is the authoritative list of active players: `{ nickname, id, score }[]` — array index is the player index. After eliminations, spliced players are gone and indexes shift.
+
+`currentPlayerIndex` equals `dealerIndex` on the first turn (dealer's special opening play). Effects from the face-up card are calculated and applied after the dealer's opening turn ends, via `effects_applied`.
 
 ---
 
 ## Gameplay — play & draw
 
-| Event          | Dir | Audience                        | Payload                                                                                                              |
-| -------------- | --- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `play_cards`   | C→S | sender                          | `{ cardsToPlay: Card[] }`                                                                                            |
-| `cards_played` | S→C | all in room (sender gets extra) | All: `{ playerId, cardsPlayed, activePileTopCard, handCount, pendingEffects }` — Sender also gets: `{ updatedHand }` |
-| `draw_card`    | C→S | sender                          | `{ }`                                                                                                                |
-| `card_drawn`   | S→C | all in room (sender gets extra) | All: `{ playerId, drawPileCount, handCount }` — Sender also gets: `{ drawnCard }`                                    |
+| Event          | Dir | Audience    | Payload                                                                |
+| -------------- | --- | ----------- | ---------------------------------------------------------------------- |
+| `play_cards`   | C→S | sender      | `{ cardsToPlay: Card[] }`                                              |
+| `cards_played` | S→C | all in room | `{ playerId, cardsPlayed, activePileTopCard, handCount }`              |
+| `hand_update`  | S→C | sender only | `{ updatedHand }` — reusable for any hand change (play, draw, effects) |
+| `draw_card`    | C→S | sender      | `{ }`                                                                  |
+| `card_drawn`   | S→C | all in room | `{ playerId, drawPileCount, handCount }`                               |
 
 ---
 
@@ -65,11 +74,9 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 ## Gameplay — effects (applied immediately after cards_played)
 
-| Event            | Dir | Audience                        | Payload                                                                                           |
-| ---------------- | --- | ------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `effect_applied` | S→C | all in room (targets get extra) | 7s: `{ type: "draw", targetIndex, cardsToDraw }` — target also gets: `{ drawnCards }`             |
-|                  |     |                                 | 8s: `{ type: "draw_and_skip", targets[], cardsToDraw }` — each target also gets: `{ drawnCards }` |
-|                  |     |                                 | Ace: `{ type: "skip", skippedIndexes[] }`                                                         |
+| Event             | Dir | Audience    | Payload                                                    |
+| ----------------- | --- | ----------- | ---------------------------------------------------------- |
+| `effects_applied` | S→C | all in room | `{ specialEffects: SpecialEffect[], affectedPlayerIndex }` |
 
 ---
 
@@ -81,7 +88,7 @@ Other players never see another player's actual cards. They see `handCount` inst
 | --------------- | --- | ----------- | ----------------------------- |
 | `set_jack_suit` | S→C | sender only | `{ }` — prompt to pick a suit |
 | `declare_suit`  | C→S | sender      | `{ suit: Suit }`              |
-| `suit_declared` | S→C | all in room | `{ playerId, suit }`          |
+| `suit_declared` | S→C | all in room | `{ suit }`                    |
 
 ### Bridge
 
@@ -91,7 +98,7 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 | ----------------- | --- | ----------- | --------------------------------- |
 | `can_bridge`      | S→C | sender only | `{ }` — player can declare bridge |
 | `declare_bridge`  | C→S | sender      | `{ }`                             |
-| `bridge_declared` | S→C | all in room | `{ playerId }`                    |
+| `bridge_declared` | S→C | all in room | `{ }`                             |
 
 ---
 
@@ -105,22 +112,21 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Round & game end
 
-| Event               | Dir | Audience    | Payload                                                                               |
-| ------------------- | --- | ----------- | ------------------------------------------------------------------------------------- |
-| `round_won`         | S→C | all in room | `{ winnerIndex }`                                                                     |
-| `score_reset`       | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0                          |
-| `choose_jack_bonus` | S→C | winner only | `{ jackCount }`                                                                       |
-| `jack_bonus_chosen` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                                              |
-| `round_ended`       | S→C | all in room | `{ scores[], eliminatedIndexes[], jackBonus?, reshuffleMultiplier, nextDealerIndex }` |
-| `game_over`         | S→C | all in room | `{ finalScores[], winnerIndex }`                                                      |
+| Event                | Dir | Audience    | Payload                                                               |
+| -------------------- | --- | ----------- | --------------------------------------------------------------------- |
+| `score_reset`        | S→C | all in room | `{ playerIndex }` — player hit exactly 120, score reset to 0          |
+| `choose_jack_bonus`  | S→C | winner only | `{ jackCount }`                                                       |
+| `declare_jack_bonus` | C→S | sender      | `{ option: "DOUBLE_ALL" \| "MINUS_20" }`                              |
+| `round_ended`        | S→C | all in room | `{ winnerIndex, scores[], eliminatedIndexes[], reshuffleMultiplier }` |
+| `game_over`          | S→C | all in room | `{ finalScores[], winnerIndex }`                                      |
 
 ---
 
 ## Errors
 
-| Event   | Dir | Audience    | Payload              |
-| ------- | --- | ----------- | -------------------- |
-| `error` | S→C | sender only | `{ message, code? }` |
+| Event   | Dir | Audience    | Payload             |
+| ------- | --- | ----------- | ------------------- |
+| `error` | S→C | sender only | `{ error: string }` |
 
 ---
 
@@ -131,7 +137,7 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 1. `turn_started` → player sees it's their turn
 2. Player plays → `play_cards` (C→S)
 3. Server validates → `cards_played` (S→C to all)
-4. If effects (7s/8s/Aces): `effect_applied` fires immediately
+4. If effects (7s/8s/Aces): `effects_applied` fires immediately
 5. If bridge possible: `can_bridge` → player chooses → `declare_bridge` → `bridge_declared` → round ends (skip step 6)
 6. If Jack (and no bridge): `set_jack_suit` → `declare_suit` → `suit_declared`
 7. Player clicks end → `end_turn` (C→S)
@@ -146,16 +152,30 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 5. If still can't play → `end_turn` (C→S)
 6. Server advances → `turn_started` for next player
 
+### 6-cover flow
+
+1. Player plays a 6 they cannot cover from hand → `cards_played` with `needsCover` state set server-side
+2. Player draws card-by-card via `draw_card` → `card_drawn` + `hand_update` each time
+3. Once player has a playable cover card, they play it via `play_cards` → `cards_played`
+4. Cover card must match the 6's suit (not rank) or be a Jack — another 6 is not a valid cover but triggers a new cover requirement
+5. After covering, player may play additional same-rank cards on top, then `end_turn`
+6. Player cannot `end_turn` while a 6 is uncovered — server rejects with error
+
 ### Round ending
 
 1. Player plays their last card(s) → `cards_played` with `handCount: 0`
-2. Server checks win validity (Ace-last edge case)
-3. `round_won` (S→C to all)
-4. If winner finished with Jack(s): `choose_jack_bonus` → `jack_bonus_chosen`
-5. Server calculates scores → `round_ended` (S→C to all)
-6. If any player hit exactly 120: `score_reset` for each (S→C to all)
-7. If players remain: new round starts with `game_started`
+2. Server checks win validity (can't finish on 6)
+3. If winner finished with Jack(s): `choose_jack_bonus` → `declare_jack_bonus`
+4. If any player hit exactly 120: `score_reset` for each (S→C to all)
+5. Server calculates scores → `round_ended` (S→C to all, includes `winnerIndex`)
+6. Server filters out eliminated players from the array
+7. If players remain: `round_started` (S→C, each player unique — fresh snapshot with updated player list)
 8. If only one player left: `game_over`
+
+### First game start
+
+1. All players ready → `game_started` (S→C to all, no payload — switch to game view)
+2. `round_started` (S→C, each player unique — full game state snapshot)
 
 ---
 
