@@ -1,13 +1,26 @@
+import { useState, type ChangeEventHandler } from "react";
 import styles from "./GameMenu.module.css";
 
 function GameMenu() {
+    const [nickname, setNickname] = useState<string>("");
+
+    const handleInputChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+        setNickname(event.currentTarget.value);
+    };
+
     return (
         <>
             <div>
-                <button className={`${styles["button-create"]}`}>
+                <input title="nickname" onChange={handleInputChange}></input>
+                <button
+                    disabled={nickname === "" ? true : false}
+                    className={`${styles["button-create"]}`}
+                >
                     Create game
                 </button>
-                <button>Join game</button>
+                <button disabled={nickname === "" ? true : false}>
+                    Join game
+                </button>
             </div>
         </>
     );
