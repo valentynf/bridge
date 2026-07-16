@@ -13,14 +13,12 @@ function GameMenu() {
             <div>
                 <input title="nickname" onChange={handleInputChange}></input>
                 <button
-                    disabled={nickname === "" ? true : false}
+                    disabled={nickname === ""}
                     className={`${styles["button-create"]}`}
                 >
                     Create game
                 </button>
-                <button disabled={nickname === "" ? true : false}>
-                    Join game
-                </button>
+                <button disabled={nickname === ""}>Join game</button>
             </div>
         </>
     );
