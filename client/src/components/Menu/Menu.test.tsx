@@ -1,11 +1,11 @@
 import { render, screen, cleanup } from "@testing-library/react";
 import { describe, test, expect, afterEach, vi } from "vitest";
 import { userEvent } from "@testing-library/user-event";
-import GameMenu from "./GameMenu";
-import { SocketContext } from "../../context/SocketContext";
+import Menu from "./Menu.js";
+import { SocketContext } from "../../context/SocketContext.js";
 import type { Socket } from "socket.io-client";
 
-describe("GameMenu", () => {
+describe("Menu", () => {
     const mockSocket = { emit: vi.fn() } as unknown as Socket;
 
     afterEach(() => {
@@ -14,7 +14,7 @@ describe("GameMenu", () => {
     });
 
     test("Should render two inputs and two buttons", () => {
-        render(<GameMenu />);
+        render(<Menu />);
         screen.getByRole("button", { name: "Create game" });
         screen.getByRole("button", { name: "Join game" });
         screen.getByRole("textbox", { name: "playerName" });
@@ -22,7 +22,7 @@ describe("GameMenu", () => {
     });
 
     test("Buttons should be disabled if input is empty", () => {
-        render(<GameMenu />);
+        render(<Menu />);
         expect(
             screen.getByRole("button", { name: "Create game" })
         ).toBeDisabled();
@@ -32,7 +32,7 @@ describe("GameMenu", () => {
     });
 
     test("Button Create Game should be enabled if nickname input is not empty", async () => {
-        render(<GameMenu />);
+        render(<Menu />);
         await userEvent.type(
             screen.getByRole("textbox", { name: "playerName" }),
             "Name"
@@ -43,7 +43,7 @@ describe("GameMenu", () => {
     });
 
     test("Button Join Game should be enabled if playerName & roomCode inputs are not empty", async () => {
-        render(<GameMenu />);
+        render(<Menu />);
         await userEvent.type(
             screen.getByRole("textbox", { name: "playerName" }),
             "Name"
@@ -58,7 +58,7 @@ describe("GameMenu", () => {
     test("Create game button should emit create_room", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <GameMenu />
+                <Menu />
             </SocketContext.Provider>
         );
         await userEvent.type(
@@ -74,7 +74,7 @@ describe("GameMenu", () => {
     test("Join game button should emit join_room", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <GameMenu />
+                <Menu />
             </SocketContext.Provider>
         );
         await userEvent.type(
