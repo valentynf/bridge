@@ -6,15 +6,19 @@ import { SocketContext } from "../../context/SocketContext";
 import type { Socket } from "socket.io-client";
 
 describe("GameMenu", () => {
+    const mockSocket = { emit: vi.fn() } as unknown as Socket;
+
     afterEach(() => {
         cleanup();
+        vi.mocked(mockSocket.emit).mockClear();
     });
 
-    test("Should render input and two buttons", () => {
+    test("Should render two inputs and two buttons", () => {
         render(<GameMenu />);
         screen.getByRole("button", { name: "Create game" });
         screen.getByRole("button", { name: "Join game" });
-        screen.getByRole("textbox");
+        screen.getByRole("textbox", { name: "playerName" });
+        screen.getByRole("textbox", { name: "roomCode" });
     });
 
     test("Buttons should be disabled if input is empty", () => {
@@ -27,26 +31,64 @@ describe("GameMenu", () => {
         ).toBeDisabled();
     });
 
-    test("Buttons should be enabled if input is not empty", async () => {
+    test("Button Create Game should be enabled if nickname input is not empty", async () => {
         render(<GameMenu />);
-        await userEvent.type(screen.getByRole("textbox"), "Name");
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "playerName" }),
+            "Name"
+        );
         expect(
             screen.getByRole("button", { name: "Create game" })
         ).toBeEnabled();
+    });
+
+    test("Button Join Game should be enabled if playerName & roomCode inputs are not empty", async () => {
+        render(<GameMenu />);
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "playerName" }),
+            "Name"
+        );
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "roomCode" }),
+            "someCode"
+        );
         expect(screen.getByRole("button", { name: "Join game" })).toBeEnabled();
     });
 
-    test.skip("Create game button should emit create_room", async () => {
-        const mockSocket = { emit: vi.fn() } as unknown as Socket;
+    test("Create game button should emit create_room", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
                 <GameMenu />
             </SocketContext.Provider>
         );
-        await userEvent.type(screen.getByRole("textbox"), "Name");
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "playerName" }),
+            "Name"
+        );
         screen.getByRole("button", { name: "Create game" }).click();
         expect(mockSocket.emit).toHaveBeenCalledWith("create_room", {
             playerName: "Name",
+        });
+    });
+
+    test("Join game button should emit join_room", async () => {
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <GameMenu />
+            </SocketContext.Provider>
+        );
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "playerName" }),
+            "Name"
+        );
+        await userEvent.type(
+            screen.getByRole("textbox", { name: "roomCode" }),
+            "testcode"
+        );
+        screen.getByRole("button", { name: "Join game" }).click();
+        expect(mockSocket.emit).toHaveBeenCalledWith("join_room", {
+            playerName: "Name",
+            roomCode: "testcode",
         });
     });
 });
