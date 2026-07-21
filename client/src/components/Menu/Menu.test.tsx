@@ -17,8 +17,8 @@ describe("Menu", () => {
         render(<Menu />);
         screen.getByRole("button", { name: "Create game" });
         screen.getByRole("button", { name: "Join game" });
-        screen.getByRole("textbox", { name: "playerName" });
-        screen.getByRole("textbox", { name: "roomCode" });
+        screen.getByRole("textbox", { name: "user name" });
+        screen.getByRole("textbox", { name: "room code" });
     });
 
     test("Buttons should be disabled if input is empty", () => {
@@ -34,8 +34,8 @@ describe("Menu", () => {
     test("Button Create Game should be enabled if nickname input is not empty", async () => {
         render(<Menu />);
         await userEvent.type(
-            screen.getByRole("textbox", { name: "playerName" }),
-            "Name"
+            screen.getByRole("textbox", { name: "user name" }),
+            "player1"
         );
         expect(
             screen.getByRole("button", { name: "Create game" })
@@ -45,12 +45,12 @@ describe("Menu", () => {
     test("Button Join Game should be enabled if playerName & roomCode inputs are not empty", async () => {
         render(<Menu />);
         await userEvent.type(
-            screen.getByRole("textbox", { name: "playerName" }),
-            "Name"
+            screen.getByRole("textbox", { name: "user name" }),
+            "player1"
         );
         await userEvent.type(
-            screen.getByRole("textbox", { name: "roomCode" }),
-            "someCode"
+            screen.getByRole("textbox", { name: "room code" }),
+            "a1b2c"
         );
         expect(screen.getByRole("button", { name: "Join game" })).toBeEnabled();
     });
@@ -62,12 +62,12 @@ describe("Menu", () => {
             </SocketContext.Provider>
         );
         await userEvent.type(
-            screen.getByRole("textbox", { name: "playerName" }),
-            "Name"
+            screen.getByRole("textbox", { name: "user name" }),
+            "player1"
         );
         screen.getByRole("button", { name: "Create game" }).click();
         expect(mockSocket.emit).toHaveBeenCalledWith("create_room", {
-            playerName: "Name",
+            playerName: "player1",
         });
     });
 
@@ -78,17 +78,17 @@ describe("Menu", () => {
             </SocketContext.Provider>
         );
         await userEvent.type(
-            screen.getByRole("textbox", { name: "playerName" }),
-            "Name"
+            screen.getByRole("textbox", { name: "user name" }),
+            "player1"
         );
         await userEvent.type(
-            screen.getByRole("textbox", { name: "roomCode" }),
-            "testcode"
+            screen.getByRole("textbox", { name: "room code" }),
+            "a1b2c"
         );
         screen.getByRole("button", { name: "Join game" }).click();
         expect(mockSocket.emit).toHaveBeenCalledWith("join_room", {
-            playerName: "Name",
-            roomCode: "testcode",
+            playerName: "player1",
+            roomCode: "a1b2c",
         });
     });
 });

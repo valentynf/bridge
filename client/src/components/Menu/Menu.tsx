@@ -22,7 +22,7 @@ function Menu() {
     const handleRoomCodeInputChange: ChangeEventHandler<HTMLInputElement> = (
         event
     ) => {
-        setRoomCode(event.currentTarget.value);
+        setRoomCode(event.currentTarget.value.toLowerCase());
     };
 
     const handleCreateGameClick: MouseEventHandler<HTMLButtonElement> = () => {
@@ -33,22 +33,28 @@ function Menu() {
 
     const handleJoinGameClick: MouseEventHandler<HTMLButtonElement> = () => {
         if (socket) {
-            socket.emit("join_room", { playerName, roomCode });
+            socket.emit("join_room", {
+                playerName,
+                roomCode,
+            });
         }
     };
 
     return (
         <div className={styles["menu-root"]}>
             <div className={styles["menu-header"]}>
+                <h1 className={styles["title"]}>Bridge</h1>
+                <label htmlFor="playerName">user name</label>
                 <input
-                    title="playerName"
+                    maxLength={12}
+                    id="playerName"
                     onChange={handleNameInputChange}
                 ></input>
             </div>
             <div className={styles["menu-body"]}>
                 <div className={styles["create-game"]}>
                     <button
-                        disabled={playerName === ""}
+                        disabled={!/^[a-zA-Z0-9]{5,12}$/.test(playerName)}
                         className={styles["button-create"]}
                         onClick={handleCreateGameClick}
                     >
@@ -56,13 +62,19 @@ function Menu() {
                     </button>
                 </div>
                 <div className={styles["join-game"]}>
+                    <label htmlFor="roomCode">room code</label>
                     <input
-                        title="roomCode"
+                        maxLength={5}
+                        id="roomCode"
                         onChange={handleRoomCodeInputChange}
                     ></input>
                     <button
+                        className={styles["button-join"]}
                         onClick={handleJoinGameClick}
-                        disabled={roomCode === "" || playerName === ""}
+                        disabled={
+                            !/^[a-z0-9]{5}$/.test(roomCode) ||
+                            !/^[a-zA-Z0-9]{5,12}$/.test(playerName)
+                        }
                     >
                         Join game
                     </button>
