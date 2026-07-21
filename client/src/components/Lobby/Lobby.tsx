@@ -1,5 +1,7 @@
+import { useContext, useState, type MouseEventHandler } from "react";
 import type { LobbyMember } from "../../../../shared/types";
 import styles from "./Lobby.module.css";
+import { SocketContext } from "../../context/SocketContext";
 
 type LobbyProps = {
     roomMembers: LobbyMember[];
@@ -7,10 +9,27 @@ type LobbyProps = {
 };
 
 function Lobby({ roomMembers, roomCode }: LobbyProps) {
+    const socket = useContext(SocketContext);
+    const [isReadyClicked, setIsReadyClicked] = useState<boolean>(false);
+
+    const readyClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
+        if (socket) socket.emit("player_ready");
+        setIsReadyClicked(true);
+    };
+
+    const copyCodeClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
+        navigator.clipboard.writeText(roomCode);
+    };
+
     return (
         <div className={styles["lobby-root"]}>
             <div className={styles["room-code"]}>
-                <button className={styles["copy-code"]}>{roomCode}</button>
+                <button
+                    onClick={copyCodeClickHandler}
+                    className={styles["copy-code"]}
+                >
+                    {roomCode}
+                </button>
             </div>
             <div className={styles["room-members"]}>
                 {roomMembers.map((member) => (
@@ -20,7 +39,14 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
                 ))}
             </div>
             <div className={styles["ready"]}>
-                <button className={styles["button-ready"]}>Ready</button>
+                <div></div>
+                <button
+                    onClick={readyClickHandler}
+                    className={styles["button-ready"]}
+                    disabled={isReadyClicked}
+                >
+                    Ready
+                </button>
             </div>
         </div>
     );
