@@ -23,23 +23,43 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
 
     return (
         <div className={styles["lobby-root"]}>
+            <label className={styles["copy-label"]}>Copy room code</label>
             <div className={styles["room-code"]}>
                 <button
                     onClick={copyCodeClickHandler}
-                    className={styles["copy-code"]}
+                    className={styles["button-copy-code"]}
                 >
                     {roomCode}
                 </button>
             </div>
             <div className={styles["room-members"]}>
-                {roomMembers.map((member) => (
-                    <div key={member.id} className={styles["member"]}>
-                        <p>{member.nickname}</p>
-                    </div>
-                ))}
+                {roomMembers.map(({ id, nickname, isReady }) => {
+                    const hue =
+                        id
+                            .split("")
+                            .reduce(
+                                (sum, char) => sum + char.charCodeAt(0),
+                                0
+                            ) % 360;
+                    const color = `hsl(${hue}, 60%, 50%)`;
+
+                    return (
+                        <div key={id} className={styles["member"]}>
+                            <div
+                                style={{
+                                    backgroundColor: color,
+                                    borderBottomColor: isReady
+                                        ? "var(--color-ready)"
+                                        : "transparent",
+                                }}
+                                className={styles["member-avatar"]}
+                            />
+                            <p>{nickname}</p>
+                        </div>
+                    );
+                })}
             </div>
             <div className={styles["ready"]}>
-                <div></div>
                 <button
                     onClick={readyClickHandler}
                     className={styles["button-ready"]}
