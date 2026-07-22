@@ -6,6 +6,10 @@ import {
 } from "react";
 import styles from "./Menu.module.css";
 import { SocketContext } from "../../context/SocketContext.js";
+import {
+    ROOM_CODE_REGEX,
+    PLAYER_NAME_REGEX,
+} from "../../../../shared/validations.js";
 
 function Menu() {
     const [playerName, setPlayerName] = useState<string>("");
@@ -54,7 +58,7 @@ function Menu() {
             <div className={styles["menu-body"]}>
                 <div className={styles["create-game"]}>
                     <button
-                        disabled={!/^[a-zA-Z0-9]{5,12}$/.test(playerName)}
+                        disabled={!PLAYER_NAME_REGEX.test(playerName)}
                         className={styles["button-create"]}
                         onClick={handleCreateGameClick}
                     >
@@ -72,8 +76,8 @@ function Menu() {
                         className={styles["button-join"]}
                         onClick={handleJoinGameClick}
                         disabled={
-                            !/^[a-z0-9]{5}$/.test(roomCode) ||
-                            !/^[a-zA-Z0-9]{5,12}$/.test(playerName)
+                            !ROOM_CODE_REGEX.test(roomCode) ||
+                            !PLAYER_NAME_REGEX.test(playerName)
                         }
                     >
                         Join game

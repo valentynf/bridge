@@ -104,6 +104,17 @@ describe("registerSocketEvents", () => {
             clientSockets[0].emit("create_room", { playerName: "testUser1" });
             return Promise.all([roomCreatedPromise, roomJoinedPromise]);
         });
+        test("Should receive error, name do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("create_room", { playerName: "boba" });
+
+            return errorReceivedPromise;
+        });
     });
     describe("join_room", () => {
         test("Should join room", () => {
@@ -186,8 +197,8 @@ describe("registerSocketEvents", () => {
         });
         test("Should receive error, game in progress", () => {
             return new Promise<void>((resolve) => {
-                rooms.set("ingame", {
-                    id: "ingame",
+                rooms.set("a1b2c", {
+                    id: "a1b2c",
                     status: "in_progress",
                     members: [],
                     gameState: undefined,
@@ -198,9 +209,37 @@ describe("registerSocketEvents", () => {
                 });
                 clientSockets[0].emit("join_room", {
                     playerName: "Frank",
-                    roomCode: "ingame",
+                    roomCode: "a1b2c",
                 });
             });
+        });
+        test("Should receive error, name do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "boba",
+                roomCode: "a1b2c",
+            });
+
+            return errorReceivedPromise;
+        });
+        test("Should receive error, roomCode do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "boba14",
+                roomCode: "code",
+            });
+
+            return errorReceivedPromise;
         });
     });
     describe("player_ready", () => {

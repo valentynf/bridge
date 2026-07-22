@@ -23,6 +23,10 @@ import {
 } from "./functions/game.js";
 import type { Socket } from "socket.io";
 import { reshuffleDeck } from "./functions/deck.js";
+import {
+    PLAYER_NAME_REGEX,
+    ROOM_CODE_REGEX,
+} from "../../shared/validations.js";
 
 export class GameServer {
     private rooms: Map<string, LobbyRoom>;
@@ -41,11 +45,18 @@ export class GameServer {
 
     registerSocketEvents() {
         this.io.on("connection", (socket) => {
-            socket.on("create_room", (payload) => {
+            socket.on("create_room", ({ playerName }) => {
+                if (!PLAYER_NAME_REGEX.test(playerName)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
+
                 const roomId = generateRoomCode();
                 const roomMembers: LobbyMember[] = [
                     {
-                        nickname: payload.playerName,
+                        nickname: playerName,
                         id: socket.id,
                         isReady: false,
                     },
@@ -62,6 +73,18 @@ export class GameServer {
                 this.io.to(roomId).emit("room_joined", { roomMembers });
             });
             socket.on("join_room", ({ playerName, roomCode }) => {
+                if (!PLAYER_NAME_REGEX.test(playerName)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
+                if (!ROOM_CODE_REGEX.test(roomCode)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
                 const roomToJoin: LobbyRoom | undefined =
                     this.rooms.get(roomCode);
                 if (!roomToJoin) {
