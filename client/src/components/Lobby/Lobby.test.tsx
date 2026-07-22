@@ -5,6 +5,7 @@ import type { LobbyMember } from "../../../../shared/types";
 import type { Socket } from "socket.io-client";
 import { SocketContext } from "../../context/SocketContext";
 import userEvent from "@testing-library/user-event";
+import { ToastContextProvider } from "../../context/ToastContext";
 
 describe("Lobby", () => {
     const mockSocket = { emit: vi.fn() } as unknown as Socket;
@@ -25,9 +26,11 @@ describe("Lobby", () => {
 
     test("Two buttons and list of players should render", () => {
         render(
-            <SocketContext.Provider value={mockSocket}>
-                <Lobby roomCode="roomCode" roomMembers={testMembers} />
-            </SocketContext.Provider>
+            <ToastContextProvider>
+                <SocketContext.Provider value={mockSocket}>
+                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                </SocketContext.Provider>
+            </ToastContextProvider>
         );
         screen.getByRole("button", { name: "roomCode" });
         screen.getByRole("button", { name: "Ready" });
@@ -36,9 +39,11 @@ describe("Lobby", () => {
 
     test("Ready button should emit player_ready", () => {
         render(
-            <SocketContext.Provider value={mockSocket}>
-                <Lobby roomCode="roomCode" roomMembers={testMembers} />
-            </SocketContext.Provider>
+            <ToastContextProvider>
+                <SocketContext.Provider value={mockSocket}>
+                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                </SocketContext.Provider>
+            </ToastContextProvider>
         );
         screen.getByRole("button", { name: "Ready" }).click();
         expect(mockSocket.emit).toHaveBeenCalledWith("player_ready");
@@ -46,9 +51,11 @@ describe("Lobby", () => {
 
     test("Ready button should be disabled after click", async () => {
         render(
-            <SocketContext.Provider value={mockSocket}>
-                <Lobby roomCode="roomCode" roomMembers={testMembers} />
-            </SocketContext.Provider>
+            <ToastContextProvider>
+                <SocketContext.Provider value={mockSocket}>
+                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                </SocketContext.Provider>
+            </ToastContextProvider>
         );
         await userEvent.click(screen.getByRole("button", { name: "Ready" }));
         expect(screen.getByRole("button", { name: "Ready" })).toBeDisabled();
@@ -56,9 +63,11 @@ describe("Lobby", () => {
 
     test("Copy room code should add room code to clipboard", () => {
         render(
-            <SocketContext.Provider value={mockSocket}>
-                <Lobby roomCode="roomCode" roomMembers={testMembers} />
-            </SocketContext.Provider>
+            <ToastContextProvider>
+                <SocketContext.Provider value={mockSocket}>
+                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                </SocketContext.Provider>
+            </ToastContextProvider>
         );
         screen.getByRole("button", { name: "roomCode" }).click();
         expect(mockNavigator.clipboard.writeText).toHaveBeenCalledWith(

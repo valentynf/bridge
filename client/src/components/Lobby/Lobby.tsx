@@ -2,6 +2,7 @@ import { useState, type MouseEventHandler } from "react";
 import type { LobbyMember } from "../../../../shared/types";
 import styles from "./Lobby.module.css";
 import { useSocket } from "../../hooks/useSocket";
+import { useToast } from "../../hooks/useToast";
 
 type LobbyProps = {
     roomMembers: LobbyMember[];
@@ -10,6 +11,7 @@ type LobbyProps = {
 
 function Lobby({ roomMembers, roomCode }: LobbyProps) {
     const socket = useSocket();
+    const showToast = useToast();
     const [isReadyClicked, setIsReadyClicked] = useState<boolean>(false);
 
     const readyClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
@@ -19,6 +21,7 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
 
     const copyCodeClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
         navigator.clipboard.writeText(roomCode);
+        showToast({ message: "Copied to clipboard!", level: "success" });
     };
 
     return (
