@@ -24,7 +24,11 @@ describe("Lobby", () => {
     });
 
     test("Two buttons and list of players should render", () => {
-        render(<Lobby roomCode="roomCode" roomMembers={testMembers} />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Lobby roomCode="roomCode" roomMembers={testMembers} />
+            </SocketContext.Provider>
+        );
         screen.getByRole("button", { name: "roomCode" });
         screen.getByRole("button", { name: "Ready" });
         for (const member of testMembers) screen.getByText(member.nickname);
@@ -41,13 +45,21 @@ describe("Lobby", () => {
     });
 
     test("Ready button should be disabled after click", async () => {
-        render(<Lobby roomCode="roomCode" roomMembers={testMembers} />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Lobby roomCode="roomCode" roomMembers={testMembers} />
+            </SocketContext.Provider>
+        );
         await userEvent.click(screen.getByRole("button", { name: "Ready" }));
         expect(screen.getByRole("button", { name: "Ready" })).toBeDisabled();
     });
 
     test("Copy room code should add room code to clipboard", () => {
-        render(<Lobby roomCode="roomCode" roomMembers={testMembers} />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Lobby roomCode="roomCode" roomMembers={testMembers} />
+            </SocketContext.Provider>
+        );
         screen.getByRole("button", { name: "roomCode" }).click();
         expect(mockNavigator.clipboard.writeText).toHaveBeenCalledWith(
             "roomCode"

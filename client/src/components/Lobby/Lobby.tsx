@@ -1,7 +1,7 @@
-import { useContext, useState, type MouseEventHandler } from "react";
+import { useState, type MouseEventHandler } from "react";
 import type { LobbyMember } from "../../../../shared/types";
 import styles from "./Lobby.module.css";
-import { SocketContext } from "../../context/SocketContext";
+import { useSocket } from "../../hooks/useSocket";
 
 type LobbyProps = {
     roomMembers: LobbyMember[];
@@ -9,11 +9,11 @@ type LobbyProps = {
 };
 
 function Lobby({ roomMembers, roomCode }: LobbyProps) {
-    const socket = useContext(SocketContext);
+    const socket = useSocket();
     const [isReadyClicked, setIsReadyClicked] = useState<boolean>(false);
 
     const readyClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
-        if (socket) socket.emit("player_ready");
+        socket.emit("player_ready");
         setIsReadyClicked(true);
     };
 

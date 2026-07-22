@@ -14,7 +14,11 @@ describe("Menu", () => {
     });
 
     test("Should render two inputs and two buttons", () => {
-        render(<Menu />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Menu />
+            </SocketContext.Provider>
+        );
         screen.getByRole("button", { name: "Create game" });
         screen.getByRole("button", { name: "Join game" });
         screen.getByRole("textbox", { name: "user name" });
@@ -22,7 +26,11 @@ describe("Menu", () => {
     });
 
     test("Buttons should be disabled if input is empty", () => {
-        render(<Menu />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Menu />
+            </SocketContext.Provider>
+        );
         expect(
             screen.getByRole("button", { name: "Create game" })
         ).toBeDisabled();
@@ -32,7 +40,11 @@ describe("Menu", () => {
     });
 
     test("Button Create Game should be enabled if nickname input is not empty", async () => {
-        render(<Menu />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Menu />
+            </SocketContext.Provider>
+        );
         await userEvent.type(
             screen.getByRole("textbox", { name: "user name" }),
             "player1"
@@ -43,7 +55,11 @@ describe("Menu", () => {
     });
 
     test("Button Join Game should be enabled if playerName & roomCode inputs are not empty", async () => {
-        render(<Menu />);
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <Menu />
+            </SocketContext.Provider>
+        );
         await userEvent.type(
             screen.getByRole("textbox", { name: "user name" }),
             "player1"

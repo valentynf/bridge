@@ -1,21 +1,20 @@
 import {
-    useContext,
     useState,
     type ChangeEventHandler,
     type MouseEventHandler,
 } from "react";
 import styles from "./Menu.module.css";
-import { SocketContext } from "../../context/SocketContext.js";
 import {
     ROOM_CODE_REGEX,
     PLAYER_NAME_REGEX,
 } from "../../../../shared/validations.js";
+import { useSocket } from "../../hooks/useSocket.js";
 
 function Menu() {
     const [playerName, setPlayerName] = useState<string>("");
     const [roomCode, setRoomCode] = useState<string>("");
 
-    const socket = useContext(SocketContext);
+    const socket = useSocket();
 
     const handleNameInputChange: ChangeEventHandler<HTMLInputElement> = (
         event
@@ -30,18 +29,14 @@ function Menu() {
     };
 
     const handleCreateGameClick: MouseEventHandler<HTMLButtonElement> = () => {
-        if (socket) {
-            socket.emit("create_room", { playerName });
-        }
+        socket.emit("create_room", { playerName });
     };
 
     const handleJoinGameClick: MouseEventHandler<HTMLButtonElement> = () => {
-        if (socket) {
-            socket.emit("join_room", {
-                playerName,
-                roomCode,
-            });
-        }
+        socket.emit("join_room", {
+            playerName,
+            roomCode,
+        });
     };
 
     return (
