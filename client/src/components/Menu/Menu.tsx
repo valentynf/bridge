@@ -48,6 +48,13 @@ function Menu() {
                     maxLength={12}
                     id="playerName"
                     onChange={handleNameInputChange}
+                    style={{
+                        borderColor:
+                            playerName.length > 0 &&
+                            !PLAYER_NAME_REGEX.test(playerName)
+                                ? "var(--color-accent)"
+                                : undefined,
+                    }}
                 ></input>
             </div>
             <div className={styles["menu-body"]}>
@@ -66,6 +73,13 @@ function Menu() {
                         maxLength={5}
                         id="roomCode"
                         onChange={handleRoomCodeInputChange}
+                        style={{
+                            borderColor:
+                                roomCode.length > 0 &&
+                                !ROOM_CODE_REGEX.test(roomCode)
+                                    ? "var(--color-accent)"
+                                    : undefined,
+                        }}
                     ></input>
                     <button
                         className={styles["button-join"]}

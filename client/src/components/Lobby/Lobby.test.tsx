@@ -5,10 +5,11 @@ import type { LobbyMember } from "../../../../shared/types";
 import type { Socket } from "socket.io-client";
 import { SocketContext } from "../../context/SocketContext";
 import userEvent from "@testing-library/user-event";
-import { ToastContextProvider } from "../../context/ToastContext";
+import { ToastContextProvider, ToastContext } from "../../context/ToastContext";
 
 describe("Lobby", () => {
     const mockSocket = { emit: vi.fn() } as unknown as Socket;
+    const mockShowToast = vi.fn();
     const mockNavigator = Object.assign(navigator, {
         clipboard: { writeText: vi.fn() },
     });
@@ -61,17 +62,21 @@ describe("Lobby", () => {
         expect(screen.getByRole("button", { name: "Ready" })).toBeDisabled();
     });
 
-    test("Copy room code should add room code to clipboard", () => {
+    test("Copy room code should add room code to clipboard and show a toast", () => {
         render(
-            <ToastContextProvider>
+            <ToastContext.Provider value={mockShowToast}>
                 <SocketContext.Provider value={mockSocket}>
                     <Lobby roomCode="roomCode" roomMembers={testMembers} />
                 </SocketContext.Provider>
-            </ToastContextProvider>
+            </ToastContext.Provider>
         );
         screen.getByRole("button", { name: "roomCode" }).click();
         expect(mockNavigator.clipboard.writeText).toHaveBeenCalledWith(
             "roomCode"
         );
+        expect(mockShowToast).toHaveBeenCalledWith({
+            message: "Copied to clipboard!",
+            level: "success",
+        });
     });
 });
