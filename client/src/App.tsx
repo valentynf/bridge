@@ -1,11 +1,10 @@
-import PlayingCard from "./components/PlayingCard/PlayingCard";
+import GameScreen from "./components/GameScreen/GameScreen";
 
 function App() {
     return (
-        <div style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-            <PlayingCard faceUp={false} />
-            <PlayingCard faceUp={true} rank="K" suit="diamonds" />
-        </div>
+        <>
+            <GameScreen />
+        </>
     );
 }
 
