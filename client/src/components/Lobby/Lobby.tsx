@@ -1,8 +1,9 @@
-import { useState, type MouseEventHandler } from "react";
+import { useState } from "react";
 import type { LobbyMember } from "../../../../shared/types";
 import styles from "./Lobby.module.css";
 import { useSocket } from "../../hooks/useSocket";
 import { useToast } from "../../hooks/useToast";
+import { getColorFromString } from "../../utils";
 
 type LobbyProps = {
     roomMembers: LobbyMember[];
@@ -14,12 +15,12 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
     const showToast = useToast();
     const [isReadyClicked, setIsReadyClicked] = useState<boolean>(false);
 
-    const readyClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
+    const readyClickHandler = () => {
         socket.emit("player_ready");
         setIsReadyClicked(true);
     };
 
-    const copyCodeClickHandler: MouseEventHandler<HTMLButtonElement> = () => {
+    const copyCodeClickHandler = () => {
         navigator.clipboard.writeText(roomCode);
         showToast({ message: "Copied to clipboard!", level: "success" });
     };
@@ -37,20 +38,11 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
             </div>
             <div className={styles["room-members"]}>
                 {roomMembers.map(({ id, nickname, isReady }) => {
-                    const hue =
-                        id
-                            .split("")
-                            .reduce(
-                                (sum, char) => sum + char.charCodeAt(0),
-                                0
-                            ) % 360;
-                    const color = `hsl(${hue}, 60%, 50%)`;
-
                     return (
                         <div key={id} className={styles["member"]}>
                             <div
                                 style={{
-                                    backgroundColor: color,
+                                    backgroundColor: getColorFromString(id),
                                     borderBottomColor: isReady
                                         ? "var(--color-ready)"
                                         : "transparent",

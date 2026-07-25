@@ -23,6 +23,7 @@ describe("Lobby", () => {
     afterEach(() => {
         cleanup();
         vi.mocked(mockSocket.emit).mockClear();
+        vi.mocked(mockShowToast).mockClear();
     });
 
     test("Two buttons and list of players should render", () => {

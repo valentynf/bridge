@@ -1,29 +1,188 @@
 import styles from "./GameScreen.module.css";
+import type { Card } from "../../../../shared/types";
+import { useEffect, useRef, useState } from "react";
+import { useSocket } from "../../hooks/useSocket";
+import PlayingCard from "../PlayingCard/PlayingCard";
+import { START_HAND_SIZE } from "../../../../shared/consts";
+import type { ClientPlayer } from "../../types";
+import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
+import { useToast } from "../../hooks/useToast";
 
 function GameScreen() {
+    const [hand, setHand] = useState<Card[]>([]);
+    const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
+        null
+    );
+    const [dealerIndex, setDealerIndex] = useState<number>(-1);
+    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
+    const [players, setPlayers] = useState<ClientPlayer[]>([]);
+    const socket = useSocket();
+    const myIndex = players.findIndex((player) => player.id === socket.id);
+    const seatMap = {
+        left: (myIndex + 1) % players.length,
+        top: (myIndex + 2) % players.length,
+        right: (myIndex + 3) % players.length,
+    };
+    const showToast = useToast();
+    const playersRef = useRef<ClientPlayer[]>(players);
+
+    useEffect(() => {
+        playersRef.current = players;
+    }, [players]);
+
+    useEffect(() => {
+        socket.on("round_started", (data) => {
+            setHand(data.hand);
+            setActivePileTopCard(data.activePileTopCard);
+            setDealerIndex(data.dealerIndex);
+            setCurrentPlayerIndex(data.currentPlayerIndex);
+            setPlayers(
+                data.players.map((player) => ({
+                    ...player,
+                    handCount: START_HAND_SIZE,
+                }))
+            );
+        });
+        socket.on("turn_started", (data) => {
+            setCurrentPlayerIndex(data.currentPlayerIndex);
+        });
+        socket.on("hand_update", (data) => {
+            setHand(data.updatedHand);
+        });
+        socket.on("cards_played", (data) => {
+            setActivePileTopCard(data.activePileTopCard);
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.id === data.playerId
+                        ? { ...player, handCount: data.handCount }
+                        : player
+                )
+            );
+        });
+        socket.on("card_drawn", (data) => {
+            setPlayers((prev) =>
+                prev.map((player) =>
+                    player.id === data.playerId
+                        ? { ...player, handCount: data.handCount }
+                        : player
+                )
+            );
+        });
+        socket.on(
+            "effects_applied",
+            ({ specialEffects, affectedPlayerIndex }) => {
+                const specialEffectsString = specialEffects.join(",");
+                const message = `${playersRef.current[affectedPlayerIndex].nickname} has suffered these effects: ${specialEffectsString}`;
+                showToast({ level: "warning", message });
+            }
+        );
+
+        return () => {
+            socket.off("round_started");
+            socket.off("turn_started");
+            socket.off("hand_update");
+            socket.off("cards_played");
+            socket.off("card_drawn");
+            socket.off("effects_applied");
+        };
+    }, [socket, showToast]);
+
+    const handleEndTurnClick = () => {
+        socket.emit("end_turn");
+    };
+
+    const handleDrawCardClick = () => {
+        socket.emit("draw_card");
+    };
+
+    const handlePlayCardsClick = () => {
+        // socket.emit("play_cards")
+    };
+
     return (
         <div className={styles["gamescreen-root"]}>
             <div className={styles["gamescreen-top"]}>
                 <div className={styles["opponent-container-top"]}>
-                    {
-                        //if players length 4, render 4th player here, if two, second, if three - none
-                    }
+                    {players.length >= 3 && (
+                        <PlayerInfoCard
+                            isDealer={dealerIndex === seatMap.top}
+                            isCurrentPlayer={currentPlayerIndex === seatMap.top}
+                            {...players[seatMap.top]}
+                        />
+                    )}
                 </div>
             </div>
             <div className={styles["gamescreen-center"]}>
-                <div className={styles["opponent-container-left"]}></div>
+                <div className={styles["opponent-container-left"]}>
+                    {players.length >= 2 && (
+                        <PlayerInfoCard
+                            isDealer={dealerIndex === seatMap.left}
+                            isCurrentPlayer={
+                                currentPlayerIndex === seatMap.left
+                            }
+                            {...players[seatMap.left]}
+                        />
+                    )}
+                </div>
                 <div className={styles["deck-container"]}>
                     <div className={styles["draw-pile"]}></div>
-                    <div className={styles["active-pile"]}></div>
+                    <div className={styles["active-pile"]}>
+                        {activePileTopCard === null ? (
+                            <PlayingCard faceUp={false} />
+                        ) : (
+                            <PlayingCard
+                                faceUp={true}
+                                rank={activePileTopCard.rank}
+                                suit={activePileTopCard.suit}
+                            />
+                        )}
+                    </div>
                 </div>
-                <div className={styles["opponent-container-right"]}></div>
+                <div className={styles["opponent-container-right"]}>
+                    {players.length >= 4 && (
+                        <PlayerInfoCard
+                            isDealer={dealerIndex === seatMap.right}
+                            isCurrentPlayer={
+                                currentPlayerIndex === seatMap.right
+                            }
+                            {...players[seatMap.right]}
+                        />
+                    )}
+                </div>
             </div>
             <div className={styles["gamescreen-bottom"]}>
-                <div className={styles["player-hand"]}></div>
+                <div className={styles["player-hand"]}>
+                    {hand.map(({ rank, suit }) => (
+                        <PlayingCard
+                            key={rank + suit}
+                            faceUp={true}
+                            suit={suit}
+                            rank={rank}
+                        />
+                    ))}
+                </div>
                 <div className={styles["game-actions"]}>
-                    <button>Play cards</button>
-                    <button>Draw card</button>
-                    <button>End Turn</button>
+                    <button
+                        className={styles["button-play-cards"]}
+                        disabled={currentPlayerIndex !== myIndex}
+                        onClick={handlePlayCardsClick}
+                    >
+                        Play cards
+                    </button>
+                    <button
+                        className={styles["button-draw-card"]}
+                        disabled={currentPlayerIndex !== myIndex}
+                        onClick={handleDrawCardClick}
+                    >
+                        Draw card
+                    </button>
+                    <button
+                        className={styles["button-end-turn"]}
+                        disabled={currentPlayerIndex !== myIndex}
+                        onClick={handleEndTurnClick}
+                    >
+                        End turn
+                    </button>
                 </div>
             </div>
         </div>

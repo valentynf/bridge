@@ -1,8 +1,4 @@
-import {
-    useState,
-    type ChangeEventHandler,
-    type MouseEventHandler,
-} from "react";
+import { useState, type ChangeEventHandler } from "react";
 import styles from "./Menu.module.css";
 import {
     ROOM_CODE_REGEX,
@@ -28,11 +24,11 @@ function Menu() {
         setRoomCode(event.currentTarget.value.toLowerCase());
     };
 
-    const handleCreateGameClick: MouseEventHandler<HTMLButtonElement> = () => {
+    const handleCreateGameClick = () => {
         socket.emit("create_room", { playerName });
     };
 
-    const handleJoinGameClick: MouseEventHandler<HTMLButtonElement> = () => {
+    const handleJoinGameClick = () => {
         socket.emit("join_room", {
             playerName,
             roomCode,
