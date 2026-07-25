@@ -4,12 +4,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 20px;
 }
 
 .opponent-info-container {
-    height: 70px;
-    width: 70%;
+    height: 100px;
+    width: 100%;
     display: flex;
     flex-direction: row;
     background-color: var(--color-surface);
@@ -20,8 +21,8 @@
 }
 
 .opponent-avatar {
-    width: 56px;
-    height: 56px;
+    width: 70px;
+    height: 70px;
     border-radius: 8px;
 }
 
@@ -37,15 +38,23 @@
     gap: 4px;
 }
 
-.opponent-nickname,
+.opponent-hand > :not(:first-child) {
+    margin-left: -20px;
+}
+
+.opponent-nickname {
+    font-size: 32px;
+    margin: 0;
+    color: var(--color-text);
+}
 .opponent-score {
-    font-size: 18px;
+    font-size: 24px;
     margin: 0;
     color: var(--color-text);
 }
 
 .current-player {
-    border: 4px var(--color-ready) solid;
+    border: 4px var(--color-text) solid;
 }
 
 .dealer {
@@ -55,7 +64,8 @@
 .dealer::after {
     content: "D";
     position: absolute;
-    font-size: 18px;
+    font-size: 24px;
+    font-weight: bold;
     color: var(--color-text);
     top: 4px;
     right: 6px;

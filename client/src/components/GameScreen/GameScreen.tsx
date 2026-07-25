@@ -9,15 +9,37 @@ import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
 import { useToast } from "../../hooks/useToast";
 
 function GameScreen() {
-    const [hand, setHand] = useState<Card[]>([]);
-    const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
-        null
-    );
-    const [dealerIndex, setDealerIndex] = useState<number>(-1);
-    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
-    const [players, setPlayers] = useState<ClientPlayer[]>([]);
+    const [hand, setHand] = useState<Card[]>([
+        { rank: "7", suit: "hearts" },
+        { rank: "Q", suit: "spades" },
+        { rank: "A", suit: "clubs" },
+        { rank: "10", suit: "diamonds" },
+        { rank: "8", suit: "hearts" },
+        { rank: "J", suit: "clubs" },
+        { rank: "6", suit: "spades" },
+    ]);
+    const [activePileTopCard, setActivePileTopCard] = useState<Card | null>({
+        rank: "K",
+        suit: "hearts",
+    });
+    const [dealerIndex, setDealerIndex] = useState<number>(3);
+    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
+    const [players, setPlayers] = useState<ClientPlayer[]>([
+        { id: "socket01abc", nickname: "valentyn", score: 0, handCount: 7 },
+        { id: "socket02def", nickname: "player2nd", score: 15, handCount: 5 },
+        { id: "socket03ghi", nickname: "player3rd", score: 40, handCount: 3 },
+        { id: "socket04jkl", nickname: "player4th", score: 80, handCount: 6 },
+    ]);
+    // const [hand, setHand] = useState<Card[]>([]);
+    // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
+    //     null
+    // );
+    // const [dealerIndex, setDealerIndex] = useState<number>(-1);
+    // const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
+    // const [players, setPlayers] = useState<ClientPlayer[]>([]);
     const socket = useSocket();
-    const myIndex = players.findIndex((player) => player.id === socket.id);
+    // const myIndex = players.findIndex((player) => player.id === socket.id);
+    const myIndex = 0;
     const seatMap = {
         left: (myIndex + 1) % players.length,
         top: (myIndex + 2) % players.length,
@@ -125,7 +147,6 @@ function GameScreen() {
                     )}
                 </div>
                 <div className={styles["deck-container"]}>
-                    <div className={styles["draw-pile"]}></div>
                     <div className={styles["active-pile"]}>
                         {activePileTopCard === null ? (
                             <PlayingCard faceUp={false} />
@@ -136,6 +157,9 @@ function GameScreen() {
                                 suit={activePileTopCard.suit}
                             />
                         )}
+                    </div>
+                    <div className={styles["draw-pile"]}>
+                        <PlayingCard faceUp={false} />
                     </div>
                 </div>
                 <div className={styles["opponent-container-right"]}>

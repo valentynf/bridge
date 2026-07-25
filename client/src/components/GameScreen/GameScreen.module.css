@@ -8,7 +8,6 @@
 .gamescreen-top {
     width: 100vw;
     height: 33vh;
-    background-color: aqua;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -17,7 +16,6 @@
 .gamescreen-center {
     width: 100vw;
     height: 34vh;
-    background-color: pink;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -27,21 +25,33 @@
 .opponent-container-left,
 .opponent-container-right,
 .opponent-container-top {
-    height: 280px;
-    width: 320px;
-    background-color: blue;
+    height: 320px;
+    width: 360px;
+}
+
+.opponent-container-left {
+    margin-left: 184px;
+}
+
+.opponent-container-right {
+    margin-right: 184px;
 }
 
 .deck-container {
-    height: 280px;
-    width: 320px;
-    background-color: purple;
+    height: 30vh;
+    width: 25%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 64px;
+    background-color: var(--color-surface);
+    border-radius: 8px;
 }
 
 .gamescreen-bottom {
     width: 100vw;
     height: 33vh;
-    background-color: mintcream;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -52,16 +62,59 @@
 .player-hand {
     height: 280px;
     width: 60%;
-    background-color: cornflowerblue;
+    background-color: var(--color-surface);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 8px;
 }
 
 .game-actions {
     height: 280px;
-    width: 30%;
-    background-color: bisque;
+    width: 25%;
+    background-color: var(--color-surface);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 8px;
     flex-direction: column;
+    border-radius: 8px;
+}
+
+.button-play-cards,
+.button-draw-card,
+.button-end-turn {
+    height: 85px;
+    width: 260px;
+    font-size: 36px;
+    border-radius: 8px;
+    border: none;
+}
+
+.button-play-cards:disabled,
+.button-draw-card:disabled,
+.button-end-turn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.button-play-cards:hover:not(:disabled),
+.button-draw-card:hover:not(:disabled),
+.button-end-turn:hover:not(:disabled) {
+    filter: brightness(1.1);
+    cursor: pointer;
+}
+
+.button-play-cards {
+    background-color: var(--color-ready);
+}
+
+.button-draw-card {
+    background-color: var(--color-yellow);
+}
+
+.button-end-turn {
+    background-color: var(--color-card-red);
 }
