@@ -44,3 +44,13 @@
     margin: 0;
     font-size: 21px;
 }
+
+.card-small {
+    height: 104px;
+    width: 72px;
+}
+
+.card-back-small {
+    height: 88px;
+    width: 56px;
+}

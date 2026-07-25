@@ -35,7 +35,7 @@ function PlayerInfoCard({
             </div>
             <div className={styles["opponent-hand"]}>
                 {Array.from({ length: handCount }).map((_, index) => (
-                    <PlayingCard key={index} faceUp={false} />
+                    <PlayingCard key={index} faceUp={false} size="small" />
                 ))}
             </div>
         </div>
