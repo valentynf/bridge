@@ -4,7 +4,6 @@ import GameScreen from "./GameScreen";
 import type { Socket } from "socket.io-client";
 import { SocketContext } from "../../context/SocketContext";
 import { ToastContext } from "../../context/ToastContext";
-import { START_HAND_SIZE } from "../../../../shared/consts";
 
 describe("GameScreen", () => {
     let container: HTMLElement;
@@ -67,15 +66,6 @@ describe("GameScreen", () => {
             act(() => {
                 emitEvent("round_started", roundStartedData);
             });
-        });
-
-        test("Should show players hand on round_start", () => {
-            const handContainer: HTMLElement = container.querySelector(
-                '[class*="player-hand"]'
-            )!;
-            expect(
-                handContainer.querySelectorAll('[class*="card-front"]').length
-            ).toBe(START_HAND_SIZE);
         });
 
         test("Should show active pile card face up", () => {
@@ -167,6 +157,58 @@ describe("GameScreen", () => {
                 level: "warning",
                 message: "player2nd has suffered these effects: SKIP_TURN",
             });
+        });
+
+        test("Clicking a card in hand should add selected class", () => {
+            const handContainer: HTMLElement = container.querySelector(
+                '[class*="player-hand-root"]'
+            )!;
+            const cardWrapper: HTMLElement = handContainer.querySelector(
+                '[class*="card-wrapper"]'
+            )!;
+            act(() => cardWrapper.click());
+            expect(cardWrapper.className).toContain("selected-card");
+        });
+
+        test("Clicking a selected card in hand should remove selected class", () => {
+            const handContainer: HTMLElement = container.querySelector(
+                '[class*="player-hand-root"]'
+            )!;
+            const cardWrapper: HTMLElement = handContainer.querySelector(
+                '[class*="card-wrapper"]'
+            )!;
+            act(() => cardWrapper.click());
+            act(() => cardWrapper.click());
+            expect(cardWrapper.className).not.toContain("selected-card");
+        });
+
+        test("Play cards button emits play_cards with selected cards", () => {
+            const handContainer: HTMLElement = container.querySelector(
+                '[class*="player-hand-root"]'
+            )!;
+            const cardWrapper: HTMLElement = handContainer.querySelector(
+                '[class*="card-wrapper"]'
+            )!;
+            act(() => cardWrapper.click());
+            screen.getByText("Play cards").click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("play_cards", {
+                cardsToPlay: [{ rank: "7", suit: "hearts" }],
+            });
+        });
+
+        test("No selected cards should remain after play_cards", () => {
+            const handContainer: HTMLElement = container.querySelector(
+                '[class*="player-hand-root"]'
+            )!;
+            const cardWrapper: HTMLElement = handContainer.querySelector(
+                '[class*="card-wrapper"]'
+            )!;
+            act(() => cardWrapper.click());
+            act(() => screen.getByText("Play cards").click());
+            expect(
+                handContainer.querySelectorAll('[class*="selected-card"]')
+                    .length
+            ).toBe(0);
         });
     });
 

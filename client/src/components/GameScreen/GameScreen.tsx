@@ -7,6 +7,7 @@ import { START_HAND_SIZE } from "../../../../shared/consts";
 import type { ClientPlayer } from "../../types";
 import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
 import { useToast } from "../../hooks/useToast";
+import PlayerHand from "../PlayerHand/PlayerHand";
 
 function GameScreen() {
     const [hand, setHand] = useState<Card[]>([
@@ -30,6 +31,7 @@ function GameScreen() {
         { id: "socket03ghi", nickname: "player3rd", score: 40, handCount: 3 },
         { id: "socket04jkl", nickname: "player4th", score: 80, handCount: 6 },
     ]);
+    const [cardsToPlay, setCardsToPlay] = useState<Card[]>([]);
     // const [hand, setHand] = useState<Card[]>([]);
     // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
     //     null
@@ -118,7 +120,22 @@ function GameScreen() {
     };
 
     const handlePlayCardsClick = () => {
-        // socket.emit("play_cards")
+        socket.emit("play_cards", { cardsToPlay });
+        setCardsToPlay([]);
+    };
+
+    const handleCardClick = (card: Card) => {
+        const cardToPlayIndex = cardsToPlay.findIndex(
+            (cardToPlay) =>
+                cardToPlay.rank === card.rank && cardToPlay.suit === card.suit
+        );
+        if (cardToPlayIndex === -1) {
+            setCardsToPlay((prev) => [card, ...prev]);
+        } else {
+            setCardsToPlay((prev) =>
+                prev.filter((_, index) => index !== cardToPlayIndex)
+            );
+        }
     };
 
     return (
@@ -175,16 +192,11 @@ function GameScreen() {
                 </div>
             </div>
             <div className={styles["gamescreen-bottom"]}>
-                <div className={styles["player-hand"]}>
-                    {hand.map(({ rank, suit }) => (
-                        <PlayingCard
-                            key={rank + suit}
-                            faceUp={true}
-                            suit={suit}
-                            rank={rank}
-                        />
-                    ))}
-                </div>
+                <PlayerHand
+                    hand={hand}
+                    cardsToPlay={cardsToPlay}
+                    onCardClick={handleCardClick}
+                />
                 <div className={styles["game-actions"]}>
                     <button
                         className={styles["button-play-cards"]}
