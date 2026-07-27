@@ -305,6 +305,37 @@ describe("GameScreen", () => {
                 option: "MINUS_20",
             });
         });
+
+        test("suit_declared should update Jack suit text", () => {
+            act(() => {
+                emitEvent("suit_declared", { suit: "diamonds" });
+            });
+            screen.getByText("Jack suit: diamonds");
+        });
+
+        test("bridge_declared should show an announcement", () => {
+            act(() => {
+                emitEvent("bridge_declared");
+            });
+            screen.getByText("Bridge declared!");
+        });
+
+        test("score_reset should show an announcement", () => {
+            act(() => {
+                emitEvent("score_reset", { playerIndex: 2 });
+            });
+            screen.getByText("player3rd score got reset!");
+        });
+
+        test("error event should trigger a toast", () => {
+            act(() => {
+                emitEvent("error", { error: "something is wrong!" });
+            });
+            expect(mockShowToast).toHaveBeenCalledWith({
+                level: "error",
+                message: "something is wrong!",
+            });
+        });
     });
 
     describe("3 opponents, not players turn", () => {

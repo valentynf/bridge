@@ -1,5 +1,5 @@
 import styles from "./GameScreen.module.css";
-import type { Card } from "../../../../shared/types";
+import { type CardSuit, type Card } from "../../../../shared/types";
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../hooks/useSocket";
 import PlayingCard from "../PlayingCard/PlayingCard";
@@ -37,6 +37,8 @@ function GameScreen() {
     ]);
     const [cardsToPlay, setCardsToPlay] = useState<Card[]>([]);
     const [activePrompt, setActivePrompt] = useState<PromptType>(null);
+    const [jackSuit, setJackSuit] = useState<CardSuit | null>(null);
+    const [announcement, setAnnouncement] = useState<string | null>(null);
     // const [hand, setHand] = useState<Card[]>([]);
     // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
     //     null
@@ -114,6 +116,25 @@ function GameScreen() {
         socket.on("choose_jack_bonus", () => {
             setActivePrompt("jack_bonus");
         });
+        socket.on("suit_declared", ({ suit }) => {
+            setJackSuit(suit);
+        });
+        socket.on("bridge_declared", () => {
+            setAnnouncement(`Bridge declared!`);
+            setTimeout(() => {
+                setAnnouncement(null);
+            }, 1500);
+        });
+        socket.on("score_reset", ({ playerIndex }) => {
+            const name = playersRef.current[playerIndex].nickname;
+            setAnnouncement(`${name} score got reset!`);
+            setTimeout(() => {
+                setAnnouncement(null);
+            }, 1500);
+        });
+        socket.on("error", ({ error }) => {
+            showToast({ level: "error", message: error });
+        });
 
         return () => {
             socket.off("round_started");
@@ -125,6 +146,10 @@ function GameScreen() {
             socket.off("set_jack_suit");
             socket.off("can_bridge");
             socket.off("choose_jack_bonus");
+            socket.off("suit_declared");
+            socket.off("bridge_declared");
+            socket.off("score_reset");
+            socket.off("error");
         };
     }, [socket, showToast]);
 
@@ -157,6 +182,13 @@ function GameScreen() {
 
     return (
         <div className={styles["gamescreen-root"]}>
+            {announcement !== null && (
+                <div className={styles["announcement-root"]}>
+                    <p className={styles["announcement-text"]}>
+                        {announcement}
+                    </p>
+                </div>
+            )}
             {activePrompt === "bridge" && (
                 <GamePrompt>
                     <BridgePrompt
@@ -234,6 +266,7 @@ function GameScreen() {
                     )}
                 </div>
                 <div className={styles["deck-container"]}>
+                    {jackSuit !== null && <p>Jack suit: {jackSuit}</p>}
                     <div className={styles["active-pile"]}>
                         {activePileTopCard === null ? (
                             <PlayingCard faceUp={false} />
