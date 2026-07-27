@@ -10,7 +10,7 @@ import type {
     RoundPlayer,
     ServerToClientEvents,
 } from "../../shared/types.js";
-import { generateRoomCode } from "./functions/utility.js";
+import { generateRoomCode, getDrawPileSize } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
 import {
     applyPendingEffects,
@@ -172,7 +172,8 @@ export class GameServer {
                     if (currentRoom.gameState.activePile[0].rank === "6")
                         currentRoom.gameState.isCoveringRequired = true;
                     currentRoom.status = "in_progress";
-                    const { players, activePile } = currentRoom.gameState;
+                    const { players, activePile, drawPile } =
+                        currentRoom.gameState;
 
                     const roundPlayers: RoundPlayer[] = players.map(
                         (player) => ({
@@ -188,6 +189,7 @@ export class GameServer {
                         this.io.to(id).emit("round_started", {
                             hand,
                             activePileTopCard: activePile[0],
+                            drawPileSize: getDrawPileSize(drawPile.length),
                             dealerIndex,
                             currentPlayerIndex: dealerIndex,
                             players: roundPlayers,
@@ -295,7 +297,9 @@ export class GameServer {
                             this.io
                                 .to(currentRoomCode)
                                 .emit("pile_reshuffled", {
-                                    drawPileCount: drawPileAfterEffects.length,
+                                    drawPileSize: getDrawPileSize(
+                                        drawPileAfterEffects.length
+                                    ),
                                     reshuffleMultiplier:
                                         gameState.reshuffleCount,
                                 });
@@ -406,7 +410,9 @@ export class GameServer {
                             this.io
                                 .to(currentRoomCode)
                                 .emit("pile_reshuffled", {
-                                    drawPileCount: drawPileAfterEffects.length,
+                                    drawPileSize: getDrawPileSize(
+                                        drawPileAfterEffects.length
+                                    ),
                                     reshuffleMultiplier:
                                         gameState.reshuffleCount,
                                 });
@@ -631,7 +637,7 @@ export class GameServer {
                         reshuffleDeck(gameState.activePile);
                     gameState.reshuffleCount++;
                     this.io.to(currentRoomCode).emit("pile_reshuffled", {
-                        drawPileCount: updatedDrawPile.length,
+                        drawPileSize: getDrawPileSize(updatedDrawPile.length),
                         reshuffleMultiplier: gameState.reshuffleCount,
                     });
 
@@ -650,7 +656,7 @@ export class GameServer {
 
                 this.io.to(currentRoomCode).emit("card_drawn", {
                     playerId: socket.id,
-                    drawPileCount: gameState.drawPile.length,
+                    drawPileSize: getDrawPileSize(gameState.drawPile.length),
                     handCount: updatedHand.length,
                 });
                 socket.emit("hand_update", { updatedHand });
@@ -823,6 +829,7 @@ export class GameServer {
                 this.io.to(id).emit("round_started", {
                     hand,
                     activePileTopCard: gameState.activePile[0],
+                    drawPileSize: getDrawPileSize(gameState.drawPile.length),
                     dealerIndex: gameState.currentDealerIndex,
                     currentPlayerIndex: gameState.currentDealerIndex,
                     players: roundPlayers,
