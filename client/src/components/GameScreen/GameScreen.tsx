@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../hooks/useSocket";
 import PlayingCard from "../PlayingCard/PlayingCard";
 import { START_HAND_SIZE } from "../../../../shared/consts";
-import type { ClientPlayer } from "../../types";
+import type { ClientPlayer, PromptType } from "../../types";
 import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
 import { useToast } from "../../hooks/useToast";
 import PlayerHand from "../PlayerHand/PlayerHand";
+import GamePrompt from "../GamePrompt/GamePrompt";
+import BridgePrompt from "../GamePrompt/prompts/BridgePrompt";
+import JackBonusPrompt from "../GamePrompt/prompts/JackBonusPrompt";
+import SuitPrompt from "../GamePrompt/prompts/SuitPrompt";
 
 function GameScreen() {
     const [hand, setHand] = useState<Card[]>([
@@ -32,6 +36,7 @@ function GameScreen() {
         { id: "socket04jkl", nickname: "player4th", score: 80, handCount: 6 },
     ]);
     const [cardsToPlay, setCardsToPlay] = useState<Card[]>([]);
+    const [activePrompt, setActivePrompt] = useState<PromptType>(null);
     // const [hand, setHand] = useState<Card[]>([]);
     // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
     //     null
@@ -100,6 +105,15 @@ function GameScreen() {
                 showToast({ level: "warning", message });
             }
         );
+        socket.on("set_jack_suit", () => {
+            setActivePrompt("suit_pick");
+        });
+        socket.on("can_bridge", () => {
+            setActivePrompt("bridge");
+        });
+        socket.on("choose_jack_bonus", () => {
+            setActivePrompt("jack_bonus");
+        });
 
         return () => {
             socket.off("round_started");
@@ -108,6 +122,9 @@ function GameScreen() {
             socket.off("cards_played");
             socket.off("card_drawn");
             socket.off("effects_applied");
+            socket.off("set_jack_suit");
+            socket.off("can_bridge");
+            socket.off("choose_jack_bonus");
         };
     }, [socket, showToast]);
 
@@ -140,6 +157,59 @@ function GameScreen() {
 
     return (
         <div className={styles["gamescreen-root"]}>
+            {activePrompt === "bridge" && (
+                <GamePrompt>
+                    <BridgePrompt
+                        onClickSkipBridge={() => {
+                            setActivePrompt(null);
+                        }}
+                        onClickDeclareBridge={() => {
+                            socket.emit("declare_bridge");
+                            setActivePrompt(null);
+                        }}
+                    />
+                </GamePrompt>
+            )}
+            {activePrompt === "jack_bonus" && (
+                <GamePrompt>
+                    <JackBonusPrompt
+                        onClickDouble={() => {
+                            socket.emit("declare_jack_bonus", {
+                                option: "DOUBLE_ALL",
+                            });
+                            setActivePrompt(null);
+                        }}
+                        onClickMinus20={() => {
+                            socket.emit("declare_jack_bonus", {
+                                option: "MINUS_20",
+                            });
+                            setActivePrompt(null);
+                        }}
+                    />
+                </GamePrompt>
+            )}
+            {activePrompt === "suit_pick" && (
+                <GamePrompt>
+                    <SuitPrompt
+                        onClickClubs={() => {
+                            socket.emit("declare_suit", { suit: "clubs" });
+                            setActivePrompt(null);
+                        }}
+                        onClickDiamonds={() => {
+                            socket.emit("declare_suit", { suit: "diamonds" });
+                            setActivePrompt(null);
+                        }}
+                        onClickHearts={() => {
+                            socket.emit("declare_suit", { suit: "hearts" });
+                            setActivePrompt(null);
+                        }}
+                        onClickSpades={() => {
+                            socket.emit("declare_suit", { suit: "spades" });
+                            setActivePrompt(null);
+                        }}
+                    />
+                </GamePrompt>
+            )}
             <div className={styles["gamescreen-top"]}>
                 <div className={styles["opponent-container-top"]}>
                     {players.length >= 3 && (

@@ -26,7 +26,7 @@ describe("GameScreen", () => {
         return container;
     };
 
-    const emitEvent = (eventName: string, payload: unknown): void => {
+    const emitEvent = (eventName: string, payload?: unknown): void => {
         const emitCallback = vi
             .mocked(mockSocket.on)
             .mock.calls.find((array) => array[0] === eventName)![1];
@@ -41,7 +41,7 @@ describe("GameScreen", () => {
         vi.mocked(mockShowToast).mockClear();
     });
 
-    describe("4 oponent, players turn", () => {
+    describe("4 opponents, players turn", () => {
         const roundStartedData = {
             hand: [
                 { rank: "7", suit: "hearts" },
@@ -210,9 +210,104 @@ describe("GameScreen", () => {
                     .length
             ).toBe(0);
         });
+
+        test("Jack suit prompt with 4 suit buttons should appear on set_jack_suit", () => {
+            act(() => {
+                emitEvent("set_jack_suit");
+            });
+
+            screen.getByRole("button", { name: "♣" });
+            screen.getByRole("button", { name: "♦" });
+            screen.getByRole("button", { name: "♥" });
+            screen.getByRole("button", { name: "♠" });
+        });
+
+        test("Jack suit prompt clubs button should emit declare_suit with proper payload", () => {
+            act(() => {
+                emitEvent("set_jack_suit");
+            });
+
+            screen.getByRole("button", { name: "♣" }).click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("declare_suit", {
+                suit: "clubs",
+            });
+        });
+
+        test("Jack suit prompt clubs button should emit declare_suit with proper payload", () => {
+            act(() => {
+                emitEvent("set_jack_suit");
+            });
+
+            screen.getByRole("button", { name: "♦" }).click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("declare_suit", {
+                suit: "diamonds",
+            });
+        });
+
+        test("Bridge prompt with 2 buttons should appear on can_bridge", () => {
+            act(() => {
+                emitEvent("can_bridge");
+            });
+
+            screen.getByRole("button", { name: "Declare Bridge" });
+            screen.getByRole("button", { name: "Skip" });
+        });
+
+        test("Bridge prompt declare bridge button should emit declare_bridge", () => {
+            act(() => {
+                emitEvent("can_bridge");
+            });
+
+            screen.getByRole("button", { name: "Declare Bridge" }).click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("declare_bridge");
+        });
+
+        test("Clicking any button inside prompt should close the prompt", () => {
+            act(() => {
+                emitEvent("can_bridge");
+            });
+
+            act(() => {
+                screen.getByRole("button", { name: "Skip" }).click();
+            });
+
+            //prompt only appears with buttons, no buttons no prompt
+            expect(screen.queryByRole("button", { name: "Skip" })).toBeNull();
+        });
+
+        test("Jack bonus prompt with 2 buttons should appear on choose_jack_bonus", () => {
+            act(() => {
+                emitEvent("choose_jack_bonus");
+            });
+
+            screen.getByRole("button", { name: "Double all" });
+            screen.getByRole("button", { name: "Minus 20" });
+        });
+
+        test("Jack bonus prompt Double all button should emit declare_jack_bonus with proper option", () => {
+            act(() => {
+                emitEvent("choose_jack_bonus");
+            });
+
+            screen.getByRole("button", { name: "Double all" }).click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("declare_jack_bonus", {
+                option: "DOUBLE_ALL",
+            });
+        });
+
+        test("Jack bonus prompt Minus 20 button should emit declare_jack_bonus with proper option", () => {
+            act(() => {
+                emitEvent("choose_jack_bonus");
+            });
+
+            screen.getByRole("button", { name: "Minus 20" }).click();
+            expect(mockSocket.emit).toHaveBeenCalledWith("declare_jack_bonus", {
+                option: "MINUS_20",
+            });
+        });
     });
 
-    describe("3 oponents, not players turn", () => {
+    describe("3 opponents, not players turn", () => {
         const roundStartedData = {
             hand: [
                 { rank: "7", suit: "hearts" },
@@ -293,7 +388,8 @@ describe("GameScreen", () => {
             ).toBe(6);
         });
     });
-    describe("2 oponents, not players turn", () => {
+
+    describe("2 opponents, not players turn", () => {
         const roundStartedData = {
             hand: [
                 { rank: "7", suit: "hearts" },
