@@ -59,6 +59,7 @@ describe("GameScreen", () => {
                 { id: "socket03ghi", nickname: "player3rd", score: 40 },
                 { id: "socket04jkl", nickname: "player4th", score: 80 },
             ],
+            drawPileSize: "medium",
         };
 
         beforeEach(() => {
@@ -335,6 +336,27 @@ describe("GameScreen", () => {
                 level: "error",
                 message: "something is wrong!",
             });
+        });
+
+        test("Draw pile container should have medium class on round_start", () => {
+            const drawPileContainer: HTMLElement = container.querySelector(
+                '[class*="draw-pile"]'
+            )!;
+            expect(drawPileContainer.className).toContain("medium");
+        });
+
+        test("Draw pile size updated and reshuffle announced on pile_reshuffled", () => {
+            act(() => {
+                emitEvent("pile_reshuffled", {
+                    drawPileSize: "large",
+                    reshuffleMultiplier: 2,
+                });
+            });
+            const drawPileContainer: HTMLElement = container.querySelector(
+                '[class*="draw-pile"]'
+            )!;
+            screen.getByText("Draw pile reshuffled - X2");
+            expect(drawPileContainer.className).toContain("large");
         });
     });
 

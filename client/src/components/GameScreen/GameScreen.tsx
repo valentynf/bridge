@@ -1,5 +1,9 @@
 import styles from "./GameScreen.module.css";
-import { type CardSuit, type Card } from "../../../../shared/types";
+import {
+    type CardSuit,
+    type Card,
+    type DrawPileSize,
+} from "../../../../shared/types";
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../hooks/useSocket";
 import PlayingCard from "../PlayingCard/PlayingCard";
@@ -39,6 +43,7 @@ function GameScreen() {
     const [activePrompt, setActivePrompt] = useState<PromptType>(null);
     const [jackSuit, setJackSuit] = useState<CardSuit | null>(null);
     const [announcement, setAnnouncement] = useState<string | null>(null);
+    const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("large");
     // const [hand, setHand] = useState<Card[]>([]);
     // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
     //     null
@@ -73,6 +78,7 @@ function GameScreen() {
                     handCount: START_HAND_SIZE,
                 }))
             );
+            setDrawPileSize(data.drawPileSize);
         });
         socket.on("turn_started", (data) => {
             setCurrentPlayerIndex(data.currentPlayerIndex);
@@ -98,6 +104,7 @@ function GameScreen() {
                         : player
                 )
             );
+            setDrawPileSize(data.drawPileSize);
         });
         socket.on(
             "effects_applied",
@@ -135,6 +142,15 @@ function GameScreen() {
         socket.on("error", ({ error }) => {
             showToast({ level: "error", message: error });
         });
+        socket.on(
+            "pile_reshuffled",
+            ({ drawPileSize, reshuffleMultiplier }) => {
+                setAnnouncement(
+                    `Draw pile reshuffled - X${reshuffleMultiplier}`
+                );
+                setDrawPileSize(drawPileSize);
+            }
+        );
 
         return () => {
             socket.off("round_started");
@@ -150,6 +166,7 @@ function GameScreen() {
             socket.off("bridge_declared");
             socket.off("score_reset");
             socket.off("error");
+            socket.off("pile_reshuffled");
         };
     }, [socket, showToast]);
 
@@ -278,7 +295,19 @@ function GameScreen() {
                             />
                         )}
                     </div>
-                    <div className={styles["draw-pile"]}>
+                    <div
+                        className={[
+                            styles["draw-pile"],
+                            drawPileSize === "large" &&
+                                styles["draw-pile-large"],
+                            drawPileSize === "medium" &&
+                                styles["draw-pile-medium"],
+                            drawPileSize === "small" &&
+                                styles["draw-pile-small"],
+                        ]
+                            .filter(Boolean)
+                            .join(" ")}
+                    >
                         <PlayingCard faceUp={false} />
                     </div>
                 </div>
