@@ -1,4 +1,4 @@
-import { cleanup, render, screen, act } from "@testing-library/react";
+import { cleanup, render, screen, act, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import GameScreen from "./GameScreen";
 import type { Socket } from "socket.io-client";
@@ -336,6 +336,46 @@ describe("GameScreen", () => {
                 level: "error",
                 message: "something is wrong!",
             });
+        });
+
+        test("round_ended event triggers a popup with winner name and scores", () => {
+            const roundEndedData = {
+                winnerIndex: 2,
+                scores: [15, 30, 0, 125],
+                eliminatedIndexes: [3],
+                reshuffleMultiplier: 1,
+            };
+            act(() => {
+                emitEvent("round_ended", roundEndedData);
+            });
+            const popupWrapper: HTMLElement = container.querySelector(
+                '[class*="roundend-popup-root"]'
+            )!;
+            const popup = within(popupWrapper);
+            popup.getByText("player3rd won the round!");
+            popup.getByText("player4th has been eliminated!");
+            popup.getByText("15");
+            popup.getByText("30");
+            popup.getByText("0");
+            popup.getByText("125");
+        });
+
+        test("End round popup disappears on round_started", () => {
+            const roundEndedData = {
+                winnerIndex: 2,
+                scores: [15, 30, 0, 125],
+                eliminatedIndexes: [3],
+                reshuffleMultiplier: 1,
+            };
+            act(() => {
+                emitEvent("round_ended", roundEndedData);
+            });
+            act(() => {
+                emitEvent("round_started", roundStartedData);
+            });
+            expect(
+                container.querySelector('[class*="roundend-popup-root"]')
+            ).toBeNull();
         });
 
         test("Draw pile container should have medium class on round_start", () => {

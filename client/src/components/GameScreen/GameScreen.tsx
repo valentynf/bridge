@@ -8,7 +8,11 @@ import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../hooks/useSocket";
 import PlayingCard from "../PlayingCard/PlayingCard";
 import { START_HAND_SIZE } from "../../../../shared/consts";
-import type { ClientPlayer, PromptType } from "../../types";
+import {
+    type RoundEndData,
+    type ClientPlayer,
+    type PromptType,
+} from "../../types";
 import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
 import { useToast } from "../../hooks/useToast";
 import PlayerHand from "../PlayerHand/PlayerHand";
@@ -16,6 +20,7 @@ import GamePrompt from "../GamePrompt/GamePrompt";
 import BridgePrompt from "../GamePrompt/prompts/BridgePrompt";
 import JackBonusPrompt from "../GamePrompt/prompts/JackBonusPrompt";
 import SuitPrompt from "../GamePrompt/prompts/SuitPrompt";
+import RoundEndPopup from "../RoundEndPopup/RoundEndPopup";
 
 function GameScreen() {
     const [hand, setHand] = useState<Card[]>([
@@ -44,6 +49,7 @@ function GameScreen() {
     const [jackSuit, setJackSuit] = useState<CardSuit | null>(null);
     const [announcement, setAnnouncement] = useState<string | null>(null);
     const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("large");
+    const [roundEndData, setRoundEndData] = useState<RoundEndData | null>(null);
     // const [hand, setHand] = useState<Card[]>([]);
     // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
     //     null
@@ -68,6 +74,7 @@ function GameScreen() {
 
     useEffect(() => {
         socket.on("round_started", (data) => {
+            setRoundEndData(null);
             setHand(data.hand);
             setActivePileTopCard(data.activePileTopCard);
             setDealerIndex(data.dealerIndex);
@@ -151,6 +158,30 @@ function GameScreen() {
                 setDrawPileSize(drawPileSize);
             }
         );
+        socket.on(
+            "round_ended",
+            ({
+                winnerIndex,
+                scores,
+                eliminatedIndexes,
+                reshuffleMultiplier,
+            }) => {
+                const winnerName = playersRef.current[winnerIndex].nickname;
+                const eliminatedNames = eliminatedIndexes.map(
+                    (index) => playersRef.current[index].nickname
+                );
+                const playerScores = scores.map((score, index) => ({
+                    nickname: playersRef.current[index].nickname,
+                    score,
+                }));
+                setRoundEndData({
+                    winnerName,
+                    eliminatedNames,
+                    playerScores,
+                    reshuffleMultiplier,
+                });
+            }
+        );
 
         return () => {
             socket.off("round_started");
@@ -167,6 +198,7 @@ function GameScreen() {
             socket.off("score_reset");
             socket.off("error");
             socket.off("pile_reshuffled");
+            socket.off("round_ended");
         };
     }, [socket, showToast]);
 
@@ -199,6 +231,7 @@ function GameScreen() {
 
     return (
         <div className={styles["gamescreen-root"]}>
+            {roundEndData !== null && <RoundEndPopup {...roundEndData} />}
             {announcement !== null && (
                 <div className={styles["announcement-root"]}>
                     <p className={styles["announcement-text"]}>
