@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
-import Lobby from "./Lobby";
+import LobbyScreen from "./LobbyScreen";
 import type { LobbyMember } from "../../../../shared/types";
 import type { Socket } from "socket.io-client";
 import { SocketContext } from "../../context/SocketContext";
 import userEvent from "@testing-library/user-event";
 import { ToastContextProvider, ToastContext } from "../../context/ToastContext";
 
-describe("Lobby", () => {
+describe("LobbyScreen", () => {
     const mockSocket = { emit: vi.fn() } as unknown as Socket;
     const mockShowToast = vi.fn();
     const mockNavigator = Object.assign(navigator, {
@@ -30,7 +30,10 @@ describe("Lobby", () => {
         render(
             <ToastContextProvider>
                 <SocketContext.Provider value={mockSocket}>
-                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                    <LobbyScreen
+                        roomCode="roomCode"
+                        roomMembers={testMembers}
+                    />
                 </SocketContext.Provider>
             </ToastContextProvider>
         );
@@ -43,7 +46,10 @@ describe("Lobby", () => {
         render(
             <ToastContextProvider>
                 <SocketContext.Provider value={mockSocket}>
-                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                    <LobbyScreen
+                        roomCode="roomCode"
+                        roomMembers={testMembers}
+                    />
                 </SocketContext.Provider>
             </ToastContextProvider>
         );
@@ -55,7 +61,10 @@ describe("Lobby", () => {
         render(
             <ToastContextProvider>
                 <SocketContext.Provider value={mockSocket}>
-                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                    <LobbyScreen
+                        roomCode="roomCode"
+                        roomMembers={testMembers}
+                    />
                 </SocketContext.Provider>
             </ToastContextProvider>
         );
@@ -67,7 +76,10 @@ describe("Lobby", () => {
         render(
             <ToastContext.Provider value={mockShowToast}>
                 <SocketContext.Provider value={mockSocket}>
-                    <Lobby roomCode="roomCode" roomMembers={testMembers} />
+                    <LobbyScreen
+                        roomCode="roomCode"
+                        roomMembers={testMembers}
+                    />
                 </SocketContext.Provider>
             </ToastContext.Provider>
         );

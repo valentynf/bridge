@@ -1,15 +1,21 @@
 .menu-root {
     display: flex;
     flex-direction: column;
-    max-width: 600px;
-    padding: 60px;
+    width: 30vw;
+    height: 50vh;
+    padding: 16px 16px 0 16px;
     color: var(--color-text);
     background-color: var(--color-surface);
     border-radius: 8px;
 }
 
+.menu-root label {
+    font-size: 30px;
+}
+
 .menu-root input {
     box-sizing: border-box;
+    width: 240px;
     color: inherit;
     padding: 16px 8px;
     font-size: 16px;
@@ -19,8 +25,10 @@
 }
 
 .menu-root button {
+    height: 80px;
+    width: 240px;
     padding: 16px 32px;
-    font-size: 14px;
+    font-size: 24px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -45,7 +53,7 @@
 }
 
 .title {
-    font-size: 40px;
+    font-size: 48px;
     text-align: center;
     margin-bottom: 36px;
     margin-top: 8px;
@@ -54,6 +62,8 @@
 .menu-body {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
     gap: 32px;
 }
 

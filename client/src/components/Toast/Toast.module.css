@@ -12,7 +12,7 @@
     padding: 12px 24px;
     border-radius: 8px;
     color: var(--color-text);
-    font-size: 14px;
+    font-size: 30px;
     animation:
         slideIn 0.3s ease-out,
         fadeOut 0.3s ease-in 1.7s forwards;

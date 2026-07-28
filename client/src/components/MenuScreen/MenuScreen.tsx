@@ -1,12 +1,12 @@
 import { useState, type ChangeEventHandler } from "react";
-import styles from "./Menu.module.css";
+import styles from "./MenuScreen.module.css";
 import {
     ROOM_CODE_REGEX,
     PLAYER_NAME_REGEX,
 } from "../../../../shared/validations.js";
 import { useSocket } from "../../hooks/useSocket.js";
 
-function Menu() {
+function MenuScreen() {
     const [playerName, setPlayerName] = useState<string>("");
     const [roomCode, setRoomCode] = useState<string>("");
 
@@ -93,4 +93,4 @@ function Menu() {
     );
 }
 
-export default Menu;
+export default MenuScreen;

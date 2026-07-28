@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { LobbyMember } from "../../../../shared/types";
-import styles from "./Lobby.module.css";
+import styles from "./LobbyScreen.module.css";
 import { useSocket } from "../../hooks/useSocket";
 import { useToast } from "../../hooks/useToast";
 import { getColorFromString } from "../../utils";
@@ -10,7 +10,7 @@ type LobbyProps = {
     roomCode: string;
 };
 
-function Lobby({ roomMembers, roomCode }: LobbyProps) {
+function LobbyScreen({ roomMembers, roomCode }: LobbyProps) {
     const socket = useSocket();
     const showToast = useToast();
     const [isReadyClicked, setIsReadyClicked] = useState<boolean>(false);
@@ -49,7 +49,15 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
                                 }}
                                 className={styles["member-avatar"]}
                             />
-                            <p>{nickname}</p>
+                            <p
+                                style={{
+                                    color: isReady
+                                        ? "var(--color-ready)"
+                                        : "var(--color-text)",
+                                }}
+                            >
+                                {nickname}
+                            </p>
                         </div>
                     );
                 })}
@@ -67,4 +75,4 @@ function Lobby({ roomMembers, roomCode }: LobbyProps) {
     );
 }
 
-export default Lobby;
+export default LobbyScreen;
