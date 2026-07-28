@@ -1,24 +1,29 @@
+import type { GameEndData } from "../../types";
 import styles from "./GameOverScreen.module.css";
 
 function GameOverScreen({
     winnerName,
     finalPlayerScores,
     onBackToMenuClick,
-}: {
-    winnerName: string;
-    finalPlayerScores: { nickname: string; score: number }[];
-    onBackToMenuClick: () => void;
-}) {
+}: GameEndData & { onBackToMenuClick: () => void }) {
     return (
-        <div className={styles["gameoverscreen-root"]}>
+        <div className={styles["game-over-screen-root"]}>
             <div className={styles["game-over-data"]}>
-                <p>{winnerName}</p>
-                {finalPlayerScores.map(({ nickname, score }, index) => (
-                    <div key={index} className={styles["player-final-score"]}>
-                        <p>{nickname}:</p>
-                        <p>{score}</p>
-                    </div>
-                ))}
+                <div className={styles["winner-info"]}>
+                    <p>The winner is</p>
+                    <p>{winnerName}</p>
+                </div>
+                <div className={styles["final-score"]}>
+                    {finalPlayerScores.map(({ nickname, score }, index) => (
+                        <div
+                            key={index}
+                            className={styles["player-final-score"]}
+                        >
+                            <p>{nickname}</p>
+                            <p>{score}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
             <button
                 onClick={onBackToMenuClick}
