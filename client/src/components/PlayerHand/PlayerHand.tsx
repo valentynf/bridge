@@ -28,7 +28,9 @@ function PlayerHand({ hand, cardsToPlay, onCardClick }: PlayerHandProps) {
                         onClick={() => onCardClick({ rank, suit })}
                     >
                         {cardToPlayIndex !== -1 && (
-                            <span>{cardToPlayIndex + 1}</span>
+                            <span className={styles["card-index"]}>
+                                {cardToPlayIndex + 1}
+                            </span>
                         )}
                         <PlayingCard faceUp={true} suit={suit} rank={rank} />
                     </div>

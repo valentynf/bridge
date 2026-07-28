@@ -21,45 +21,25 @@ import BridgePrompt from "../GamePrompt/prompts/BridgePrompt";
 import JackBonusPrompt from "../GamePrompt/prompts/JackBonusPrompt";
 import SuitPrompt from "../GamePrompt/prompts/SuitPrompt";
 import RoundEndPopup from "../RoundEndPopup/RoundEndPopup";
+import GameAnnouncement from "../GameAnnouncement/GameAnnouncement";
+import { buildEffectsMessage } from "../../utils";
 
 function GameScreen() {
-    const [hand, setHand] = useState<Card[]>([
-        { rank: "7", suit: "hearts" },
-        { rank: "Q", suit: "spades" },
-        { rank: "A", suit: "clubs" },
-        { rank: "10", suit: "diamonds" },
-        { rank: "8", suit: "hearts" },
-        { rank: "J", suit: "clubs" },
-        { rank: "6", suit: "spades" },
-    ]);
-    const [activePileTopCard, setActivePileTopCard] = useState<Card | null>({
-        rank: "K",
-        suit: "hearts",
-    });
-    const [dealerIndex, setDealerIndex] = useState<number>(3);
-    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
-    const [players, setPlayers] = useState<ClientPlayer[]>([
-        { id: "socket01abc", nickname: "valentyn", score: 0, handCount: 7 },
-        { id: "socket02def", nickname: "player2nd", score: 15, handCount: 5 },
-        { id: "socket03ghi", nickname: "player3rd", score: 40, handCount: 3 },
-        { id: "socket04jkl", nickname: "player4th", score: 80, handCount: 6 },
-    ]);
+    const [hand, setHand] = useState<Card[]>([]);
+    const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
+        null
+    );
+    const [dealerIndex, setDealerIndex] = useState<number>(-1);
+    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
+    const [players, setPlayers] = useState<ClientPlayer[]>([]);
     const [cardsToPlay, setCardsToPlay] = useState<Card[]>([]);
     const [activePrompt, setActivePrompt] = useState<PromptType>(null);
     const [jackSuit, setJackSuit] = useState<CardSuit | null>(null);
     const [announcement, setAnnouncement] = useState<string | null>(null);
-    const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("large");
+    const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("medium");
     const [roundEndData, setRoundEndData] = useState<RoundEndData | null>(null);
-    // const [hand, setHand] = useState<Card[]>([]);
-    // const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
-    //     null
-    // );
-    // const [dealerIndex, setDealerIndex] = useState<number>(-1);
-    // const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
-    // const [players, setPlayers] = useState<ClientPlayer[]>([]);
     const socket = useSocket();
-    // const myIndex = players.findIndex((player) => player.id === socket.id);
-    const myIndex = 0;
+    const myIndex = players.findIndex((player) => player.id === socket.id);
     const seatMap = {
         left: (myIndex + 1) % players.length,
         top: (myIndex + 2) % players.length,
@@ -74,7 +54,6 @@ function GameScreen() {
 
     useEffect(() => {
         socket.on("round_started", (data) => {
-            setRoundEndData(null);
             setHand(data.hand);
             setActivePileTopCard(data.activePileTopCard);
             setDealerIndex(data.dealerIndex);
@@ -102,6 +81,7 @@ function GameScreen() {
                         : player
                 )
             );
+            setJackSuit(null);
         });
         socket.on("card_drawn", (data) => {
             setPlayers((prev) =>
@@ -116,8 +96,10 @@ function GameScreen() {
         socket.on(
             "effects_applied",
             ({ specialEffects, affectedPlayerIndex }) => {
-                const specialEffectsString = specialEffects.join(",");
-                const message = `${playersRef.current[affectedPlayerIndex].nickname} has suffered these effects: ${specialEffectsString}`;
+                const message = buildEffectsMessage(
+                    playersRef.current[affectedPlayerIndex].nickname,
+                    specialEffects
+                );
                 showToast({ level: "warning", message });
             }
         );
@@ -137,14 +119,14 @@ function GameScreen() {
             setAnnouncement(`Bridge declared!`);
             setTimeout(() => {
                 setAnnouncement(null);
-            }, 1500);
+            }, 2000);
         });
         socket.on("score_reset", ({ playerIndex }) => {
             const name = playersRef.current[playerIndex].nickname;
             setAnnouncement(`${name} score got reset!`);
             setTimeout(() => {
                 setAnnouncement(null);
-            }, 1500);
+            }, 2000);
         });
         socket.on("error", ({ error }) => {
             showToast({ level: "error", message: error });
@@ -231,14 +213,15 @@ function GameScreen() {
 
     return (
         <div className={styles["gamescreen-root"]}>
-            {roundEndData !== null && <RoundEndPopup {...roundEndData} />}
-            {announcement !== null && (
-                <div className={styles["announcement-root"]}>
-                    <p className={styles["announcement-text"]}>
-                        {announcement}
-                    </p>
-                </div>
+            {roundEndData !== null && (
+                <RoundEndPopup
+                    onContinueClick={() => {
+                        setRoundEndData(null);
+                    }}
+                    {...roundEndData}
+                />
             )}
+            {announcement !== null && <GameAnnouncement text={announcement} />}
             {activePrompt === "bridge" && (
                 <GamePrompt>
                     <BridgePrompt
@@ -362,7 +345,14 @@ function GameScreen() {
                     cardsToPlay={cardsToPlay}
                     onCardClick={handleCardClick}
                 />
-                <div className={styles["game-actions"]}>
+                <div
+                    className={[
+                        styles["game-actions"],
+                        dealerIndex === myIndex && styles["player-dealer"],
+                    ]
+                        .filter(Boolean)
+                        .join(" ")}
+                >
                     <button
                         className={styles["button-play-cards"]}
                         disabled={currentPlayerIndex !== myIndex}

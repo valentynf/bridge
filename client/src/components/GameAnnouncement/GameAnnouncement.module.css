@@ -1,0 +1,41 @@
+.game-announcement-root {
+    position: fixed;
+    display: flex;
+    width: 100vw;
+    height: auto;
+    justify-content: center;
+    z-index: 30;
+    animation: fade-in-out 2s ease-in-out;
+}
+
+.announcement {
+    background-color: rgba(0, 0, 0, 0.7);
+    height: 160px;
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 8px;
+}
+
+.announcement-text {
+    color: var(--color-text);
+    font-size: 96px;
+    border: 1px solid red;
+    margin: 0;
+    padding: 0;
+}
+
+@keyframes fade-in-out {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}

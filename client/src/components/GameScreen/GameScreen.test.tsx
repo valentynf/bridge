@@ -156,7 +156,7 @@ describe("GameScreen", () => {
             });
             expect(mockShowToast).toHaveBeenCalledWith({
                 level: "warning",
-                message: "player2nd has suffered these effects: SKIP_TURN",
+                message: "player2nd has to skip a turn",
             });
         });
 
@@ -360,7 +360,7 @@ describe("GameScreen", () => {
             popup.getByText("125");
         });
 
-        test("End round popup disappears on round_started", () => {
+        test("End round popup disappears on continue click", () => {
             const roundEndedData = {
                 winnerIndex: 2,
                 scores: [15, 30, 0, 125],
@@ -371,7 +371,7 @@ describe("GameScreen", () => {
                 emitEvent("round_ended", roundEndedData);
             });
             act(() => {
-                emitEvent("round_started", roundStartedData);
+                screen.getByRole("button", { name: "Continue" }).click();
             });
             expect(
                 container.querySelector('[class*="roundend-popup-root"]')

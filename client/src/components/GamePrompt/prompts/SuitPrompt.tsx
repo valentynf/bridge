@@ -12,12 +12,25 @@ function SuitPrompt({
     onClickSpades,
 }: SuitePromptProps) {
     return (
-        <div>
-            <button onClick={onClickHearts}>♥</button>
-            <button onClick={onClickDiamonds}>♦</button>
-            <button onClick={onClickSpades}>♠</button>
-            <button onClick={onClickClubs}>♣</button>
-        </div>
+        <>
+            <h1>Choose Jack suit</h1>
+            <div>
+                <button
+                    style={{ color: "var(--color-card-red" }}
+                    onClick={onClickHearts}
+                >
+                    ♥
+                </button>
+                <button
+                    style={{ color: "var(--color-card-red" }}
+                    onClick={onClickDiamonds}
+                >
+                    ♦
+                </button>
+                <button onClick={onClickSpades}>♠</button>
+                <button onClick={onClickClubs}>♣</button>
+            </div>
+        </>
     );
 }
 

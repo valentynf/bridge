@@ -19,7 +19,8 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 12vw;
 }
 
 .opponent-container-left,
@@ -27,14 +28,6 @@
 .opponent-container-top {
     height: 320px;
     width: 360px;
-}
-
-.opponent-container-left {
-    margin-left: 184px;
-}
-
-.opponent-container-right {
-    margin-right: 184px;
 }
 
 .deck-container {
@@ -55,7 +48,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 3%;
+    gap: 64px;
     justify-content: center;
 }
 
@@ -105,4 +98,42 @@
 
 .button-end-turn {
     background-color: var(--color-card-red);
+}
+
+.draw-pile-large {
+    box-shadow:
+        8px -8px 0 var(--color-card-white),
+        8px -8px 0 2px rgba(0, 0, 0, 0.4),
+        16px -16px 0 var(--color-card-white),
+        16px -16px 0 2px rgba(0, 0, 0, 0.4),
+        24px -24px 0 var(--color-card-white),
+        24px -24px 0 2px rgba(0, 0, 0, 0.4);
+}
+
+.draw-pile-medium {
+    box-shadow:
+        8px -8px 0 var(--color-card-white),
+        8px -8px 0 2px rgba(0, 0, 0, 0.4),
+        16px -16px 0 var(--color-card-white),
+        16px -16px 0 2px rgba(0, 0, 0, 0.4);
+}
+
+.draw-pile-small {
+    box-shadow:
+        8px -8px 0 var(--color-card-white),
+        8px -8px 0 2px rgba(0, 0, 0, 0.4);
+}
+
+.player-dealer {
+    position: relative;
+}
+
+.player-dealer::after {
+    content: "D";
+    position: absolute;
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--color-text);
+    top: 8px;
+    right: 18px;
 }

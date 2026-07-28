@@ -8,10 +8,13 @@ function BridgePrompt({
     onClickSkipBridge,
 }: BridgePromptProps) {
     return (
-        <div>
-            <button onClick={onClickDeclareBridge}>Declare Bridge</button>
-            <button onClick={onClickSkipBridge}>Skip</button>
-        </div>
+        <>
+            <h1>Would you like to bridge?</h1>
+            <div>
+                <button onClick={onClickDeclareBridge}>Declare Bridge</button>
+                <button onClick={onClickSkipBridge}>Skip</button>
+            </div>
+        </>
     );
 }
 

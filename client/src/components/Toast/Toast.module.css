@@ -13,7 +13,9 @@
     border-radius: 8px;
     color: var(--color-text);
     font-size: 14px;
-    animation: slideIn 0.3s ease-out;
+    animation:
+        slideIn 0.3s ease-out,
+        fadeOut 0.3s ease-in 1.7s forwards;
 }
 
 .success {
@@ -37,5 +39,12 @@
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(50%);
     }
 }

@@ -1,0 +1,45 @@
+.game-prompt-root {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.prompt {
+    background-color: var(--color-surface);
+    height: 320px;
+    width: 560px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.prompt button {
+    height: 64px;
+    min-width: 104px;
+    font-size: 48px;
+    background-color: var(--color-card-white);
+    padding: 0 8px 0 8px;
+}
+
+.prompt button:hover {
+    filter: brightness(0.8);
+    cursor: pointer;
+}
+
+.prompt h1 {
+    color: var(--color-text);
+    font-size: 48px;
+}
+
+.prompt > div {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+}
