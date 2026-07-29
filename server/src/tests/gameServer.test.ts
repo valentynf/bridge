@@ -78,11 +78,25 @@ describe("registerSocketEvents", () => {
     });
 
     afterEach(() => {
-        clientSockets.forEach((clientSocket) => {
-            clientSocket.removeAllListeners();
+        return new Promise<void>((resolve) => {
+            clientSockets.forEach((clientSocket) => {
+                clientSocket.removeAllListeners();
+                clientSocket.disconnect();
+            });
+            rooms.forEach((_, roomId) => io.socketsLeave(roomId));
+            rooms.clear();
+
+            // reconnecting same sockets thus clearing the data in events Map so we don't hit rate limit in tests unwillingly
+            clientSockets.forEach((clientSocket) => clientSocket.connect());
+            Promise.all(
+                clientSockets.map(
+                    (clientSocket) =>
+                        new Promise((res) => {
+                            clientSocket.once("connect", () => res(undefined));
+                        })
+                )
+            ).then(() => resolve());
         });
-        rooms.forEach((_, roomId) => io.socketsLeave(roomId));
-        rooms.clear();
     });
 
     describe("create_room", () => {
