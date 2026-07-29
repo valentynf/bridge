@@ -4,3 +4,7 @@
 /client/node_modules
 /server/dist
 /client/dist
+
+.env
+.env.local
+.env.*.local
