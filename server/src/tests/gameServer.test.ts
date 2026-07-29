@@ -272,6 +272,7 @@ describe("registerSocketEvents", () => {
                                         dealerIndex,
                                         currentPlayerIndex,
                                         players,
+                                        drawPileSize,
                                     }) => {
                                         expect(Array.isArray(hand)).toBe(true);
                                         expect(
@@ -281,6 +282,7 @@ describe("registerSocketEvents", () => {
                                             dealerIndex
                                         );
                                         expect(players.length).toBe(4);
+                                        expect(drawPileSize).toBe("medium");
 
                                         res(undefined);
                                     }
