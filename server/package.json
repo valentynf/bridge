@@ -4,7 +4,12 @@
     "type": "module",
     "scripts": {
         "test": "vitest",
-        "dev": "tsx src/index.ts"
+        "dev": "tsx src/index.ts",
+        "db:up": "docker compose -f ../docker-compose.yml up -d",
+        "db:down": "docker compose -f ../docker-compose.yml down",
+        "db:logs": "docker compose -f ../docker-compose.yml logs -f db",
+        "db:psql": "docker exec -it bridge-postgres psql -U bridge -d bridge",
+        "db:reset": "docker compose -f ../docker-compose.yml down -v && docker compose -f ../docker-compose.yml up -d"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
