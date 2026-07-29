@@ -10,7 +10,7 @@ import type {
     RoundPlayer,
     ServerToClientEvents,
 } from "../../shared/types.js";
-import { generateRoomCode } from "./functions/utility.js";
+import { generateRoomCode, getDrawPileSize } from "./functions/utility.js";
 import { MAX_ROOM_SIZE, MIN_ROOM_SIZE } from "../../shared/consts.js";
 import {
     applyPendingEffects,
@@ -23,10 +23,16 @@ import {
 } from "./functions/game.js";
 import type { Socket } from "socket.io";
 import { reshuffleDeck } from "./functions/deck.js";
+import {
+    PLAYER_NAME_REGEX,
+    ROOM_CODE_REGEX,
+} from "../../shared/validations.js";
+import { createRateLimiter } from "./functions/rateLimiter.js";
 
 export class GameServer {
     private rooms: Map<string, LobbyRoom>;
     private customShuffle: ((unshuffledDeck: Card[]) => Card[]) | undefined;
+    private rateLimiter = createRateLimiter(3, 1000);
 
     constructor(
         private io: Server<ClientToServerEvents, ServerToClientEvents>,
@@ -41,11 +47,24 @@ export class GameServer {
 
     registerSocketEvents() {
         this.io.on("connection", (socket) => {
-            socket.on("create_room", (payload) => {
+            socket.on("create_room", ({ playerName }) => {
+                if (!this.rateLimiter.check(socket.id, "create_room")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
+                if (!PLAYER_NAME_REGEX.test(playerName)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
+
                 const roomId = generateRoomCode();
                 const roomMembers: LobbyMember[] = [
                     {
-                        nickname: payload.playerName,
+                        nickname: playerName,
                         id: socket.id,
                         isReady: false,
                     },
@@ -62,6 +81,24 @@ export class GameServer {
                 this.io.to(roomId).emit("room_joined", { roomMembers });
             });
             socket.on("join_room", ({ playerName, roomCode }) => {
+                if (!this.rateLimiter.check(socket.id, "join_room")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
+                if (!PLAYER_NAME_REGEX.test(playerName)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
+                if (!ROOM_CODE_REGEX.test(roomCode)) {
+                    socket.emit("error", {
+                        error: "Validation error: incorrect player name",
+                    });
+                    return;
+                }
                 const roomToJoin: LobbyRoom | undefined =
                     this.rooms.get(roomCode);
                 if (!roomToJoin) {
@@ -95,6 +132,12 @@ export class GameServer {
                 });
             });
             socket.on("player_ready", () => {
+                if (!this.rateLimiter.check(socket.id, "player_ready")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const currentRoomCode = [...socket.rooms].filter(
                     (roomId) => roomId !== socket.id
                 )[0];
@@ -149,7 +192,8 @@ export class GameServer {
                     if (currentRoom.gameState.activePile[0].rank === "6")
                         currentRoom.gameState.isCoveringRequired = true;
                     currentRoom.status = "in_progress";
-                    const { players, activePile } = currentRoom.gameState;
+                    const { players, activePile, drawPile } =
+                        currentRoom.gameState;
 
                     const roundPlayers: RoundPlayer[] = players.map(
                         (player) => ({
@@ -165,6 +209,7 @@ export class GameServer {
                         this.io.to(id).emit("round_started", {
                             hand,
                             activePileTopCard: activePile[0],
+                            drawPileSize: getDrawPileSize(drawPile.length),
                             dealerIndex,
                             currentPlayerIndex: dealerIndex,
                             players: roundPlayers,
@@ -173,6 +218,12 @@ export class GameServer {
                 }
             });
             socket.on("play_cards", ({ cardsToPlay }) => {
+                if (!this.rateLimiter.check(socket.id, "play_cards")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -272,7 +323,9 @@ export class GameServer {
                             this.io
                                 .to(currentRoomCode)
                                 .emit("pile_reshuffled", {
-                                    drawPileCount: drawPileAfterEffects.length,
+                                    drawPileSize: getDrawPileSize(
+                                        drawPileAfterEffects.length
+                                    ),
                                     reshuffleMultiplier:
                                         gameState.reshuffleCount,
                                 });
@@ -383,7 +436,9 @@ export class GameServer {
                             this.io
                                 .to(currentRoomCode)
                                 .emit("pile_reshuffled", {
-                                    drawPileCount: drawPileAfterEffects.length,
+                                    drawPileSize: getDrawPileSize(
+                                        drawPileAfterEffects.length
+                                    ),
                                     reshuffleMultiplier:
                                         gameState.reshuffleCount,
                                 });
@@ -444,6 +499,12 @@ export class GameServer {
                 }
             });
             socket.on("end_turn", () => {
+                if (!this.rateLimiter.check(socket.id, "end_turn")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -496,6 +557,12 @@ export class GameServer {
                 });
             });
             socket.on("declare_suit", ({ suit }) => {
+                if (!this.rateLimiter.check(socket.id, "declare_suit")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -523,6 +590,12 @@ export class GameServer {
                 this.io.to(currentRoomCode).emit("suit_declared", { suit });
             });
             socket.on("declare_bridge", () => {
+                if (!this.rateLimiter.check(socket.id, "declare_bridge")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -552,6 +625,12 @@ export class GameServer {
                 );
             });
             socket.on("draw_card", () => {
+                if (!this.rateLimiter.check(socket.id, "draw_card")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -608,7 +687,7 @@ export class GameServer {
                         reshuffleDeck(gameState.activePile);
                     gameState.reshuffleCount++;
                     this.io.to(currentRoomCode).emit("pile_reshuffled", {
-                        drawPileCount: updatedDrawPile.length,
+                        drawPileSize: getDrawPileSize(updatedDrawPile.length),
                         reshuffleMultiplier: gameState.reshuffleCount,
                     });
 
@@ -627,12 +706,18 @@ export class GameServer {
 
                 this.io.to(currentRoomCode).emit("card_drawn", {
                     playerId: socket.id,
-                    drawPileCount: gameState.drawPile.length,
+                    drawPileSize: getDrawPileSize(gameState.drawPile.length),
                     handCount: updatedHand.length,
                 });
                 socket.emit("hand_update", { updatedHand });
             });
             socket.on("declare_jack_bonus", ({ option }) => {
+                if (!this.rateLimiter.check(socket.id, "declare_jack_bonus")) {
+                    socket.emit("error", {
+                        error: "Event sending rate limit reached, wait for a moment",
+                    });
+                    return;
+                }
                 const gameContext = this.getGameContext(socket);
                 if (!gameContext) {
                     return;
@@ -663,6 +748,9 @@ export class GameServer {
                     currentPlayerIndex,
                     jackEndEffect
                 );
+            });
+            socket.on("disconnect", () => {
+                this.rateLimiter.clearForSocket(socket.id);
             });
         });
     }
@@ -800,6 +888,7 @@ export class GameServer {
                 this.io.to(id).emit("round_started", {
                     hand,
                     activePileTopCard: gameState.activePile[0],
+                    drawPileSize: getDrawPileSize(gameState.drawPile.length),
                     dealerIndex: gameState.currentDealerIndex,
                     currentPlayerIndex: gameState.currentDealerIndex,
                     players: roundPlayers,

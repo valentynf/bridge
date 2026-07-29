@@ -78,11 +78,25 @@ describe("registerSocketEvents", () => {
     });
 
     afterEach(() => {
-        clientSockets.forEach((clientSocket) => {
-            clientSocket.removeAllListeners();
+        return new Promise<void>((resolve) => {
+            clientSockets.forEach((clientSocket) => {
+                clientSocket.removeAllListeners();
+                clientSocket.disconnect();
+            });
+            rooms.forEach((_, roomId) => io.socketsLeave(roomId));
+            rooms.clear();
+
+            // reconnecting same sockets thus clearing the data in events Map so we don't hit rate limit in tests unwillingly
+            clientSockets.forEach((clientSocket) => clientSocket.connect());
+            Promise.all(
+                clientSockets.map(
+                    (clientSocket) =>
+                        new Promise((res) => {
+                            clientSocket.once("connect", () => res(undefined));
+                        })
+                )
+            ).then(() => resolve());
         });
-        rooms.forEach((_, roomId) => io.socketsLeave(roomId));
-        rooms.clear();
     });
 
     describe("create_room", () => {
@@ -103,6 +117,17 @@ describe("registerSocketEvents", () => {
             });
             clientSockets[0].emit("create_room", { playerName: "testUser1" });
             return Promise.all([roomCreatedPromise, roomJoinedPromise]);
+        });
+        test("Should receive error, name do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("create_room", { playerName: "boba" });
+
+            return errorReceivedPromise;
         });
     });
     describe("join_room", () => {
@@ -186,8 +211,8 @@ describe("registerSocketEvents", () => {
         });
         test("Should receive error, game in progress", () => {
             return new Promise<void>((resolve) => {
-                rooms.set("ingame", {
-                    id: "ingame",
+                rooms.set("a1b2c", {
+                    id: "a1b2c",
                     status: "in_progress",
                     members: [],
                     gameState: undefined,
@@ -198,9 +223,37 @@ describe("registerSocketEvents", () => {
                 });
                 clientSockets[0].emit("join_room", {
                     playerName: "Frank",
-                    roomCode: "ingame",
+                    roomCode: "a1b2c",
                 });
             });
+        });
+        test("Should receive error, name do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "boba",
+                roomCode: "a1b2c",
+            });
+
+            return errorReceivedPromise;
+        });
+        test("Should receive error, roomCode do not pass validation", () => {
+            const errorReceivedPromise = new Promise<void>((resolve) => {
+                clientSockets[0].on("error", ({ error }) => {
+                    expect(error.toLowerCase()).toContain("validation");
+                    resolve();
+                });
+            });
+            clientSockets[0].emit("join_room", {
+                playerName: "boba14",
+                roomCode: "code",
+            });
+
+            return errorReceivedPromise;
         });
     });
     describe("player_ready", () => {
@@ -219,6 +272,7 @@ describe("registerSocketEvents", () => {
                                         dealerIndex,
                                         currentPlayerIndex,
                                         players,
+                                        drawPileSize,
                                     }) => {
                                         expect(Array.isArray(hand)).toBe(true);
                                         expect(
@@ -228,6 +282,7 @@ describe("registerSocketEvents", () => {
                                             dealerIndex
                                         );
                                         expect(players.length).toBe(4);
+                                        expect(drawPileSize).toBe("medium");
 
                                         res(undefined);
                                     }

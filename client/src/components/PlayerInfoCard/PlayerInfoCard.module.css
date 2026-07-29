@@ -1,0 +1,72 @@
+.opponent-infocard-root {
+    height: 280px;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.opponent-info-container {
+    height: 100px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    background-color: var(--color-surface);
+    align-items: center;
+    justify-content: space-around;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.opponent-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+}
+
+.opponent-info {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+}
+
+.opponent-hand {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.opponent-hand > :not(:first-child) {
+    margin-left: -20px;
+}
+
+.opponent-nickname {
+    font-size: 32px;
+    margin: 0;
+    color: var(--color-text);
+}
+.opponent-score {
+    font-size: 24px;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.current-player {
+    border: 4px var(--color-text) solid;
+}
+
+.dealer {
+    position: relative;
+}
+
+.dealer::after {
+    content: "D";
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--color-text);
+    top: 4px;
+    right: 6px;
+}

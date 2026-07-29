@@ -1,13 +1,23 @@
 :root {
-    font: 18px/145% var(--sans);
-    letter-spacing: 0.18px;
-    color-scheme: light dark;
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+    --color-bg: #252627;
+    --color-surface: #564e58;
+    --color-text: #f2efe9;
+    --color-accent: #904e55;
+    --color-accent-secondary: #bfb48f;
+    --color-ready: #2ecc71;
+    --color-card-red: #e63946;
+    --color-card-black: #2b2d30;
+    --color-card-white: #faf6f0;
+    --color-yellow: #f1c40f;
+}
 
-    @media (max-width: 1024px) {
-        font-size: 16px;
-    }
+body {
+    background-color: var(--color-bg);
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

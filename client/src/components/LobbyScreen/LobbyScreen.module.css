@@ -1,0 +1,83 @@
+.lobby-root {
+    width: 25vw;
+    height: 40vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 60px;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border-radius: 8px;
+}
+
+.copy-label {
+    font-size: 30px;
+}
+
+.room-code {
+    background: var(--color-accent-secondary);
+    padding: 24px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+}
+
+.button-copy-code {
+    color: var(--color-bg);
+    background-color: transparent;
+    height: 64px;
+    width: 240px;
+    padding: 16px 32px;
+    font-size: 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.room-members {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    padding: 16px 0 8px 0;
+}
+
+.member p {
+    font-size: 30px;
+    color: var(--color-text);
+}
+
+.member {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.member-avatar {
+    box-sizing: border-box;
+    height: 140px;
+    width: 140px;
+    border-radius: 8px;
+    border-bottom: 8px solid transparent;
+}
+
+.button-ready {
+    color: var(--color-text);
+    background: var(--color-accent);
+    height: 80px;
+    width: 240px;
+    padding: 16px 32px;
+    font-size: 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.button-ready:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.button-ready:hover:not(:disabled) {
+    filter: brightness(1.1);
+}

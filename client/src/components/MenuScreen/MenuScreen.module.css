@@ -1,0 +1,94 @@
+.menu-root {
+    display: flex;
+    flex-direction: column;
+    width: 30vw;
+    height: 50vh;
+    padding: 16px 16px 0 16px;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border-radius: 8px;
+}
+
+.menu-root label {
+    font-size: 30px;
+}
+
+.menu-root input {
+    box-sizing: border-box;
+    width: 240px;
+    color: inherit;
+    padding: 16px 8px;
+    font-size: 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--color-accent-secondary);
+}
+
+.menu-root button {
+    height: 80px;
+    width: 240px;
+    padding: 16px 32px;
+    font-size: 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.menu-root button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.menu-root button:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.menu-header {
+    padding-bottom: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.title {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 36px;
+    margin-top: 8px;
+}
+
+.menu-body {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    gap: 32px;
+}
+
+.create-game {
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.button-create {
+    color: var(--color-text);
+    background: var(--color-accent);
+}
+
+.join-game {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.button-join {
+    color: var(--color-bg);
+    background: var(--color-accent-secondary);
+}

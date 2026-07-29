@@ -41,9 +41,9 @@ Signal-only event. Tells clients to switch from lobby view to game view. No payl
 
 ## Round start
 
-| Event           | Dir | Audience             | Payload                                                                                |
-| --------------- | --- | -------------------- | -------------------------------------------------------------------------------------- |
-| `round_started` | S→C | each player (unique) | `{ players: RoundPlayer[], hand, activePileTopCard, dealerIndex, currentPlayerIndex }` |
+| Event           | Dir | Audience             | Payload                                                                                                            |
+| --------------- | --- | -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `round_started` | S→C | each player (unique) | `{ players: RoundPlayer[], hand, activePileTopCard, dealerIndex, currentPlayerIndex, drawPileSize: DrawPileSize }` |
 
 Fires at the start of every round (including the first). Each player receives their own `hand`. `players` is the authoritative list of active players: `{ nickname, id, score }[]` — array index is the player index. After eliminations, spliced players are gone and indexes shift.
 
@@ -59,7 +59,7 @@ Fires at the start of every round (including the first). Each player receives th
 | `cards_played` | S→C | all in room | `{ playerId, cardsPlayed, activePileTopCard, handCount }`              |
 | `hand_update`  | S→C | sender only | `{ updatedHand }` — reusable for any hand change (play, draw, effects) |
 | `draw_card`    | C→S | sender      | `{ }`                                                                  |
-| `card_drawn`   | S→C | all in room | `{ playerId, drawPileCount, handCount }`                               |
+| `card_drawn`   | S→C | all in room | `{ playerId, drawPileSize: DrawPileSize, handCount }`                  |
 
 ---
 
@@ -104,9 +104,9 @@ Bridge is triggered when the top 4 cards on the active pile are the same rank af
 
 ## Reshuffle
 
-| Event             | Dir | Audience    | Payload                                  |
-| ----------------- | --- | ----------- | ---------------------------------------- |
-| `pile_reshuffled` | S→C | all in room | `{ drawPileCount, reshuffleMultiplier }` |
+| Event             | Dir | Audience    | Payload                                               |
+| ----------------- | --- | ----------- | ----------------------------------------------------- |
+| `pile_reshuffled` | S→C | all in room | `{ drawPileSize: DrawPileSize, reshuffleMultiplier }` |
 
 ---
 

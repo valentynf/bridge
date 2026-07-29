@@ -11,6 +11,7 @@ export default defineConfig([
         extends: ["js/recommended"],
         languageOptions: { globals: globals.node },
         rules: {
+            "@typescript-eslint/no-unused-vars": "error",
             "no-console": "error",
         },
     },

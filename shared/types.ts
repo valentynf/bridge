@@ -24,6 +24,8 @@ export type GamePlayer = {
 
 export type RoundPlayer = Omit<GamePlayer, "hand" | "isEliminated">;
 
+export type DrawPileSize = "small" | "medium" | "large";
+
 export type BridgeGameState = {
     players: GamePlayer[];
     currentDealerIndex: number;
@@ -63,6 +65,7 @@ export interface ServerToClientEvents {
     round_started: (payload: {
         hand: Card[];
         activePileTopCard: Card;
+        drawPileSize: DrawPileSize;
         dealerIndex: number;
         currentPlayerIndex: number;
         players: RoundPlayer[];
@@ -89,7 +92,7 @@ export interface ServerToClientEvents {
     }) => void;
     card_drawn: (payload: {
         playerId: string;
-        drawPileCount: number;
+        drawPileSize: DrawPileSize;
         handCount: number;
     }) => void;
     effects_applied: (payload: {
@@ -97,7 +100,7 @@ export interface ServerToClientEvents {
         affectedPlayerIndex: number;
     }) => void;
     pile_reshuffled: (payload: {
-        drawPileCount: number;
+        drawPileSize: DrawPileSize;
         reshuffleMultiplier: number;
     }) => void;
     score_reset: (payload: { playerIndex: number }) => void;
