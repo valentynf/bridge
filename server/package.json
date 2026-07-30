@@ -4,15 +4,20 @@
     "type": "module",
     "scripts": {
         "test": "vitest",
-        "dev": "tsx src/index.ts",
+        "dev": "tsx --env-file=.env --watch src/index.ts",
         "db:up": "docker compose -f ../docker-compose.yml up -d",
         "db:down": "docker compose -f ../docker-compose.yml down",
         "db:logs": "docker compose -f ../docker-compose.yml logs -f db",
         "db:psql": "docker exec -it bridge-postgres psql -U bridge -d bridge",
-        "db:reset": "docker compose -f ../docker-compose.yml down -v && docker compose -f ../docker-compose.yml up -d"
+        "db:reset": "docker compose -f ../docker-compose.yml down -v && docker compose -f ../docker-compose.yml up -d",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:migrate:prod": "drizzle-kit migrate --config=drizzle.config.prod.ts",
+        "db:studio": "drizzle-kit studio"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
+        "drizzle-kit": "^0.31.10",
         "globals": "^17.4.0",
         "jiti": "^2.6.1",
         "tsx": "^4.21.0",
@@ -21,7 +26,9 @@
         "vitest": "^4.1.2"
     },
     "dependencies": {
+        "drizzle-orm": "^0.45.2",
         "express": "^5.2.1",
+        "postgres": "^3.4.9",
         "socket.io": "^4.8.3",
         "socket.io-client": "^4.8.3"
     }
