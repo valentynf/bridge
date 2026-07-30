@@ -16,6 +16,7 @@
         "db:studio": "drizzle-kit studio"
     },
     "devDependencies": {
+        "@types/bcrypt": "^6.0.0",
         "@types/express": "^5.0.6",
         "drizzle-kit": "^0.31.10",
         "globals": "^17.4.0",
@@ -26,6 +27,7 @@
         "vitest": "^4.1.2"
     },
     "dependencies": {
+        "bcrypt": "^6.0.0",
         "drizzle-orm": "^0.45.2",
         "express": "^5.2.1",
         "postgres": "^3.4.9",
