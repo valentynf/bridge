@@ -1,10 +1,12 @@
 import { Router } from "express";
 import z from "zod";
-import { hashPassword, verifyPassword } from "../functions/auth.js";
+import { hashPassword, verifyPassword } from "../functions/password.js";
 import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { PLAYER_NAME_REGEX } from "../../../shared/validations.js";
 import { eq, or } from "drizzle-orm";
+import { signToken } from "../functions/jwt.js";
+import requireAuth from "../middlewares/requireAuth.js";
 
 const router = Router();
 
@@ -42,6 +44,16 @@ router.post("/login", async (req, res) => {
         if (!isProperPassword) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
+
+        const token = signToken({ userId: user.id });
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false, // change to true in prod
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         return res
             .status(200)
             .json({ id: user.id, email: user.email, nickname: user.nickname });
@@ -68,6 +80,16 @@ router.post("/register", async (req, res) => {
                 email: users.email,
                 nickname: users.nickname,
             });
+
+        const token = signToken({ userId: newUser.id });
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false, // change to true in prod
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         return res.status(201).json(newUser);
     } catch (error) {
         if (
@@ -81,9 +103,35 @@ router.post("/register", async (req, res) => {
                 .status(409)
                 .json({ error: "Email or nickname already taken" });
         }
+
         return res.status(500).json({
             error: "Something went wrong when registering a new user",
         });
+    }
+});
+
+router.get("/me", requireAuth, async (req, res) => {
+    if (!req.userId) {
+        res.status(401).json({ error: "Not authenticated" });
+        return;
+    }
+    try {
+        const [user] = await db
+            .select({
+                id: users.id,
+                email: users.email,
+                nickname: users.nickname,
+            })
+            .from(users)
+            .where(eq(users.id, req.userId));
+        if (!user) {
+            res.status(401).json({ error: "User not found" });
+            return;
+        }
+        return res.status(200).json(user);
+    } catch {
+        res.status(500).json({ error: "Something went wrong" });
+        return;
     }
 });
 

@@ -105,4 +105,50 @@ describe("auth routes", () => {
             error: "Invalid credentials",
         });
     });
+
+    test("POST /login - should set token cookie", async () => {
+        await request(app).post("/api/auth/register").send({
+            email: "test@test.com",
+            password: "password123",
+            nickname: "testuser",
+        });
+
+        const response = await request(app).post("/api/auth/login").send({
+            identifier: "testuser",
+            password: "password123",
+        });
+
+        expect(response.status).toBe(200);
+        const cookies = response.headers["set-cookie"];
+        expect(cookies).toBeDefined();
+        expect(cookies[0]).toContain("token=");
+        expect(cookies[0]).toContain("HttpOnly");
+    });
+
+    test("GET /me - should return 200 for valid cookie", async () => {
+        const registerResponse = await request(app)
+            .post("/api/auth/register")
+            .send({
+                email: "test@test.com",
+                password: "password123",
+                nickname: "testuser",
+            });
+        const cookie = registerResponse.headers["set-cookie"];
+        const meResponse = await request(app)
+            .get("/api/auth/me")
+            .set("Cookie", cookie);
+        expect(meResponse.status).toBe(200);
+    });
+
+    test("GET /me - should return 401 for no cookie", async () => {
+        const meResponse = await request(app).get("/api/auth/me");
+        expect(meResponse.status).toBe(401);
+    });
+
+    test("GET /me - should return 401 for invalid cookie", async () => {
+        const meResponse = await request(app)
+            .get("/api/auth/me")
+            .set("Cookie", "token=hackertoken");
+        expect(meResponse.status).toBe(401);
+    });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { hashPassword, verifyPassword } from "../functions/auth.js";
+import { hashPassword, verifyPassword } from "../functions/password.js";
 
 describe("auth", () => {
     const password = "qwerty123";
