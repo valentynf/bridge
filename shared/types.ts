@@ -112,9 +112,9 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-    create_room: (payload: { playerName: string }) => void;
+    create_room: () => void;
     end_turn: () => void;
-    join_room: (payload: { playerName: string; roomCode: string }) => void;
+    join_room: (payload: { roomCode: string }) => void;
     player_ready: () => void;
     play_cards: (payload: { cardsToPlay: Card[] }) => void;
     declare_suit: (payload: { suit: CardSuit }) => void;

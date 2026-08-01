@@ -12,6 +12,7 @@ import {
     type RoundEndData,
     type ClientPlayer,
     type PromptType,
+    type AuthUser,
 } from "../../types";
 import PlayerInfoCard from "../PlayerInfoCard/PlayerInfoCard";
 import { useToast } from "../../hooks/useToast";
@@ -24,7 +25,7 @@ import RoundEndPopup from "../RoundEndPopup/RoundEndPopup";
 import GameAnnouncement from "../GameAnnouncement/GameAnnouncement";
 import { buildEffectsMessage } from "../../utils";
 
-function GameScreen() {
+function GameScreen({ currentUser }: { currentUser: AuthUser }) {
     const [hand, setHand] = useState<Card[]>([]);
     const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
         null
@@ -39,7 +40,7 @@ function GameScreen() {
     const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("medium");
     const [roundEndData, setRoundEndData] = useState<RoundEndData | null>(null);
     const socket = useSocket();
-    const myIndex = players.findIndex((player) => player.id === socket.id);
+    const myIndex = players.findIndex((player) => player.id === currentUser.id);
     const seatMap = {
         left: (myIndex + 1) % players.length,
         top: (myIndex + 2) % players.length,
