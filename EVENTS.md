@@ -22,9 +22,9 @@ Other players never see another player's actual cards. They see `handCount` inst
 
 | Event                 | Dir | Audience    | Payload                                     |
 | --------------------- | --- | ----------- | ------------------------------------------- |
-| `create_room`         | C→S | sender      | `{ playerName }`                            |
+| `create_room`         | C→S | sender      | `{ }`                                       |
 | `room_created`        | S→C | sender      | `{ roomCode }`                              |
-| `join_room`           | C→S | sender      | `{ playerName, roomCode }`                  |
+| `join_room`           | C→S | sender      | `{ roomCode }`                              |
 | `room_joined`         | S→C | all in room | `{ roomMembers: LobbyMember[] }`            |
 | `player_ready`        | C→S | sender      | `{ }`                                       |
 | `player_ready_update` | S→C | all in room | `{ readyPlayerId: string, readyPlayers[] }` |

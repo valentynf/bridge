@@ -4,7 +4,7 @@ export type ClientPlayer = RoundPlayer & { handCount: number };
 
 export type PromptType = "suit_pick" | "bridge" | "jack_bonus" | null;
 
-export type ScreenType = "menu" | "lobby" | "game" | "gameOver";
+export type ScreenType = "auth" | "menu" | "lobby" | "game" | "game-over";
 
 export type RoundEndData = {
     winnerName: string;
@@ -16,4 +16,10 @@ export type RoundEndData = {
 export type GameEndData = {
     winnerName: string;
     finalPlayerScores: { nickname: string; score: number }[];
+};
+
+export type AuthUser = {
+    id: string;
+    email: string;
+    nickname: string;
 };

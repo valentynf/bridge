@@ -23,11 +23,9 @@ import {
 } from "./functions/game.js";
 import type { Socket } from "socket.io";
 import { reshuffleDeck } from "./functions/deck.js";
-import {
-    PLAYER_NAME_REGEX,
-    ROOM_CODE_REGEX,
-} from "../../shared/validations.js";
+import { ROOM_CODE_REGEX } from "../../shared/validations.js";
 import { createRateLimiter } from "./functions/rateLimiter.js";
+import type { SocketData } from "./types/socketio.js";
 
 export class GameServer {
     private rooms: Map<string, LobbyRoom>;
@@ -35,7 +33,12 @@ export class GameServer {
     private rateLimiter = createRateLimiter(3, 1000);
 
     constructor(
-        private io: Server<ClientToServerEvents, ServerToClientEvents>,
+        private io: Server<
+            ClientToServerEvents,
+            ServerToClientEvents,
+            Record<string, never>,
+            SocketData
+        >,
         options?: {
             customShuffle?: (unshuffledDeck: Card[]) => Card[];
             rooms?: Map<string, LobbyRoom>;
@@ -47,16 +50,11 @@ export class GameServer {
 
     registerSocketEvents() {
         this.io.on("connection", (socket) => {
-            socket.on("create_room", ({ playerName }) => {
+            socket.join(socket.data.userId);
+            socket.on("create_room", () => {
                 if (!this.rateLimiter.check(socket.id, "create_room")) {
                     socket.emit("error", {
                         error: "Event sending rate limit reached, wait for a moment",
-                    });
-                    return;
-                }
-                if (!PLAYER_NAME_REGEX.test(playerName)) {
-                    socket.emit("error", {
-                        error: "Validation error: incorrect player name",
                     });
                     return;
                 }
@@ -64,8 +62,8 @@ export class GameServer {
                 const roomId = generateRoomCode();
                 const roomMembers: LobbyMember[] = [
                     {
-                        nickname: playerName,
-                        id: socket.id,
+                        nickname: socket.data.nickname,
+                        id: socket.data.userId,
                         isReady: false,
                     },
                 ];
@@ -80,16 +78,10 @@ export class GameServer {
                 socket.join(roomId);
                 this.io.to(roomId).emit("room_joined", { roomMembers });
             });
-            socket.on("join_room", ({ playerName, roomCode }) => {
+            socket.on("join_room", ({ roomCode }) => {
                 if (!this.rateLimiter.check(socket.id, "join_room")) {
                     socket.emit("error", {
                         error: "Event sending rate limit reached, wait for a moment",
-                    });
-                    return;
-                }
-                if (!PLAYER_NAME_REGEX.test(playerName)) {
-                    socket.emit("error", {
-                        error: "Validation error: incorrect player name",
                     });
                     return;
                 }
@@ -121,8 +113,8 @@ export class GameServer {
                     return;
                 }
                 const newLobbyMember: LobbyMember = {
-                    nickname: playerName,
-                    id: socket.id,
+                    nickname: socket.data.nickname,
+                    id: socket.data.userId,
                     isReady: false,
                 };
                 roomToJoin.members.push(newLobbyMember);
@@ -139,7 +131,8 @@ export class GameServer {
                     return;
                 }
                 const currentRoomCode = [...socket.rooms].filter(
-                    (roomId) => roomId !== socket.id
+                    (roomId) =>
+                        roomId !== socket.id && roomId !== socket.data.userId
                 )[0];
                 if (!currentRoomCode) {
                     socket.emit("error", {
@@ -155,7 +148,7 @@ export class GameServer {
                     return;
                 }
                 const currentRoomMember = currentRoom.members.find(
-                    (roomMember) => roomMember.id === socket.id
+                    (roomMember) => roomMember.id === socket.data.userId
                 );
                 if (!currentRoomMember) {
                     socket.emit("error", {
@@ -172,7 +165,7 @@ export class GameServer {
                     (member) => member.isReady
                 );
                 this.io.to(currentRoomCode).emit("player_ready_update", {
-                    readyPlayerId: socket.id,
+                    readyPlayerId: socket.data.userId,
                     readyPlayers,
                 });
                 const areAllReady: boolean = currentRoom.members.every(
@@ -239,7 +232,7 @@ export class GameServer {
                     jackSuit,
                     isCoveringRequired,
                 } = gameState;
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -519,7 +512,7 @@ export class GameServer {
                     hasActedThisTurn,
                 } = gameState;
 
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -579,7 +572,7 @@ export class GameServer {
                     });
                     return;
                 }
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -602,7 +595,7 @@ export class GameServer {
                 }
                 const { gameState, currentRoomCode } = gameContext;
                 const { currentPlayerIndex, activePile, players } = gameState;
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -647,7 +640,7 @@ export class GameServer {
                     isCoveringRequired,
                 } = gameState;
 
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -705,7 +698,7 @@ export class GameServer {
                 if (!isCoveringRequired) gameState.hasActedThisTurn = true;
 
                 this.io.to(currentRoomCode).emit("card_drawn", {
-                    playerId: socket.id,
+                    playerId: socket.data.userId,
                     drawPileSize: getDrawPileSize(gameState.drawPile.length),
                     handCount: updatedHand.length,
                 });
@@ -725,7 +718,7 @@ export class GameServer {
                 const { gameState, currentRoomCode } = gameContext;
                 const { currentPlayerIndex, pendingJackBonusCount, players } =
                     gameState;
-                if (socket.id !== players[currentPlayerIndex].id) {
+                if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
@@ -759,7 +752,7 @@ export class GameServer {
         socket: Socket<ClientToServerEvents, ServerToClientEvents>
     ): { currentRoomCode: string; gameState: BridgeGameState } | undefined {
         const currentRoomCode = [...socket.rooms].filter(
-            (roomId) => roomId !== socket.id
+            (roomId) => roomId !== socket.id && roomId !== socket.data.userId
         )[0];
         if (!currentRoomCode) {
             socket.emit("error", {

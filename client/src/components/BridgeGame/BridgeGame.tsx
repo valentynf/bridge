@@ -1,4 +1,4 @@
-import { type GameEndData, type ScreenType } from "../../types";
+import { type AuthUser, type GameEndData, type ScreenType } from "../../types";
 import { useEffect, useRef, useState } from "react";
 import { type LobbyMember, type RoundPlayer } from "../../../../shared/types";
 import MenuScreen from "../MenuScreen/MenuScreen";
@@ -6,16 +6,32 @@ import LobbyScreen from "../LobbyScreen/LobbyScreen";
 import GameScreen from "../GameScreen/GameScreen";
 import GameOverScreen from "../GameOverScreen/GameOverScreen";
 import { useSocket } from "../../hooks/useSocket";
+import AuthScreen from "../AuthScreen/AuthScreen";
+import apiClient from "../../api/apiClient";
 
 function BridgeGame() {
-    const [currentView, setCurrentView] = useState<ScreenType>("menu");
+    const [currentView, setCurrentView] = useState<ScreenType>("auth");
     const [roomCode, setRoomCode] = useState<string>("");
     const [roomMembers, setRoomMembers] = useState<LobbyMember[]>([]);
     const [gameOverData, setGameOverData] = useState<GameEndData | null>(null);
     const [players, setPlayers] = useState<RoundPlayer[]>([]);
+    const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
     const socket = useSocket();
 
     const playersRef = useRef<RoundPlayer[]>(players);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const response = await apiClient.get("/auth/me");
+                setCurrentUser(response.data);
+                setCurrentView("menu");
+            } catch {
+                setCurrentView("auth");
+            }
+        };
+        checkAuth();
+    }, []);
 
     useEffect(() => {
         playersRef.current = players;
@@ -44,7 +60,7 @@ function BridgeGame() {
                     score,
                 })),
             });
-            setCurrentView("gameOver");
+            setCurrentView("game-over");
         });
 
         return () => {
@@ -58,12 +74,22 @@ function BridgeGame() {
 
     return (
         <>
+            {currentView === "auth" && (
+                <AuthScreen
+                    onAuthSuccess={(user) => {
+                        setCurrentUser(user);
+                        setCurrentView("menu");
+                    }}
+                />
+            )}
             {currentView === "menu" && <MenuScreen />}
             {currentView === "lobby" && (
                 <LobbyScreen roomMembers={roomMembers} roomCode={roomCode} />
             )}
-            {currentView === "game" && <GameScreen />}
-            {currentView === "gameOver" && gameOverData !== null && (
+            {currentView === "game" && currentUser && (
+                <GameScreen currentUser={currentUser} />
+            )}
+            {currentView === "game-over" && gameOverData !== null && (
                 <GameOverScreen
                     onBackToMenuClick={() => {
                         setRoomCode("");

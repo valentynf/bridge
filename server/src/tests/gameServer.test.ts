@@ -22,10 +22,23 @@ import type {
 import { reverseDealCards, shuffleDeck } from "../functions/deck.js";
 import { areSameCards } from "../functions/utility.js";
 import { MAX_ROOM_SIZE, START_HAND_SIZE } from "../../../shared/consts.js";
+import type { SocketData } from "../types/socketio.js";
+import { db } from "../db/index.js";
+import { users } from "../db/schema.js";
+import { signToken } from "../functions/jwt.js";
+import type { InferSelectModel } from "drizzle-orm";
+import { socketAuth } from "../middlewares/socketAuth.js";
 
 describe("registerSocketEvents", () => {
-    let io: Server;
+    let io: Server<
+        ClientToServerEvents,
+        ServerToClientEvents,
+        Record<string, never>,
+        SocketData
+    >;
     let gameServer: GameServer;
+    let tokens: string[];
+    let insertedUsers: InferSelectModel<typeof users>[];
     const rooms: Map<string, LobbyRoom> = new Map<string, LobbyRoom>();
     const clientSockets: ClientSocket<
         ServerToClientEvents,
@@ -38,38 +51,79 @@ describe("registerSocketEvents", () => {
         return shuffleDeck(unshuffledDeck);
     };
 
-    beforeAll(() => {
-        return new Promise((resolve) => {
-            const httpServer = createServer();
-            io = new Server<ClientToServerEvents, ServerToClientEvents>(
-                httpServer
-            );
-            gameServer = new GameServer(io, {
-                customShuffle: predictableShuffleDeck,
-                rooms,
-            });
-            httpServer.listen(() => {
-                const port = (httpServer.address() as AddressInfo).port;
-                for (let i = 0; i < 5; i++) {
-                    const clientSocket = ioc(`http://localhost:${port}`);
-                    clientSockets.push(clientSocket);
-                }
-                gameServer.registerSocketEvents();
-                Promise.all(
-                    clientSockets.map(
-                        (clientSocket) =>
-                            new Promise((res) => {
-                                clientSocket.on("connect", () =>
-                                    res(undefined)
-                                );
-                            })
-                    )
-                ).then(() => resolve(undefined));
-            });
+    beforeAll(async () => {
+        const httpServer = createServer();
+        io = new Server<
+            ClientToServerEvents,
+            ServerToClientEvents,
+            Record<string, never>,
+            SocketData
+        >(httpServer);
+        io.use(socketAuth);
+        gameServer = new GameServer(io, {
+            customShuffle: predictableShuffleDeck,
+            rooms,
         });
+
+        await db.delete(users);
+        insertedUsers = await db
+            .insert(users)
+            .values([
+                {
+                    email: "u1@t.com",
+                    nickname: "testUser1",
+                    passwordHash: "hash",
+                },
+                {
+                    email: "u2@t.com",
+                    nickname: "testUser2",
+                    passwordHash: "hash",
+                },
+                {
+                    email: "u3@t.com",
+                    nickname: "testUser3",
+                    passwordHash: "hash",
+                },
+                {
+                    email: "u4@t.com",
+                    nickname: "testUser4",
+                    passwordHash: "hash",
+                },
+                {
+                    email: "u5@t.com",
+                    nickname: "testUser5",
+                    passwordHash: "hash",
+                },
+            ])
+            .returning();
+
+        tokens = insertedUsers.map((u) => signToken({ userId: u.id }));
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(() => resolve());
+        });
+        const port = (httpServer.address() as AddressInfo).port;
+
+        for (let i = 0; i < 5; i++) {
+            const clientSocket = ioc(`http://localhost:${port}`, {
+                extraHeaders: { Cookie: `token=${tokens[i]}` },
+            });
+            clientSockets.push(clientSocket);
+        }
+        gameServer.registerSocketEvents();
+
+        await Promise.all(
+            clientSockets.map(
+                (clientSocket) =>
+                    new Promise((res) => {
+                        clientSocket.on("connect", () => res(undefined));
+                    })
+            )
+        );
     });
 
-    afterAll(() => {
+    afterAll(async () => {
+        await db.delete(users);
         mathRandomSpy.mockRestore();
         io.close();
         clientSockets.forEach((clientSocket) => {
@@ -115,19 +169,8 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
             });
-            clientSockets[0].emit("create_room", { playerName: "testUser1" });
+            clientSockets[0].emit("create_room");
             return Promise.all([roomCreatedPromise, roomJoinedPromise]);
-        });
-        test("Should receive error, name do not pass validation", () => {
-            const errorReceivedPromise = new Promise<void>((resolve) => {
-                clientSockets[0].on("error", ({ error }) => {
-                    expect(error.toLowerCase()).toContain("validation");
-                    resolve();
-                });
-            });
-            clientSockets[0].emit("create_room", { playerName: "boba" });
-
-            return errorReceivedPromise;
         });
     });
     describe("join_room", () => {
@@ -138,22 +181,20 @@ describe("registerSocketEvents", () => {
                     expect(
                         roomMembers.every(
                             ({ id }) =>
-                                id === clientSockets[0].id ||
-                                id === clientSockets[1].id
+                                id === insertedUsers[0].id ||
+                                id === insertedUsers[1].id
                         )
                     ).toBe(true);
                     resolve();
                 });
+
                 clientSockets[0].on("room_created", ({ roomCode }) => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser",
-                });
+                clientSockets[0].emit("create_room");
             });
         });
         test("Should receive error, non-existing room", () => {
@@ -163,7 +204,6 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
                 clientSockets[0].emit("join_room", {
-                    playerName: "testUser2",
                     roomCode: "noice",
                 });
             });
@@ -177,25 +217,21 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
                 clientSockets[3].once("room_joined", () => {
                     clientSockets[4].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -204,9 +240,7 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
         });
         test("Should receive error, game in progress", () => {
@@ -222,24 +256,9 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
                 clientSockets[0].emit("join_room", {
-                    playerName: "Frank",
                     roomCode: "a1b2c",
                 });
             });
-        });
-        test("Should receive error, name do not pass validation", () => {
-            const errorReceivedPromise = new Promise<void>((resolve) => {
-                clientSockets[0].on("error", ({ error }) => {
-                    expect(error.toLowerCase()).toContain("validation");
-                    resolve();
-                });
-            });
-            clientSockets[0].emit("join_room", {
-                playerName: "boba",
-                roomCode: "a1b2c",
-            });
-
-            return errorReceivedPromise;
         });
         test("Should receive error, roomCode do not pass validation", () => {
             const errorReceivedPromise = new Promise<void>((resolve) => {
@@ -249,7 +268,6 @@ describe("registerSocketEvents", () => {
                 });
             });
             clientSockets[0].emit("join_room", {
-                playerName: "boba14",
                 roomCode: "code",
             });
 
@@ -300,19 +318,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -329,9 +344,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
 
                 Promise.all([
                     ...roundStartedPromises,
@@ -359,19 +372,16 @@ describe("registerSocketEvents", () => {
                         );
                         clientSockets[0].once("room_joined", () => {
                             clientSockets[1].emit("join_room", {
-                                playerName: "testUser2",
                                 roomCode,
                             });
                         });
                         clientSockets[1].once("room_joined", () => {
                             clientSockets[2].emit("join_room", {
-                                playerName: "testUser3",
                                 roomCode,
                             });
                         });
                         clientSockets[2].once("room_joined", () => {
                             clientSockets[3].emit("join_room", {
-                                playerName: "testUser4",
                                 roomCode,
                             });
                         });
@@ -399,9 +409,7 @@ describe("registerSocketEvents", () => {
                             resolve();
                         });
 
-                        clientSockets[0].emit("create_room", {
-                            playerName: "testUser1",
-                        });
+                        clientSockets[0].emit("create_room");
                     })
             );
 
@@ -518,19 +526,16 @@ describe("registerSocketEvents", () => {
                     );
                     clientSockets[0].once("room_joined", () => {
                         clientSockets[1].emit("join_room", {
-                            playerName: "testUser2",
                             roomCode,
                         });
                     });
                     clientSockets[1].once("room_joined", () => {
                         clientSockets[2].emit("join_room", {
-                            playerName: "testUser3",
                             roomCode,
                         });
                     });
                     clientSockets[2].once("room_joined", () => {
                         clientSockets[3].emit("join_room", {
-                            playerName: "testUser4",
                             roomCode,
                         });
                     });
@@ -558,9 +563,7 @@ describe("registerSocketEvents", () => {
                         resolve();
                     });
 
-                    clientSockets[0].emit("create_room", {
-                        playerName: "testUser1",
-                    });
+                    clientSockets[0].emit("create_room");
                 });
 
                 const turnStartedPromise = new Promise((res) => {
@@ -590,19 +593,16 @@ describe("registerSocketEvents", () => {
                     );
                     clientSockets[0].once("room_joined", () => {
                         clientSockets[1].emit("join_room", {
-                            playerName: "testUser2",
                             roomCode,
                         });
                     });
                     clientSockets[1].once("room_joined", () => {
                         clientSockets[2].emit("join_room", {
-                            playerName: "testUser3",
                             roomCode,
                         });
                     });
                     clientSockets[2].once("room_joined", () => {
                         clientSockets[3].emit("join_room", {
-                            playerName: "testUser4",
                             roomCode,
                         });
                     });
@@ -630,9 +630,7 @@ describe("registerSocketEvents", () => {
                         resolve();
                     });
 
-                    clientSockets[0].emit("create_room", {
-                        playerName: "testUser1",
-                    });
+                    clientSockets[0].emit("create_room");
                 });
 
                 const turnStartedPromise = new Promise((res) => {
@@ -677,19 +675,16 @@ describe("registerSocketEvents", () => {
                     );
                     clientSockets[0].once("room_joined", () => {
                         clientSockets[1].emit("join_room", {
-                            playerName: "testUser2",
                             roomCode,
                         });
                     });
                     clientSockets[1].once("room_joined", () => {
                         clientSockets[2].emit("join_room", {
-                            playerName: "testUser3",
                             roomCode,
                         });
                     });
                     clientSockets[2].once("room_joined", () => {
                         clientSockets[3].emit("join_room", {
-                            playerName: "testUser4",
                             roomCode,
                         });
                     });
@@ -717,9 +712,7 @@ describe("registerSocketEvents", () => {
                         resolve();
                     });
 
-                    clientSockets[0].emit("create_room", {
-                        playerName: "testUser1",
-                    });
+                    clientSockets[0].emit("create_room");
                 });
 
                 const turnStartedPromise = new Promise((res) => {
@@ -768,19 +761,16 @@ describe("registerSocketEvents", () => {
                         );
                         clientSockets[0].once("room_joined", () => {
                             clientSockets[1].emit("join_room", {
-                                playerName: "testUser2",
                                 roomCode,
                             });
                         });
                         clientSockets[1].once("room_joined", () => {
                             clientSockets[2].emit("join_room", {
-                                playerName: "testUser3",
                                 roomCode,
                             });
                         });
                         clientSockets[2].once("room_joined", () => {
                             clientSockets[3].emit("join_room", {
-                                playerName: "testUser4",
                                 roomCode,
                             });
                         });
@@ -823,9 +813,7 @@ describe("registerSocketEvents", () => {
                             );
                         });
 
-                        clientSockets[0].emit("create_room", {
-                            playerName: "testUser1",
-                        });
+                        clientSockets[0].emit("create_room");
                     })
             );
 
@@ -1078,19 +1066,16 @@ describe("registerSocketEvents", () => {
                         );
                         clientSockets[0].once("room_joined", () => {
                             clientSockets[1].emit("join_room", {
-                                playerName: "testUser2",
                                 roomCode,
                             });
                         });
                         clientSockets[1].once("room_joined", () => {
                             clientSockets[2].emit("join_room", {
-                                playerName: "testUser3",
                                 roomCode,
                             });
                         });
                         clientSockets[2].once("room_joined", () => {
                             clientSockets[3].emit("join_room", {
-                                playerName: "testUser4",
                                 roomCode,
                             });
                         });
@@ -1145,9 +1130,7 @@ describe("registerSocketEvents", () => {
                             );
                         });
 
-                        clientSockets[0].emit("create_room", {
-                            playerName: "testUser1",
-                        });
+                        clientSockets[0].emit("create_room");
                     })
             );
 
@@ -1324,19 +1307,16 @@ describe("registerSocketEvents", () => {
                         );
                         clientSockets[0].once("room_joined", () => {
                             clientSockets[1].emit("join_room", {
-                                playerName: "testUser2",
                                 roomCode,
                             });
                         });
                         clientSockets[1].once("room_joined", () => {
                             clientSockets[2].emit("join_room", {
-                                playerName: "testUser3",
                                 roomCode,
                             });
                         });
                         clientSockets[2].once("room_joined", () => {
                             clientSockets[3].emit("join_room", {
-                                playerName: "testUser4",
                                 roomCode,
                             });
                         });
@@ -1379,9 +1359,7 @@ describe("registerSocketEvents", () => {
                             );
                         });
 
-                        clientSockets[0].emit("create_room", {
-                            playerName: "testUser1",
-                        });
+                        clientSockets[0].emit("create_room");
                     })
             );
 
@@ -1421,19 +1399,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -1479,9 +1454,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const sixPlayedPromise = new Promise<void>((res) => {
@@ -1539,19 +1512,16 @@ describe("registerSocketEvents", () => {
                         );
                         clientSockets[0].once("room_joined", () => {
                             clientSockets[1].emit("join_room", {
-                                playerName: "testUser2",
                                 roomCode,
                             });
                         });
                         clientSockets[1].once("room_joined", () => {
                             clientSockets[2].emit("join_room", {
-                                playerName: "testUser3",
                                 roomCode,
                             });
                         });
                         clientSockets[2].once("room_joined", () => {
                             clientSockets[3].emit("join_room", {
-                                playerName: "testUser4",
                                 roomCode,
                             });
                         });
@@ -1615,9 +1585,7 @@ describe("registerSocketEvents", () => {
                             );
                         });
 
-                        clientSockets[0].emit("create_room", {
-                            playerName: "testUser1",
-                        });
+                        clientSockets[0].emit("create_room");
                     })
             );
             test("Should not end turn without covering six", () => {
@@ -1712,19 +1680,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -1752,9 +1717,7 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const sixCoveredPromise = new Promise<void>((res) => {
@@ -1787,19 +1750,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -1830,9 +1790,7 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const sixCoveredPromise = new Promise<void>((res) => {
@@ -1878,19 +1836,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -1933,9 +1888,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const roundEndedPromise = new Promise((res) => {
@@ -1961,19 +1914,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2016,9 +1966,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const roundEndedNotReceivedPromise = new Promise((res) => {
@@ -2046,19 +1994,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2101,9 +2046,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const roundEndedPromise = new Promise((res) => {
@@ -2146,19 +2089,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2209,9 +2149,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const roundEndedPromise = new Promise((res) => {
@@ -2258,19 +2196,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2314,9 +2249,7 @@ describe("registerSocketEvents", () => {
                     clientSockets[3].emit("player_ready");
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const roundEndedPromise = new Promise((res) => {
@@ -2352,7 +2285,6 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
@@ -2392,9 +2324,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const gameEndedPromise = new Promise((res) => {
@@ -2429,19 +2359,16 @@ describe("registerSocketEvents", () => {
                     );
                     clientSockets[0].once("room_joined", () => {
                         clientSockets[1].emit("join_room", {
-                            playerName: "testUser2",
                             roomCode,
                         });
                     });
                     clientSockets[1].once("room_joined", () => {
                         clientSockets[2].emit("join_room", {
-                            playerName: "testUser3",
                             roomCode,
                         });
                     });
                     clientSockets[2].once("room_joined", () => {
                         clientSockets[3].emit("join_room", {
-                            playerName: "testUser4",
                             roomCode,
                         });
                     });
@@ -2484,9 +2411,7 @@ describe("registerSocketEvents", () => {
                         );
                     });
 
-                    clientSockets[0].emit("create_room", {
-                        playerName: "testUser1",
-                    });
+                    clientSockets[0].emit("create_room");
                 })
         );
 
@@ -2547,19 +2472,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2602,9 +2524,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const cardDrawnPromise = new Promise((res) => {
@@ -2626,19 +2546,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2681,9 +2598,7 @@ describe("registerSocketEvents", () => {
                     );
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const cardDrawnNotReceivedPromise = new Promise((res) => {
@@ -2708,19 +2623,16 @@ describe("registerSocketEvents", () => {
                 );
                 clientSockets[0].once("room_joined", () => {
                     clientSockets[1].emit("join_room", {
-                        playerName: "testUser2",
                         roomCode,
                     });
                 });
                 clientSockets[1].once("room_joined", () => {
                     clientSockets[2].emit("join_room", {
-                        playerName: "testUser3",
                         roomCode,
                     });
                 });
                 clientSockets[2].once("room_joined", () => {
                     clientSockets[3].emit("join_room", {
-                        playerName: "testUser4",
                         roomCode,
                     });
                 });
@@ -2748,9 +2660,7 @@ describe("registerSocketEvents", () => {
                     resolve();
                 });
 
-                clientSockets[0].emit("create_room", {
-                    playerName: "testUser1",
-                });
+                clientSockets[0].emit("create_room");
             });
 
             const cardDrawnNotReceivedPromise = new Promise((res) => {

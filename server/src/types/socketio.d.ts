@@ -1,6 +1,4 @@
-declare module "socket.io" {
-    interface SocketData {
-        userId: string;
-    }
+export interface SocketData {
+    userId: string;
+    nickname: string;
 }
-export {};

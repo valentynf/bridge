@@ -1,9 +1,19 @@
-import { cleanup, render, act, screen } from "@testing-library/react";
+import {
+    cleanup,
+    render,
+    act,
+    screen,
+    waitFor,
+    fireEvent,
+} from "@testing-library/react";
 import type { Socket } from "socket.io-client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import BridgeGame from "./BridgeGame";
 import { SocketContext } from "../../context/SocketContext";
 import { ToastContext } from "../../context/ToastContext";
+import apiClient from "../../api/apiClient";
+
+vi.mock("../../api/apiClient");
 
 describe("BridgeGame", () => {
     let container: HTMLElement;
@@ -13,7 +23,6 @@ describe("BridgeGame", () => {
         off: vi.fn(),
     } as unknown as Socket;
     const mockShowToast = vi.fn();
-    mockSocket.id = "socket01abc";
 
     const renderBridgeGame = (): HTMLElement => {
         const { container } = render(
@@ -42,11 +51,49 @@ describe("BridgeGame", () => {
     });
 
     beforeEach(() => {
+        vi.mocked(apiClient.get).mockRejectedValue({});
         container = renderBridgeGame();
     });
 
-    test("Should render menu view by default", () => {
+    test("Should render login view on /me reject", () => {
+        expect(
+            container.querySelector('[class*="auth-screen-root"]')
+        ).not.toBeNull();
+    });
+
+    test("Should render menu on /me success", async () => {
+        cleanup();
+        vi.mocked(apiClient.get).mockResolvedValue({
+            data: { id: "1", email: "x@y.com", nickname: "testuser" },
+        });
+        container = renderBridgeGame();
+
+        await waitFor(() => {
+            expect(
+                container.querySelector('[class*="menu-root"]')
+            ).not.toBeNull();
+        });
+    });
+
+    test("Should switch to menu view after successful login", async () => {
+        const fakeUser = { id: "1", email: "x@y.com", nickname: "testuser" };
+        vi.mocked(apiClient.post).mockResolvedValue({ data: fakeUser });
+
+        const inputs = container.querySelectorAll("input");
+        const identifierInput = inputs[0] as HTMLInputElement;
+        const passwordInput = inputs[1] as HTMLInputElement;
+
+        fireEvent.change(identifierInput, { target: { value: "testuser" } });
+        fireEvent.change(passwordInput, { target: { value: "password123" } });
+
+        await act(async () => {
+            screen.getByRole("button", { name: "Login" }).click();
+        });
+
         expect(container.querySelector('[class*="menu-root"]')).not.toBeNull();
+        expect(
+            container.querySelector('[class*="auth-screen-root"]')
+        ).toBeNull();
     });
 
     test("Should switch to lobby view and show room code on room_created", () => {
@@ -77,7 +124,18 @@ describe("BridgeGame", () => {
         screen.getByText("player2nd");
     });
 
-    test("Should switch to game view on game_started", () => {
+    test("Should switch to game view on game_started", async () => {
+        cleanup();
+        vi.mocked(mockSocket.on).mockClear();
+        vi.mocked(apiClient.get).mockResolvedValue({
+            data: { id: "1", email: "x@y.com", nickname: "testuser" },
+        });
+        container = renderBridgeGame();
+        await waitFor(() =>
+            expect(
+                container.querySelector('[class*="menu-root"]')
+            ).not.toBeNull()
+        );
         act(() => {
             emitEvent("game_started");
         });

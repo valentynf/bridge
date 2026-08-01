@@ -13,13 +13,17 @@ describe("GameScreen", () => {
         off: vi.fn(),
     } as unknown as Socket;
     const mockShowToast = vi.fn();
-    mockSocket.id = "socket01abc";
+    const mockCurrentUser = {
+        id: "socket01abc",
+        email: "x@y.com",
+        nickname: "valentyn",
+    };
 
     const renderGameScreen = (): HTMLElement => {
         const { container } = render(
             <ToastContext.Provider value={mockShowToast}>
                 <SocketContext.Provider value={mockSocket}>
-                    <GameScreen />
+                    <GameScreen currentUser={mockCurrentUser} />
                 </SocketContext.Provider>
             </ToastContext.Provider>
         );
