@@ -4,7 +4,7 @@ import styles from "./AuthScreen.module.css";
 import type { AuthUser } from "../../types";
 import { useToast } from "../../hooks/useToast";
 import axios from "axios";
-import { PLAYER_NAME_REGEX } from "../../../../shared/validations";
+import { EMAIL_REGEX, PLAYER_NAME_REGEX } from "../../../../shared/validations";
 
 type AuthScreenProps = {
     onAuthSuccess: (user: AuthUser) => void;
@@ -85,8 +85,24 @@ function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         <div className={styles["auth-screen-root"]}>
             <div className={styles["auth-root"]}>
                 <div className={styles["auth-header"]}>
-                    <p onClick={onRegisterClick}>Register</p>
-                    <p onClick={onLoginClick}>Login</p>
+                    <p
+                        className={
+                            currentTab === "register"
+                                ? styles["active-tab"]
+                                : ""
+                        }
+                        onClick={onRegisterClick}
+                    >
+                        Register
+                    </p>
+                    <p
+                        className={
+                            currentTab === "login" ? styles["active-tab"] : ""
+                        }
+                        onClick={onLoginClick}
+                    >
+                        Login
+                    </p>
                 </div>
                 <div className={styles["auth-form"]}>
                     {currentTab === "login" && (
@@ -94,14 +110,22 @@ function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                             className={styles["login-form"]}
                             onSubmit={handleLoginSubmit}
                         >
+                            <label htmlFor="identifier">identifier</label>
                             <input
+                                pattern={`(${PLAYER_NAME_REGEX.source}|${EMAIL_REGEX.source})`}
+                                id="identifier"
+                                placeholder=" "
                                 type="text"
                                 value={identifier}
                                 onChange={(e) => setIdentifier(e.target.value)}
                             />
+                            <label htmlFor="login-password">password</label>
                             <input
+                                id="login-password"
+                                placeholder=" "
                                 type="password"
                                 value={password}
+                                minLength={8}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
 
@@ -113,19 +137,29 @@ function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                             className={styles["register-form"]}
                             onSubmit={handleRegisterSubmit}
                         >
+                            <label htmlFor="email">email</label>
                             <input
-                                type="email"
+                                id="email"
+                                placeholder=" "
+                                type="text"
+                                pattern={EMAIL_REGEX.source}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
+                            <label htmlFor="nickname">nickname</label>
                             <input
+                                id="nickname"
+                                placeholder=" "
                                 type="text"
                                 value={nickname}
                                 title="Nickname must be 5-12 alphanumeric characters"
                                 pattern={PLAYER_NAME_REGEX.source}
                                 onChange={(e) => setNickname(e.target.value)}
                             />
+                            <label htmlFor="register-password">password</label>
                             <input
+                                id="register-password"
+                                placeholder=" "
                                 type="password"
                                 value={password}
                                 minLength={8}

@@ -1,0 +1,82 @@
+.auth-screen-root {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-root input:invalid:not(:placeholder-shown) {
+    border-color: var(--color-accent);
+}
+
+.auth-root {
+    width: 400px;
+    height: 540px;
+    background-color: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    border-radius: 8px;
+}
+
+.auth-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    gap: 64px;
+    font-size: 36px;
+}
+
+.auth-header > p {
+    margin: 0;
+}
+
+.auth-header > p:hover {
+    cursor: pointer;
+}
+
+.active-tab {
+    color: var(--color-text);
+}
+
+.login-form,
+.register-form {
+    width: 400px;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input {
+    padding: 12px 16px;
+    font-size: 20px;
+    border: 8px solid var(--color-surface);
+    border-radius: 8px;
+    background: var(--color-card-white);
+    color: var(--color-card-black);
+    outline: none;
+}
+
+label {
+    color: var(--color-text);
+}
+
+button {
+    border: none;
+    margin-top: 24px;
+    height: 40px;
+    width: 300px;
+    border-radius: 8px;
+    background-color: var(--color-accent);
+    font-size: 24px;
+}
+
+button:hover {
+    filter: brightness(0.8);
+    cursor: pointer;
+}
