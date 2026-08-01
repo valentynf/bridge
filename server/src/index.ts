@@ -6,10 +6,12 @@ import {
 } from "../../shared/types.js";
 import { GameServer } from "./gameServer.js";
 import app from "./app.js";
+import { socketAuth } from "./middlewares/socketAuth.js";
 
 const port: number = 3000;
 const server = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server);
+io.use(socketAuth);
 const gameServer = new GameServer(io);
 
 gameServer.registerSocketEvents();
