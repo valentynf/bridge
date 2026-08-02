@@ -3,9 +3,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY shared ./shared
 COPY server ./server
-ENV NPM_CONFIG_PRODUCTION=false
+ENV NODE_ENV=development
 RUN cd server && npm ci --include=dev --no-audit --no-fund
 RUN cd server && npm run build
+ENV NODE_ENV=production
 WORKDIR /app/server
 EXPOSE 3000
 CMD ["node", "dist/index.js"]
