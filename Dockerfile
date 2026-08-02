@@ -1,6 +1,7 @@
 FROM node:20.11.1-slim
 WORKDIR /app
 COPY package*.json ./
+COPY tsconfig.json ./
 COPY shared ./shared
 COPY server ./server
 ENV NODE_ENV=development
