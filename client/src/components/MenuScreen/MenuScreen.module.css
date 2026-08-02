@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     width: 600px;
-    height: 50vh;
+    height: 440px;
     padding: 16px 16px 0 16px;
     color: var(--color-text);
     background-color: var(--color-surface);
@@ -95,6 +95,7 @@
 
 .logout-bar {
     position: fixed;
+    height: 60px;
     top: 24px;
     right: 24px;
     display: flex;
@@ -109,6 +110,7 @@
 }
 
 .logout-button {
+    margin: 0;
     border: none;
     color: var(--color-text);
     background: var(--color-accent);
