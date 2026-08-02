@@ -1,4 +1,4 @@
-import { hash, compare } from "bcrypt";
+import { hash, compare } from "bcryptjs";
 
 export const hashPassword = (password: string): Promise<string> => {
     return hash(password, 10);
