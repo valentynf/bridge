@@ -4,7 +4,7 @@ COPY package*.json ./
 COPY shared ./shared
 COPY server ./server
 ENV NODE_ENV=development
-RUN cd server && npm ci --include=dev --no-audit --no-fund
+RUN cd server && npm install
 RUN cd server && npm run build
 ENV NODE_ENV=production
 WORKDIR /app/server
