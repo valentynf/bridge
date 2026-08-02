@@ -1,4 +1,5 @@
 import type { Card } from "../../../../shared/types";
+import { getSuitSymbol } from "../../utils";
 import styles from "./PlayingCard.module.css";
 
 type CardProps =
@@ -9,8 +10,6 @@ type CardProps =
           size?: never;
       }
     | { faceUp: false; rank?: never; suit?: never; size?: "small" | "normal" };
-
-const suitSymbols = { clubs: "♣", diamonds: "♦", hearts: "♥", spades: "♠" };
 
 function PlayingCard({ rank, suit, faceUp, size }: CardProps) {
     const cardColor: string = `var(--color-card-${
@@ -32,13 +31,13 @@ function PlayingCard({ rank, suit, faceUp, size }: CardProps) {
                         <p
                             className={styles["card-text"]}
                             style={{ color: cardColor }}
-                        >{`${rank} ${suitSymbols[suit]}`}</p>
+                        >{`${rank} ${getSuitSymbol(suit)}`}</p>
                     </div>
                     <div className={styles["front-card-bottom"]}>
                         <p
                             className={styles["card-text"]}
                             style={{ color: cardColor }}
-                        >{`${rank} ${suitSymbols[suit]}`}</p>
+                        >{`${rank} ${getSuitSymbol(suit)}`}</p>
                     </div>
                 </div>
             ) : (

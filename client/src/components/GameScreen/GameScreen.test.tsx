@@ -449,7 +449,7 @@ describe("GameScreen", () => {
             ).toBeDisabled();
         });
 
-        test("Should render new top active pile card and update handCount on cards_played", () => {
+        test("Should render new top active pile card and update handCount on cards_played + announcement", () => {
             act(() => {
                 emitEvent("cards_played", {
                     playerId: "socket02def",
@@ -468,6 +468,7 @@ describe("GameScreen", () => {
                 '[class*="active-pile"]'
             )!;
             expect(activePileContainer.textContent.includes("7 ♣")).toBe(true);
+            screen.getByText("player2nd played: 7♣");
         });
 
         test("Should update opponents hand count", () => {

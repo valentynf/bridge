@@ -195,7 +195,18 @@ describe("BridgeGame", () => {
         screen.getByText("132");
     });
 
-    test("Should switch to menu view upon clicking Back to Menu button", () => {
+    test("Should switch to menu view upon clicking Back to Menu button", async () => {
+        cleanup();
+        vi.mocked(mockSocket.on).mockClear();
+        vi.mocked(apiClient.get).mockResolvedValue({
+            data: { id: "1", email: "x@y.com", nickname: "testuser" },
+        });
+        container = renderBridgeGame();
+        await waitFor(() =>
+            expect(
+                container.querySelector('[class*="menu-root"]')
+            ).not.toBeNull()
+        );
         act(() => {
             emitEvent("round_started", {
                 players: [

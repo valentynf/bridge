@@ -8,6 +8,7 @@ import GameOverScreen from "../GameOverScreen/GameOverScreen";
 import { useSocket } from "../../hooks/useSocket";
 import AuthScreen from "../AuthScreen/AuthScreen";
 import apiClient from "../../api/apiClient";
+import { useToast } from "../../hooks/useToast";
 
 function BridgeGame() {
     const [currentView, setCurrentView] = useState<ScreenType>("auth");
@@ -17,6 +18,7 @@ function BridgeGame() {
     const [players, setPlayers] = useState<RoundPlayer[]>([]);
     const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
     const socket = useSocket();
+    const showToast = useToast();
 
     const playersRef = useRef<RoundPlayer[]>(players);
 
@@ -32,6 +34,16 @@ function BridgeGame() {
         };
         checkAuth();
     }, []);
+
+    const handleLogout = async () => {
+        try {
+            await apiClient.post("/auth/logout");
+        } catch {
+            showToast({ level: "error", message: "Logout request failed" });
+        }
+        setCurrentUser(null);
+        setCurrentView("auth");
+    };
 
     useEffect(() => {
         playersRef.current = players;
@@ -82,7 +94,12 @@ function BridgeGame() {
                     }}
                 />
             )}
-            {currentView === "menu" && <MenuScreen />}
+            {currentView === "menu" && currentUser && (
+                <MenuScreen
+                    nickname={currentUser.nickname}
+                    onLogout={handleLogout}
+                />
+            )}
             {currentView === "lobby" && (
                 <LobbyScreen roomMembers={roomMembers} roomCode={roomCode} />
             )}

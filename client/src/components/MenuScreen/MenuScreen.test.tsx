@@ -7,16 +7,17 @@ import MenuScreen from "./MenuScreen.js";
 
 describe("MenuScreen", () => {
     const mockSocket = { emit: vi.fn() } as unknown as Socket;
+    const mockOnLogout = vi.fn();
 
     afterEach(() => {
         cleanup();
-        vi.mocked(mockSocket.emit).mockClear();
+        vi.clearAllMocks();
     });
 
     test("Should render one input and two buttons", () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <MenuScreen />
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
             </SocketContext.Provider>
         );
         screen.getByRole("button", { name: "Create game" });
@@ -27,7 +28,7 @@ describe("MenuScreen", () => {
     test("Buttons should be disabled if input is empty", () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <MenuScreen />
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
             </SocketContext.Provider>
         );
         expect(
@@ -38,7 +39,7 @@ describe("MenuScreen", () => {
     test("Button Join Game should be enabled if playerName & roomCode inputs are not empty", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <MenuScreen />
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
             </SocketContext.Provider>
         );
         await userEvent.type(
@@ -51,7 +52,7 @@ describe("MenuScreen", () => {
     test("Create game button should emit create_room", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <MenuScreen />
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
             </SocketContext.Provider>
         );
 
@@ -62,7 +63,7 @@ describe("MenuScreen", () => {
     test("Join game button should emit join_room", async () => {
         render(
             <SocketContext.Provider value={mockSocket}>
-                <MenuScreen />
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
             </SocketContext.Provider>
         );
         await userEvent.type(
@@ -73,5 +74,24 @@ describe("MenuScreen", () => {
         expect(mockSocket.emit).toHaveBeenCalledWith("join_room", {
             roomCode: "a1b2c",
         });
+    });
+
+    test("Should render nickname in header", () => {
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <MenuScreen nickname="valentyn" onLogout={vi.fn()} />
+            </SocketContext.Provider>
+        );
+        screen.getByText("Hello, valentyn!");
+    });
+
+    test("Logout button click calls onLogout", () => {
+        render(
+            <SocketContext.Provider value={mockSocket}>
+                <MenuScreen nickname="valentyn" onLogout={mockOnLogout} />
+            </SocketContext.Provider>
+        );
+        screen.getByRole("button", { name: "Logout" }).click();
+        expect(mockOnLogout).toHaveBeenCalled();
     });
 });

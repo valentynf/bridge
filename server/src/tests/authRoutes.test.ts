@@ -151,4 +151,12 @@ describe("auth routes", () => {
             .set("Cookie", "token=hackertoken");
         expect(meResponse.status).toBe(401);
     });
+
+    test("POST /logout - should clear token cookie", async () => {
+        const response = await request(app).post("/api/auth/logout");
+        expect(response.status).toBe(200);
+        const cookies = response.headers["set-cookie"];
+        expect(cookies).toBeDefined();
+        expect(cookies[0]).toContain("token=;");
+    });
 });

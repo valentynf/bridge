@@ -1,4 +1,4 @@
-import type { SpecialEffect } from "../../shared/types";
+import type { CardSuit, SpecialEffect } from "../../shared/types";
 
 export const getColorFromString = (string: string): string => {
     const hue =
@@ -23,4 +23,9 @@ export const buildEffectsMessage = (
     }
 
     return `${name} has to ${parts.join(" and ")}`;
+};
+
+export const getSuitSymbol = (suit: CardSuit): string => {
+    const suitSymbols = { clubs: "♣", diamonds: "♦", hearts: "♥", spades: "♠" };
+    return suitSymbols[suit];
 };

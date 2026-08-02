@@ -23,7 +23,7 @@ import JackBonusPrompt from "../GamePrompt/prompts/JackBonusPrompt";
 import SuitPrompt from "../GamePrompt/prompts/SuitPrompt";
 import RoundEndPopup from "../RoundEndPopup/RoundEndPopup";
 import GameAnnouncement from "../GameAnnouncement/GameAnnouncement";
-import { buildEffectsMessage } from "../../utils";
+import { buildEffectsMessage, getSuitSymbol } from "../../utils";
 
 function GameScreen({ currentUser }: { currentUser: AuthUser }) {
     const [hand, setHand] = useState<Card[]>([]);
@@ -83,6 +83,15 @@ function GameScreen({ currentUser }: { currentUser: AuthUser }) {
                 )
             );
             setJackSuit(null);
+            const player = playersRef.current.find(
+                (p) => p.id === data.playerId
+            );
+            if (!player) return;
+            const cardsText = data.cardsPlayed
+                .map((c) => `${c.rank}${getSuitSymbol(c.suit)}`)
+                .join(" ");
+            setAnnouncement(`${player.nickname} played: ${cardsText}`);
+            setTimeout(() => setAnnouncement(null), 2000);
         });
         socket.on("card_drawn", (data) => {
             setPlayers((prev) =>

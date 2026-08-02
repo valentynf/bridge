@@ -3,7 +3,12 @@ import styles from "./MenuScreen.module.css";
 import { ROOM_CODE_REGEX } from "../../../../shared/validations.js";
 import { useSocket } from "../../hooks/useSocket.js";
 
-function MenuScreen() {
+type MenuScreenProps = {
+    nickname: string;
+    onLogout: () => void;
+};
+
+function MenuScreen({ nickname, onLogout }: MenuScreenProps) {
     const [roomCode, setRoomCode] = useState<string>("");
 
     const socket = useSocket();
@@ -26,6 +31,12 @@ function MenuScreen() {
 
     return (
         <div className={styles["menu-root"]}>
+            <div className={styles["logout-bar"]}>
+                <p className={styles["hello-user-text"]}>Hello, {nickname}!</p>
+                <button onClick={onLogout} className={styles["logout-button"]}>
+                    Logout
+                </button>
+            </div>
             <div className={styles["menu-header"]}>
                 <h1 className={styles["title"]}>Bridge</h1>
             </div>
