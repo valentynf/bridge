@@ -2,6 +2,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema.js";
 
-const connectionString = process.env.DATABASE_URL_DEV!;
+const connectionString =
+    process.env.NODE_ENV === "production"
+        ? process.env.DATABASE_URL_PROD!
+        : process.env.DATABASE_URL_DEV!;
 const client = postgres(connectionString);
 export const db = drizzle(client, { schema });

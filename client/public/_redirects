@@ -1,0 +1,2 @@
+/api/*  https://bridge-production-5c96.up.railway.app/api/:splat  200
+/socket.io/*  https://bridge-production-5c96.up.railway.app/socket.io/:splat  200

@@ -16,7 +16,12 @@ const io = new Server<
     ServerToClientEvents,
     Record<string, never>,
     SocketData
->(server);
+>(server, {
+    cors: {
+        origin: "https://bridge-game-client.netlify.app",
+        credentials: true,
+    },
+});
 io.use(socketAuth);
 const gameServer = new GameServer(io);
 
