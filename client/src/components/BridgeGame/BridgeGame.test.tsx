@@ -143,6 +143,19 @@ describe("BridgeGame", () => {
         act(() => {
             emitEvent("game_started");
         });
+        act(() => {
+            emitEvent("round_started", {
+                hand: [{ rank: "7", suit: "hearts" }],
+                activePileTopCard: { rank: "J", suit: "clubs" },
+                dealerIndex: 0,
+                currentPlayerIndex: 0,
+                drawPileSize: "medium",
+                players: [
+                    { id: "socket01abc", nickname: "valentyn", score: 0 },
+                    { id: "socket02def", nickname: "player2nd", score: 0 },
+                ],
+            });
+        });
         expect(
             container.querySelector('[class*="gamescreen-root"]')
         ).not.toBeNull();

@@ -54,6 +54,15 @@ export type LobbyRoom = {
     gameState: BridgeGameState | undefined;
 };
 
+export type RoundStartedPayload = {
+    hand: Card[];
+    activePileTopCard: Card;
+    drawPileSize: DrawPileSize;
+    dealerIndex: number;
+    currentPlayerIndex: number;
+    players: RoundPlayer[];
+};
+
 export interface ServerToClientEvents {
     room_created: (payload: { roomCode: string }) => void;
     room_joined: (payload: { roomMembers: LobbyMember[] }) => void;
@@ -62,14 +71,7 @@ export interface ServerToClientEvents {
         readyPlayers: LobbyMember[];
     }) => void;
     error: (payload: { error: string }) => void;
-    round_started: (payload: {
-        hand: Card[];
-        activePileTopCard: Card;
-        drawPileSize: DrawPileSize;
-        dealerIndex: number;
-        currentPlayerIndex: number;
-        players: RoundPlayer[];
-    }) => void;
+    round_started: (payload: RoundStartedPayload) => void;
     game_started: () => void;
     cards_played: (payload: {
         playerId: string;

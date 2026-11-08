@@ -3,6 +3,7 @@ import {
     type CardSuit,
     type Card,
     type DrawPileSize,
+    type RoundStartedPayload,
 } from "../../../../shared/types";
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../../hooks/useSocket";
@@ -25,19 +26,35 @@ import RoundEndPopup from "../RoundEndPopup/RoundEndPopup";
 import GameAnnouncement from "../GameAnnouncement/GameAnnouncement";
 import { buildEffectsMessage, getSuitSymbol } from "../../utils";
 
-function GameScreen({ currentUser }: { currentUser: AuthUser }) {
-    const [hand, setHand] = useState<Card[]>([]);
+type GameScreenProps = {
+    currentUser: AuthUser;
+    initialRoundData: RoundStartedPayload;
+};
+
+function GameScreen({ currentUser, initialRoundData }: GameScreenProps) {
+    const [hand, setHand] = useState<Card[]>(initialRoundData.hand);
     const [activePileTopCard, setActivePileTopCard] = useState<Card | null>(
-        null
+        initialRoundData.activePileTopCard
     );
-    const [dealerIndex, setDealerIndex] = useState<number>(-1);
-    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(-2);
-    const [players, setPlayers] = useState<ClientPlayer[]>([]);
+    const [dealerIndex, setDealerIndex] = useState<number>(
+        initialRoundData.dealerIndex
+    );
+    const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(
+        initialRoundData.currentPlayerIndex
+    );
+    const [players, setPlayers] = useState<ClientPlayer[]>(
+        initialRoundData.players.map((player) => ({
+            ...player,
+            handCount: START_HAND_SIZE,
+        }))
+    );
     const [cardsToPlay, setCardsToPlay] = useState<Card[]>([]);
     const [activePrompt, setActivePrompt] = useState<PromptType>(null);
     const [jackSuit, setJackSuit] = useState<CardSuit | null>(null);
     const [announcement, setAnnouncement] = useState<string | null>(null);
-    const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>("medium");
+    const [drawPileSize, setDrawPileSize] = useState<DrawPileSize>(
+        initialRoundData.drawPileSize
+    );
     const [roundEndData, setRoundEndData] = useState<RoundEndData | null>(null);
     const socket = useSocket();
     const myIndex = players.findIndex((player) => player.id === currentUser.id);
