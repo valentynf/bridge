@@ -21,6 +21,8 @@ describe("BridgeGame", () => {
         emit: vi.fn(),
         on: vi.fn(),
         off: vi.fn(),
+        connect: vi.fn(),
+        disconnect: vi.fn(),
     } as unknown as Socket;
     const mockShowToast = vi.fn();
 
@@ -47,6 +49,8 @@ describe("BridgeGame", () => {
         vi.mocked(mockSocket.emit).mockClear();
         vi.mocked(mockSocket.on).mockClear();
         vi.mocked(mockSocket.off).mockClear();
+        vi.mocked(mockSocket.connect).mockClear();
+        vi.mocked(mockSocket.disconnect).mockClear();
         vi.mocked(mockShowToast).mockClear();
     });
 
