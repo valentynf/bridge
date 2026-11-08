@@ -11,7 +11,7 @@ const SocketContext = createContext<Socket<
 > | null>(null);
 
 function SocketContextProvider({ children }: { children: ReactNode }) {
-    const [socket] = useState<Socket>(() => io());
+    const [socket] = useState<Socket>(() => io({ autoConnect: false }));
 
     return (
         <SocketContext.Provider value={socket}>

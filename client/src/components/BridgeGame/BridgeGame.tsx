@@ -28,12 +28,13 @@ function BridgeGame() {
                 const response = await apiClient.get("/auth/me");
                 setCurrentUser(response.data);
                 setCurrentView("menu");
+                socket.connect();
             } catch {
                 setCurrentView("auth");
             }
         };
         checkAuth();
-    }, []);
+    }, [socket]);
 
     const handleLogout = async () => {
         try {
@@ -41,6 +42,7 @@ function BridgeGame() {
         } catch {
             showToast({ level: "error", message: "Logout request failed" });
         }
+        socket.disconnect();
         setCurrentUser(null);
         setCurrentView("auth");
     };
@@ -74,6 +76,12 @@ function BridgeGame() {
             });
             setCurrentView("game-over");
         });
+        socket.on("connect_error", (err) => {
+            showToast({
+                level: "error",
+                message: `Connection error: ${err.message}`,
+            });
+        });
 
         return () => {
             socket.off("round_started");
@@ -81,8 +89,9 @@ function BridgeGame() {
             socket.off("room_joined");
             socket.off("game_started");
             socket.off("game_over");
+            socket.off("connect_error");
         };
-    }, [socket]);
+    }, [socket, showToast]);
 
     return (
         <>
@@ -91,6 +100,7 @@ function BridgeGame() {
                     onAuthSuccess={(user) => {
                         setCurrentUser(user);
                         setCurrentView("menu");
+                        socket.connect();
                     }}
                 />
             )}
