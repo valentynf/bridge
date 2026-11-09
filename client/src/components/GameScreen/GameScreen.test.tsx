@@ -19,11 +19,14 @@ describe("GameScreen", () => {
         nickname: "valentyn",
     };
 
-    const renderGameScreen = (): HTMLElement => {
+    const renderGameScreen = (initialRoundData: unknown): HTMLElement => {
         const { container } = render(
             <ToastContext.Provider value={mockShowToast}>
                 <SocketContext.Provider value={mockSocket}>
-                    <GameScreen currentUser={mockCurrentUser} />
+                    <GameScreen
+                        currentUser={mockCurrentUser}
+                        initialRoundData={initialRoundData as never}
+                    />
                 </SocketContext.Provider>
             </ToastContext.Provider>
         );
@@ -46,7 +49,7 @@ describe("GameScreen", () => {
     });
 
     describe("4 opponents, players turn", () => {
-        const roundStartedData = {
+        const initialRoundData = {
             hand: [
                 { rank: "7", suit: "hearts" },
                 { rank: "Q", suit: "spades" },
@@ -67,10 +70,7 @@ describe("GameScreen", () => {
         };
 
         beforeEach(() => {
-            container = renderGameScreen();
-            act(() => {
-                emitEvent("round_started", roundStartedData);
-            });
+            container = renderGameScreen(initialRoundData);
         });
 
         test("Should show active pile card face up", () => {
@@ -405,7 +405,7 @@ describe("GameScreen", () => {
     });
 
     describe("3 opponents, not players turn", () => {
-        const roundStartedData = {
+        const initialRoundData = {
             hand: [
                 { rank: "7", suit: "hearts" },
                 { rank: "Q", suit: "spades" },
@@ -424,10 +424,7 @@ describe("GameScreen", () => {
         };
 
         beforeEach(() => {
-            container = renderGameScreen();
-            act(() => {
-                emitEvent("round_started", roundStartedData);
-            });
+            container = renderGameScreen(initialRoundData);
         });
 
         test("Should show two player info cards with info", () => {
@@ -488,7 +485,7 @@ describe("GameScreen", () => {
     });
 
     describe("2 opponents, not players turn", () => {
-        const roundStartedData = {
+        const initialRoundData = {
             hand: [
                 { rank: "7", suit: "hearts" },
                 { rank: "Q", suit: "spades" },
@@ -506,10 +503,7 @@ describe("GameScreen", () => {
         };
 
         beforeEach(() => {
-            container = renderGameScreen();
-            act(() => {
-                emitEvent("round_started", roundStartedData);
-            });
+            container = renderGameScreen(initialRoundData);
         });
 
         test("Should show one player info card with info", () => {

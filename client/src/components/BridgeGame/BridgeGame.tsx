@@ -1,6 +1,10 @@
 import { type AuthUser, type GameEndData, type ScreenType } from "../../types";
 import { useEffect, useRef, useState } from "react";
-import { type LobbyMember, type RoundPlayer } from "../../../../shared/types";
+import {
+    type LobbyMember,
+    type RoundPlayer,
+    type RoundStartedPayload,
+} from "../../../../shared/types";
 import MenuScreen from "../MenuScreen/MenuScreen";
 import LobbyScreen from "../LobbyScreen/LobbyScreen";
 import GameScreen from "../GameScreen/GameScreen";
@@ -17,6 +21,8 @@ function BridgeGame() {
     const [gameOverData, setGameOverData] = useState<GameEndData | null>(null);
     const [players, setPlayers] = useState<RoundPlayer[]>([]);
     const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+    const [roundStartData, setRoundStartData] =
+        useState<RoundStartedPayload | null>(null);
     const socket = useSocket();
     const showToast = useToast();
 
@@ -52,8 +58,9 @@ function BridgeGame() {
     }, [players]);
 
     useEffect(() => {
-        socket.on("round_started", ({ players }) => {
-            setPlayers(players);
+        socket.on("round_started", (data) => {
+            setPlayers(data.players);
+            setRoundStartData(data);
         });
         socket.on("room_created", ({ roomCode }) => {
             setRoomCode(roomCode);
@@ -113,8 +120,11 @@ function BridgeGame() {
             {currentView === "lobby" && (
                 <LobbyScreen roomMembers={roomMembers} roomCode={roomCode} />
             )}
-            {currentView === "game" && currentUser && (
-                <GameScreen currentUser={currentUser} />
+            {currentView === "game" && currentUser && roundStartData && (
+                <GameScreen
+                    initialRoundData={roundStartData}
+                    currentUser={currentUser}
+                />
             )}
             {currentView === "game-over" && gameOverData !== null && (
                 <GameOverScreen
