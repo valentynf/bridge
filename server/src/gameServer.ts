@@ -515,6 +515,9 @@ export class GameServer {
                 const { gameState, currentRoomCode } = gameContext;
                 const {
                     currentPlayerIndex,
+                    currentDealerIndex,
+                    activePile,
+                    reshuffleCount,
                     players,
                     shouldSkipNextPlayer,
                     isPendingSuitDeclaration,
@@ -522,13 +525,18 @@ export class GameServer {
                     hasActedThisTurn,
                 } = gameState;
 
+                const isDealersTurn: boolean =
+                    activePile.length === 1 &&
+                    reshuffleCount === 0 &&
+                    currentPlayerIndex === currentDealerIndex;
+
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
                         error: "Illegal play - different player turn",
                     });
                     return;
                 }
-                if (!hasActedThisTurn) {
+                if (!hasActedThisTurn && !isDealersTurn) {
                     socket.emit("error", {
                         error: "Player has not acted this turn",
                     });

@@ -432,6 +432,23 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
+            test("Should advance turn when dealer ends turn without playing", () => {
+                const turnStartedPromise = new Promise((res) => {
+                    clientSockets[0].on(
+                        "turn_started",
+                        ({ currentPlayerIndex }) => {
+                            expect(currentPlayerIndex).toBe(
+                                (dealerIndex + 1) % 4
+                            );
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[dealerIndex].emit("end_turn");
+
+                return turnStartedPromise;
+            });
             test("Should advance turn when dealer plays same rank card", () => {
                 const playedCard: Card = { rank: "10", suit: "hearts" };
                 const turnStartedPromise = new Promise((res) => {
