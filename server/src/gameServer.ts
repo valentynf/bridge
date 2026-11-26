@@ -713,7 +713,15 @@ export class GameServer {
 
                 const updatedHand: Card[] =
                     gameState.players[currentPlayerIndex].hand;
-                if (!isCoveringRequired) gameState.hasActedThisTurn = true;
+                if (
+                    !isCoveringRequired &&
+                    !checkCanPlay(
+                        gameState.activePile[0],
+                        updatedHand,
+                        jackSuit
+                    )
+                )
+                    gameState.hasActedThisTurn = true;
 
                 this.io.to(currentRoomCode).emit("card_drawn", {
                     playerId: socket.data.userId,
