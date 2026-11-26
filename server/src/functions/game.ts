@@ -263,7 +263,7 @@ export const countPoints = (
             const jackEffect = jackEndEffect.option;
             const numberOfJacks = jackEndEffect.count;
             if (jackEffect === "DOUBLE_ALL" && i !== winnerIndex)
-                roundScore = roundScore * Math.pow(2, numberOfJacks);
+                roundScore = roundScore * 2 * numberOfJacks;
             if (jackEffect === "MINUS_20" && i === winnerIndex)
                 roundScore = roundScore - 20 * numberOfJacks;
         }
@@ -355,6 +355,7 @@ export const generateInitialState = (
         shouldSkipNextPlayer: false,
         isPendingSuitDeclaration: false,
         hasActedThisTurn: false,
+        isDealerOpening: true,
         isCoveringRequired: false,
         pendingJackBonusCount: undefined,
     };

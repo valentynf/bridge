@@ -175,7 +175,7 @@ export class GameServer {
                     currentRoom.members.length >= MIN_ROOM_SIZE;
                 if (areAllReady && isEnoughPlayers) {
                     const dealerIndex = Math.floor(
-                        Math.random() * (currentRoom.members.length - 1)
+                        Math.random() * currentRoom.members.length
                     );
                     currentRoom.gameState = generateInitialState(
                         currentRoom.members,
@@ -225,12 +225,13 @@ export class GameServer {
                 const {
                     activePile,
                     drawPile,
-                    currentDealerIndex,
                     currentPlayerIndex,
-                    reshuffleCount,
                     players,
                     jackSuit,
                     isCoveringRequired,
+                    hasActedThisTurn,
+                    isDealerOpening,
+                    isPendingSuitDeclaration,
                 } = gameState;
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
@@ -239,15 +240,20 @@ export class GameServer {
                     return;
                 }
                 const currentPlayer: GamePlayer = players[currentPlayerIndex];
-                const isDealersTurn: boolean =
-                    activePile.length === 1 &&
-                    reshuffleCount === 0 &&
-                    currentPlayerIndex === currentDealerIndex;
+                const cardsWithoutSixes: Card[] = cardsToPlay.filter(
+                    (card) => card.rank !== "6"
+                );
                 const onlyPlayedJacks: boolean =
-                    cardsToPlay.length > 0 &&
-                    cardsToPlay.every((card) => card.rank === "J");
+                    cardsWithoutSixes.length > 0 &&
+                    cardsWithoutSixes.every((card) => card.rank === "J");
 
-                if (isDealersTurn) {
+                if (isDealerOpening) {
+                    if (isPendingSuitDeclaration) {
+                        socket.emit("error", {
+                            error: "Must declare suit before playing",
+                        });
+                        return;
+                    }
                     if (cardsToPlay.length > 0) {
                         let updatedActivePile, updatedHand;
                         if (isCoveringRequired) {
@@ -291,6 +297,12 @@ export class GameServer {
                         gameState.players[currentPlayerIndex].hand =
                             updatedHand;
                         socket.emit("hand_update", { updatedHand });
+                    }
+                    if (gameState.activePile[0].rank === "J") {
+                        gameState.hasActedThisTurn = true;
+                        gameState.isPendingSuitDeclaration = true;
+                        socket.emit("set_jack_suit");
+                        return;
                     }
                     const specialEffects = countSpecialEffects(
                         gameState.activePile
@@ -354,11 +366,18 @@ export class GameServer {
                         gameState.currentPlayerIndex =
                             (currentPlayerIndex + 1) % players.length;
                     }
+                    gameState.isDealerOpening = false;
 
                     this.io.to(currentRoomCode).emit("turn_started", {
                         currentPlayerIndex: gameState.currentPlayerIndex,
                     });
                 } else {
+                    if (hasActedThisTurn && !isCoveringRequired) {
+                        socket.emit("error", {
+                            error: "You have already acted during this turn",
+                        });
+                        return;
+                    }
                     if (cardsToPlay.length === 0) {
                         socket.emit("error", {
                             error: `Cannot play empty hand`,
@@ -462,9 +481,9 @@ export class GameServer {
                     if (updatedHand.length === 0 && !needsCover) {
                         if (onlyPlayedJacks) {
                             gameState.pendingJackBonusCount =
-                                cardsToPlay.length;
+                                cardsWithoutSixes.length;
                             socket.emit("choose_jack_bonus", {
-                                jackCount: cardsToPlay.length,
+                                jackCount: cardsWithoutSixes.length,
                             });
                             return;
                         }
@@ -510,6 +529,7 @@ export class GameServer {
                     isPendingSuitDeclaration,
                     isCoveringRequired,
                     hasActedThisTurn,
+                    isDealerOpening,
                 } = gameState;
 
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
@@ -518,10 +538,20 @@ export class GameServer {
                     });
                     return;
                 }
-                if (!hasActedThisTurn) {
+                if (!hasActedThisTurn && !isDealerOpening) {
                     socket.emit("error", {
                         error: "Player has not acted this turn",
                     });
+                    return;
+                }
+                if (
+                    isDealerOpening &&
+                    !hasActedThisTurn &&
+                    gameState.activePile[0].rank === "J"
+                ) {
+                    gameState.hasActedThisTurn = true;
+                    gameState.isPendingSuitDeclaration = true;
+                    socket.emit("set_jack_suit");
                     return;
                 }
                 if (isCoveringRequired) {
@@ -544,6 +574,7 @@ export class GameServer {
                 gameState.currentPlayerIndex = nextPlayerIndex;
                 gameState.shouldSkipNextPlayer = false;
                 gameState.hasActedThisTurn = false;
+                gameState.isDealerOpening = false;
 
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
@@ -631,13 +662,12 @@ export class GameServer {
                 const { gameState, currentRoomCode } = gameContext;
                 const {
                     currentPlayerIndex,
-                    currentDealerIndex,
                     hasActedThisTurn,
                     activePile,
                     players,
                     jackSuit,
-                    reshuffleCount,
                     isCoveringRequired,
+                    isDealerOpening,
                 } = gameState;
 
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
@@ -647,11 +677,7 @@ export class GameServer {
                     return;
                 }
 
-                const isDealersTurn =
-                    activePile.length === 1 &&
-                    reshuffleCount === 0 &&
-                    currentPlayerIndex === currentDealerIndex;
-                if (isDealersTurn && !isCoveringRequired) {
+                if (isDealerOpening && !isCoveringRequired) {
                     socket.emit("error", {
                         error: "You cannot draw cards during first dealer turn",
                     });
@@ -695,7 +721,15 @@ export class GameServer {
 
                 const updatedHand: Card[] =
                     gameState.players[currentPlayerIndex].hand;
-                if (!isCoveringRequired) gameState.hasActedThisTurn = true;
+                if (
+                    !isCoveringRequired &&
+                    !checkCanPlay(
+                        gameState.activePile[0],
+                        updatedHand,
+                        jackSuit
+                    )
+                )
+                    gameState.hasActedThisTurn = true;
 
                 this.io.to(currentRoomCode).emit("card_drawn", {
                     playerId: socket.data.userId,
