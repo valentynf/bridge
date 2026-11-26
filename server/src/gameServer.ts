@@ -231,6 +231,7 @@ export class GameServer {
                     isCoveringRequired,
                     hasActedThisTurn,
                     isDealerOpening,
+                    isPendingSuitDeclaration,
                 } = gameState;
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
@@ -247,6 +248,12 @@ export class GameServer {
                     cardsWithoutSixes.every((card) => card.rank === "J");
 
                 if (isDealerOpening) {
+                    if (isPendingSuitDeclaration) {
+                        socket.emit("error", {
+                            error: "Must declare suit before playing",
+                        });
+                        return;
+                    }
                     if (cardsToPlay.length > 0) {
                         let updatedActivePile, updatedHand;
                         if (isCoveringRequired) {
@@ -290,6 +297,12 @@ export class GameServer {
                         gameState.players[currentPlayerIndex].hand =
                             updatedHand;
                         socket.emit("hand_update", { updatedHand });
+                    }
+                    if (gameState.activePile[0].rank === "J") {
+                        gameState.hasActedThisTurn = true;
+                        gameState.isPendingSuitDeclaration = true;
+                        socket.emit("set_jack_suit");
+                        return;
                     }
                     const specialEffects = countSpecialEffects(
                         gameState.activePile
@@ -529,6 +542,16 @@ export class GameServer {
                     socket.emit("error", {
                         error: "Player has not acted this turn",
                     });
+                    return;
+                }
+                if (
+                    isDealerOpening &&
+                    !hasActedThisTurn &&
+                    gameState.activePile[0].rank === "J"
+                ) {
+                    gameState.hasActedThisTurn = true;
+                    gameState.isPendingSuitDeclaration = true;
+                    socket.emit("set_jack_suit");
                     return;
                 }
                 if (isCoveringRequired) {
