@@ -352,6 +352,31 @@ describe("registerSocketEvents", () => {
                 ]).finally(() => resolve());
             });
         });
+        test("Should be able to choose last player as dealer", () => {
+            return new Promise<void>((resolve) => {
+                let roomCode: string;
+                clientSockets[0].once("round_started", ({ dealerIndex }) => {
+                    expect(dealerIndex).toBe(1);
+                    resolve();
+                });
+                clientSockets[0].on(
+                    "room_created",
+                    (payload) => (roomCode = payload.roomCode)
+                );
+                clientSockets[0].once("room_joined", () => {
+                    clientSockets[1].emit("join_room", {
+                        roomCode,
+                    });
+                });
+                clientSockets[1].once("room_joined", () => {
+                    mathRandomSpy.mockReturnValue(0.9);
+                    clientSockets[0].emit("player_ready");
+                    clientSockets[1].emit("player_ready");
+                });
+
+                clientSockets[0].emit("create_room");
+            });
+        });
     });
     describe("play_cards", () => {
         let dealerIndex: number;
@@ -1507,7 +1532,7 @@ describe("registerSocketEvents", () => {
                         ],
                         [{ rank: "9", suit: "spades" }]
                     );
-                    mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                    mathRandomSpy.mockReturnValue(0.1);
                     clientSockets[0].emit("player_ready");
                     clientSockets[1].emit("player_ready");
                 });

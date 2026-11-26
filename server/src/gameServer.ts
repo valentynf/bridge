@@ -175,7 +175,7 @@ export class GameServer {
                     currentRoom.members.length >= MIN_ROOM_SIZE;
                 if (areAllReady && isEnoughPlayers) {
                     const dealerIndex = Math.floor(
-                        Math.random() * (currentRoom.members.length - 1)
+                        Math.random() * currentRoom.members.length
                     );
                     currentRoom.gameState = generateInitialState(
                         currentRoom.members,
