@@ -37,6 +37,7 @@ export type BridgeGameState = {
     shouldSkipNextPlayer: boolean;
     isPendingSuitDeclaration: boolean;
     hasActedThisTurn: boolean;
+    isDealerOpening: boolean;
     isCoveringRequired: boolean;
     pendingJackBonusCount: number | undefined;
 };

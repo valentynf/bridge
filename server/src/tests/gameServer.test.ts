@@ -1475,6 +1475,76 @@ describe("registerSocketEvents", () => {
             });
         });
 
+        test("Dealer turn: Should not repeat dealer opening after other player drew", async () => {
+            await new Promise<void>((resolve) => {
+                let roomCode: string;
+                clientSockets[0].once(
+                    "room_created",
+                    (payload) => (roomCode = payload.roomCode)
+                );
+                clientSockets[0].once("room_joined", () => {
+                    clientSockets[1].emit("join_room", {
+                        roomCode,
+                    });
+                });
+                clientSockets[1].once("room_joined", () => {
+                    predictableDeck = reverseDealCards(
+                        [
+                            [
+                                { rank: "6", suit: "diamonds" },
+                                { rank: "Q", suit: "clubs" },
+                                { rank: "10", suit: "spades" },
+                                { rank: "10", suit: "hearts" },
+                                { rank: "10", suit: "clubs" },
+                            ],
+                            [
+                                { rank: "K", suit: "hearts" },
+                                { rank: "9", suit: "diamonds" },
+                                { rank: "8", suit: "diamonds" },
+                                { rank: "7", suit: "hearts" },
+                                { rank: "Q", suit: "hearts" },
+                            ],
+                        ],
+                        [{ rank: "9", suit: "spades" }]
+                    );
+                    mathRandomSpy.mockReturnValue(0.1); //this makes dealerIndex 0 for testing purposes
+                    clientSockets[0].emit("player_ready");
+                    clientSockets[1].emit("player_ready");
+                });
+                clientSockets[0].once("round_started", (payload) => {
+                    dealerIndex = payload.dealerIndex;
+                    clientSockets[dealerIndex].emit("play_cards", {
+                        cardsToPlay: [],
+                    });
+                    clientSockets[1].once("turn_started", () => {
+                        resolve();
+                    });
+                });
+
+                clientSockets[0].emit("create_room");
+            });
+
+            const cardsPlayedPromise = new Promise((res) => {
+                clientSockets[0].once("cards_played", () => {
+                    res(undefined);
+                });
+            });
+
+            clientSockets[1].once("card_drawn", () => {
+                clientSockets[1].emit("end_turn");
+            });
+
+            clientSockets[0].once("turn_started", () => {
+                clientSockets[dealerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "Q", suit: "clubs" }],
+                });
+            });
+
+            clientSockets[1].emit("draw_card");
+
+            return cardsPlayedPromise;
+        });
+
         test("Should play a card right after drawing it", async () => {
             await new Promise<void>((resolve) => {
                 let roomCode: string;

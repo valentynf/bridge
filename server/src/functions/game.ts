@@ -355,6 +355,7 @@ export const generateInitialState = (
         shouldSkipNextPlayer: false,
         isPendingSuitDeclaration: false,
         hasActedThisTurn: false,
+        isDealerOpening: true,
         isCoveringRequired: false,
         pendingJackBonusCount: undefined,
     };

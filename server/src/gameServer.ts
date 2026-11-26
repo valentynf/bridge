@@ -225,13 +225,12 @@ export class GameServer {
                 const {
                     activePile,
                     drawPile,
-                    currentDealerIndex,
                     currentPlayerIndex,
-                    reshuffleCount,
                     players,
                     jackSuit,
                     isCoveringRequired,
                     hasActedThisTurn,
+                    isDealerOpening,
                 } = gameState;
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
@@ -240,10 +239,6 @@ export class GameServer {
                     return;
                 }
                 const currentPlayer: GamePlayer = players[currentPlayerIndex];
-                const isDealersTurn: boolean =
-                    activePile.length === 1 &&
-                    reshuffleCount === 0 &&
-                    currentPlayerIndex === currentDealerIndex;
                 const cardsWithoutSixes: Card[] = cardsToPlay.filter(
                     (card) => card.rank !== "6"
                 );
@@ -251,7 +246,7 @@ export class GameServer {
                     cardsWithoutSixes.length > 0 &&
                     cardsWithoutSixes.every((card) => card.rank === "J");
 
-                if (isDealersTurn) {
+                if (isDealerOpening) {
                     if (cardsToPlay.length > 0) {
                         let updatedActivePile, updatedHand;
                         if (isCoveringRequired) {
@@ -358,6 +353,7 @@ export class GameServer {
                         gameState.currentPlayerIndex =
                             (currentPlayerIndex + 1) % players.length;
                     }
+                    gameState.isDealerOpening = false;
 
                     this.io.to(currentRoomCode).emit("turn_started", {
                         currentPlayerIndex: gameState.currentPlayerIndex,
@@ -515,20 +511,13 @@ export class GameServer {
                 const { gameState, currentRoomCode } = gameContext;
                 const {
                     currentPlayerIndex,
-                    currentDealerIndex,
-                    activePile,
-                    reshuffleCount,
                     players,
                     shouldSkipNextPlayer,
                     isPendingSuitDeclaration,
                     isCoveringRequired,
                     hasActedThisTurn,
+                    isDealerOpening,
                 } = gameState;
-
-                const isDealersTurn: boolean =
-                    activePile.length === 1 &&
-                    reshuffleCount === 0 &&
-                    currentPlayerIndex === currentDealerIndex;
 
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
@@ -536,7 +525,7 @@ export class GameServer {
                     });
                     return;
                 }
-                if (!hasActedThisTurn && !isDealersTurn) {
+                if (!hasActedThisTurn && !isDealerOpening) {
                     socket.emit("error", {
                         error: "Player has not acted this turn",
                     });
@@ -562,6 +551,7 @@ export class GameServer {
                 gameState.currentPlayerIndex = nextPlayerIndex;
                 gameState.shouldSkipNextPlayer = false;
                 gameState.hasActedThisTurn = false;
+                gameState.isDealerOpening = false;
 
                 this.io.to(currentRoomCode).emit("turn_started", {
                     currentPlayerIndex: gameState.currentPlayerIndex,
@@ -649,13 +639,12 @@ export class GameServer {
                 const { gameState, currentRoomCode } = gameContext;
                 const {
                     currentPlayerIndex,
-                    currentDealerIndex,
                     hasActedThisTurn,
                     activePile,
                     players,
                     jackSuit,
-                    reshuffleCount,
                     isCoveringRequired,
+                    isDealerOpening,
                 } = gameState;
 
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
@@ -665,11 +654,7 @@ export class GameServer {
                     return;
                 }
 
-                const isDealersTurn =
-                    activePile.length === 1 &&
-                    reshuffleCount === 0 &&
-                    currentPlayerIndex === currentDealerIndex;
-                if (isDealersTurn && !isCoveringRequired) {
+                if (isDealerOpening && !isCoveringRequired) {
                     socket.emit("error", {
                         error: "You cannot draw cards during first dealer turn",
                     });
