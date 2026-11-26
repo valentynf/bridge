@@ -128,6 +128,46 @@ describe("BridgeGame", () => {
         screen.getByText("player2nd");
     });
 
+    test("Should mark only the player from player_ready_update as ready", () => {
+        act(() => {
+            emitEvent("room_joined", {
+                roomMembers: [
+                    { id: "socket01abc", nickname: "valentyn", isReady: false },
+                    {
+                        id: "socket02def",
+                        nickname: "player2nd",
+                        isReady: false,
+                    },
+                ],
+            });
+        });
+        expect(screen.getByText("valentyn").style.color).toBe(
+            "var(--color-text)"
+        );
+        expect(screen.getByText("player2nd").style.color).toBe(
+            "var(--color-text)"
+        );
+
+        act(() => {
+            emitEvent("player_ready_update", {
+                readyPlayerId: "socket02def",
+                readyPlayers: [
+                    {
+                        id: "socket02def",
+                        nickname: "player2nd",
+                        isReady: true,
+                    },
+                ],
+            });
+        });
+        expect(screen.getByText("valentyn").style.color).toBe(
+            "var(--color-text)"
+        );
+        expect(screen.getByText("player2nd").style.color).toBe(
+            "var(--color-ready)"
+        );
+    });
+
     test("Should switch to game view on game_started", async () => {
         cleanup();
         vi.mocked(mockSocket.on).mockClear();

@@ -70,6 +70,15 @@ function BridgeGame() {
             setRoomMembers(roomMembers);
             setCurrentView("lobby");
         });
+        socket.on("player_ready_update", ({ readyPlayerId }) => {
+            setRoomMembers((prev) =>
+                prev.map((member) =>
+                    member.id === readyPlayerId
+                        ? { ...member, isReady: true }
+                        : member
+                )
+            );
+        });
         socket.on("game_started", () => {
             setCurrentView("game");
         });
@@ -94,6 +103,7 @@ function BridgeGame() {
             socket.off("round_started");
             socket.off("room_created");
             socket.off("room_joined");
+            socket.off("player_ready_update");
             socket.off("game_started");
             socket.off("game_over");
             socket.off("connect_error");
