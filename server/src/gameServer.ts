@@ -231,6 +231,7 @@ export class GameServer {
                     players,
                     jackSuit,
                     isCoveringRequired,
+                    hasActedThisTurn,
                 } = gameState;
                 if (socket.data.userId !== players[currentPlayerIndex].id) {
                     socket.emit("error", {
@@ -359,6 +360,12 @@ export class GameServer {
                         currentPlayerIndex: gameState.currentPlayerIndex,
                     });
                 } else {
+                    if (hasActedThisTurn && !isCoveringRequired) {
+                        socket.emit("error", {
+                            error: "You have already acted during this turn",
+                        });
+                        return;
+                    }
                     if (cardsToPlay.length === 0) {
                         socket.emit("error", {
                             error: `Cannot play empty hand`,

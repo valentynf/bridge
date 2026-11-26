@@ -817,6 +817,38 @@ describe("registerSocketEvents", () => {
                     })
             );
 
+            test("Should not allow to play cards several times during one turn", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "K", suit: "clubs" }],
+                });
+
+                await Promise.all([cardsPlayedPromise, handUpdatedPromise]);
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [{ rank: "8", suit: "clubs" }],
+                });
+
+                const errorReceivedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("error", () => {
+                        res(undefined);
+                    });
+                });
+
+                return errorReceivedPromise;
+            });
+
             test("Should advance turn after non-special proper card was played", async () => {
                 const cardsPlayedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].on("cards_played", () => {
