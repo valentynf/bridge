@@ -1212,6 +1212,42 @@ describe("registerSocketEvents", () => {
 
                 return turnStartedPromise;
             });
+
+            test("Should trigger Jack suit declaring when Jack covers six in one play", async () => {
+                const cardsPlayedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("cards_played", () => {
+                        res(undefined);
+                    });
+                });
+
+                const handUpdatedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on("hand_update", () => {
+                        res(undefined);
+                    });
+                });
+
+                const setJackSuitReceivedPromise = new Promise((res) => {
+                    clientSockets[currentPlayerIndex].on(
+                        "set_jack_suit",
+                        () => {
+                            res(undefined);
+                        }
+                    );
+                });
+
+                clientSockets[currentPlayerIndex].emit("play_cards", {
+                    cardsToPlay: [
+                        { rank: "J", suit: "hearts" },
+                        { rank: "6", suit: "clubs" },
+                    ],
+                });
+
+                return Promise.all([
+                    cardsPlayedPromise,
+                    handUpdatedPromise,
+                    setJackSuitReceivedPromise,
+                ]);
+            });
             test("Should reject end_turn when suit has not been declared", async () => {
                 const cardsPlayedPromise = new Promise((res) => {
                     clientSockets[currentPlayerIndex].on("cards_played", () => {

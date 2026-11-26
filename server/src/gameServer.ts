@@ -244,9 +244,12 @@ export class GameServer {
                     activePile.length === 1 &&
                     reshuffleCount === 0 &&
                     currentPlayerIndex === currentDealerIndex;
+                const cardsWithoutSixes: Card[] = cardsToPlay.filter(
+                    (card) => card.rank !== "6"
+                );
                 const onlyPlayedJacks: boolean =
-                    cardsToPlay.length > 0 &&
-                    cardsToPlay.every((card) => card.rank === "J");
+                    cardsWithoutSixes.length > 0 &&
+                    cardsWithoutSixes.every((card) => card.rank === "J");
 
                 if (isDealersTurn) {
                     if (cardsToPlay.length > 0) {
@@ -469,9 +472,9 @@ export class GameServer {
                     if (updatedHand.length === 0 && !needsCover) {
                         if (onlyPlayedJacks) {
                             gameState.pendingJackBonusCount =
-                                cardsToPlay.length;
+                                cardsWithoutSixes.length;
                             socket.emit("choose_jack_bonus", {
-                                jackCount: cardsToPlay.length,
+                                jackCount: cardsWithoutSixes.length,
                             });
                             return;
                         }
