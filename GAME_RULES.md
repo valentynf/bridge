@@ -152,7 +152,7 @@ This can happen mid-turn: if the top card allows it and the player holds all 4 o
 If the winning player's **last card(s) were Jack(s)**, the player chooses one of two options to apply:
 
 - **Option A:** The winner's cumulative score is reduced by **20 × number of Jacks played**.
-- **Option B:** Each remaining player's card points for this round are **multiplied by the number of Jacks played**.
+- **Option B:** Each remaining player's card points for this round are **multiplied by 2 × the number of Jacks played** (×2, ×4, ×6, ×8).
 
 The winner picks whichever option benefits them most. Only one option applies per round.
 

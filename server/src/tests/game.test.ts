@@ -805,6 +805,20 @@ describe("countPoints", () => {
         );
         expect(updatedScores).toEqual([130, 200, 30, 10]);
     });
+    test("Should return updated score, three jacks x6", () => {
+        const threeJacksToDouble: JackEndEffect = {
+            option: "DOUBLE_ALL",
+            count: 3,
+        };
+        const updatedScores = countPoints(
+            defaultPlayersHands,
+            defaultWinnerIndex,
+            defaultReshuffleMultiplier,
+            defaultCurrentScores,
+            threeJacksToDouble
+        );
+        expect(updatedScores).toEqual([170, 290, 30, 10]);
+    });
 });
 
 describe("countSpecialEffects", () => {
